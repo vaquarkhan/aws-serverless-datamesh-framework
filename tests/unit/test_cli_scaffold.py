@@ -17,6 +17,8 @@ def test_scaffold_domain_creates_files(tmp_path: Path) -> None:
     )
     assert (root / "handler.py").exists()
     assert (root / "contract.yaml").exists()
+    assert (root / "consumer_sla.yaml").exists()
+    assert (root / "step_function.asl.json").exists()
     assert (root / "terraform" / "main.tf").exists()
     assert (root / "tests" / "test_payments.py").exists()
 

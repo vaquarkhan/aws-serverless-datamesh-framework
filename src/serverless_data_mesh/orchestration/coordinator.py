@@ -22,9 +22,24 @@ from serverless_data_mesh.types.workload import (
     SourceReaderFn,
     WriteOutcome,
 )
+from serverless_data_mesh.metrics.mesh_trust import publish_vrp_metric
+from serverless_data_mesh.orchestration.reprocess import attempt_vrp_repair
 from serverless_data_mesh.verification.vrp import VRPProofGenerator, validate_then_commit
 
 logger = logging.getLogger(__name__)
+
+
+def _missing_from_repair(
+    source: list[dict[str, Any]],
+    sink: list[dict[str, Any]],
+    identity_fields: tuple[str, ...],
+) -> list[dict[str, Any]]:
+    sink_ids = {"|".join(str(r.get(f, "")) for f in identity_fields) for r in sink}
+    return [
+        r
+        for r in source
+        if "|".join(str(r.get(f, "")) for f in identity_fields) not in sink_ids
+    ]
 
 
 class IceGuardDurableCoordinator:
@@ -90,6 +105,8 @@ class IceGuardDurableCoordinator:
         batch_writer: BatchWriterFn,
         source_reader: SourceReaderFn,
         resume_state: OrchestrationState | None = None,
+        sink_reader: SourceReaderFn | None = None,
+        enable_auto_repair: bool = False,
     ) -> dict[str, Any]:
         """Run a large write as durable, resumable chunks under IceGuard protection."""
         state = resume_state or self._initial_state(workload)
@@ -126,15 +143,44 @@ class IceGuardDurableCoordinator:
                     chunk_paths_by_batch[(start, end)] = paths
 
                     source_records = source_reader(start, end)
+                    sink_records = sink_reader(start, end) if sink_reader else source_records
                     proof = self._proofs.build_proof(
                         source_records=source_records,
-                        sink_records=source_records,
+                        sink_records=sink_records,
                         workload=workload,
                         chunk_start=start,
                         chunk_end=end,
                         prev_proof_hash=state.last_proof_hash,
                     )
                     verification = validate_then_commit(proof)
+                    if verification.outcome != "PASS" and enable_auto_repair and sink_reader:
+
+                        def _repair_write(missing: list[dict[str, Any]]) -> list[dict[str, Any]]:
+                            batch_writer(start, start + len(missing))
+                            return sink_records + missing
+
+                        repair = attempt_vrp_repair(
+                            source_records=source_records,
+                            sink_records=sink_records,
+                            workload=workload,
+                            chunk_start=start,
+                            chunk_end=end,
+                            proof_generator=self._proofs,
+                            write_repair_fn=_repair_write,
+                        )
+                        if repair.outcome == "repaired_pass" and repair.proof is not None:
+                            proof = repair.proof
+                            verification = validate_then_commit(proof)
+                            sink_records = sink_records + _missing_from_repair(
+                                source_records, sink_records, workload.identity_fields
+                            )
+
+                    publish_vrp_metric(
+                        domain_id=workload.boundary.domain_id,
+                        verdict=proof["reconciliation"]["verdict"],
+                        row_count=len(sink_records),
+                        workload_id=workload.workload_id,
+                    )
                     if verification.outcome != "PASS":
                         raise VerificationRejectedError(
                             f"VRP blocked chunk [{start}, {end}): {verification.reason}"

@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-06-15
+
+### Added
+
+- **Auto VRP reprocessing** (`orchestration/reprocess.py`): detect drops, repair sink, re-proof, commit or escalate
+- **Consumer SLA enforcement** (`governance/consumer_sla.py`): freshness, completeness, required columns; LF grant hook
+- **Live CloudWatch trust dashboard** (Terraform `monitoring/dashboard.tf` + `publish_vrp_metric`)
+- **Grafana template** (`infrastructure/grafana/mesh-trust-dashboard.json`)
+- **Lake Formation governance module** (`terraform/modules/governance/`)
+- CLI: `serverless-data-mesh canary`, `reprocess-demo`, `dashboard --cloudwatch`
+- Scaffold: `consumer_sla.yaml`, `step_function.asl.json`, richer handler imports
+- Docs: `docs/mesh-trust-dashboard.md`
+- Tests: reprocess, consumer SLA, canary, auto-repair demo
+
+### Changed
+
+- `IceGuardDurableCoordinator` supports optional `sink_reader` + `enable_auto_repair`
+- Trust dashboard supports proofs scan, CloudWatch live mode, and demo fallback
+
 ## [0.1.3] - 2026-06-15
 
 ### Added

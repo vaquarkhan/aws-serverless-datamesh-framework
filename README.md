@@ -236,8 +236,13 @@ Details: [benchmarks/README.md](benchmarks/README.md) · `make cost-estimate`
 
 ```bash
 serverless-data-mesh init --domain payments --table fact_payments --account 123456789012
-serverless-data-mesh dashboard   # mesh trust dashboard HTML
+serverless-data-mesh dashboard              # HTML trust dashboard (proofs / CloudWatch / demo)
+serverless-data-mesh dashboard --cloudwatch # live VRP metrics from CloudWatch
+serverless-data-mesh canary                 # VRP canary before promotion
+serverless-data-mesh reprocess-demo         # auto-repair dropped records after VRP FAIL
 ```
+
+**11/10 production features** (all implemented): auto VRP reprocessing, live CloudWatch + Grafana trust dashboard, Lake Formation consumer SLA enforcement. See [docs/mesh-trust-dashboard.md](docs/mesh-trust-dashboard.md).
 
 ### Full development setup
 

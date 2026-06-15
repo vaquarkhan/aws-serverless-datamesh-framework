@@ -1,0 +1,104 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "max": 1,
+          "min": 0,
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "alias": "{{Domain}}",
+          "dimensions": { "Domain": "*" },
+          "metricName": "VRPTrustScore",
+          "namespace": "ServerlessDataMesh/Trust",
+          "period": "300",
+          "refId": "A",
+          "region": "us-east-2",
+          "statistic": "Average"
+        }
+      ],
+      "title": "VRP Trust Score by Domain",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "targets": [
+        {
+          "alias": "{{Domain}} rows",
+          "dimensions": { "Domain": "*" },
+          "metricName": "VRPRowCount",
+          "namespace": "ServerlessDataMesh/Trust",
+          "period": "300",
+          "refId": "A",
+          "region": "us-east-2",
+          "statistic": "Maximum"
+        }
+      ],
+      "title": "VRP Row Count by Domain",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${DS_CLOUDWATCH}"
+      },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 8 },
+      "id": 3,
+      "targets": [
+        {
+          "metricName": "VRPFail",
+          "namespace": "ServerlessDataMesh/Trust",
+          "period": "300",
+          "refId": "A",
+          "region": "us-east-2",
+          "statistic": "Sum"
+        },
+        {
+          "metricName": "MetadataCommitted",
+          "namespace": "ServerlessDataMesh/Trust",
+          "period": "300",
+          "refId": "B",
+          "region": "us-east-2",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "VRP Failures vs Metadata Commits",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["serverless-data-mesh", "vaquar-pattern", "vrp"],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "title": "Mesh Trust Dashboard (Vaquar Pattern)",
+  "uid": "sdm-mesh-trust",
+  "version": 1
+}

@@ -66,7 +66,9 @@ def _cmd_dashboard(args: argparse.Namespace) -> int:
     path = render_trust_dashboard(
         proofs_dir=args.proofs_dir,
         output=args.output,
-        demo=not args.proofs_dir,
+        demo=not args.proofs_dir and not args.cloudwatch,
+        cloudwatch=args.cloudwatch,
+        cloudwatch_region=args.region,
     )
     print(f"Trust dashboard written: {path}")
     if args.open_browser:
@@ -74,6 +76,46 @@ def _cmd_dashboard(args: argparse.Namespace) -> int:
 
         webbrowser.open(f"file://{path}")
     return 0
+
+
+def _cmd_canary(args: argparse.Namespace) -> int:
+    from serverless_data_mesh.orchestration.canary import run_canary
+
+    result = run_canary(
+        record_count=args.records,
+        inject_canary_drift=args.drift,
+        max_divergence_pct=args.max_divergence,
+    )
+    if args.json:
+        print(json.dumps(result, indent=2))
+    else:
+        print(f"\n  Canary outcome: {result['outcome']}")
+        print(f"  Production VRP: {result['production_verdict']}")
+        print(f"  Canary VRP:     {result['canary_verdict']}")
+        print(f"  Divergence:     {result['divergence_pct']}%")
+        print(f"  Promote:        {result['promote']}\n")
+        print(f"  {result['message']}\n")
+    return 0 if result["promote"] else 1
+
+
+def _cmd_reprocess_demo(args: argparse.Namespace) -> int:
+    from serverless_data_mesh.local.runtime import LocalPVDMRuntime
+
+    runtime = LocalPVDMRuntime()
+    result = runtime.run_write_with_auto_repair(
+        record_count=args.records,
+        drop_count=args.drop,
+    )
+    if args.json:
+        print(json.dumps(result, indent=2, default=str))
+    else:
+        print("\n  Auto VRP reprocessing demo\n")
+        print(f"  Outcome:          {result['outcome']}")
+        repair = result.get("repair", {})
+        print(f"  Missing before:   {repair.get('missing_before', '?')}")
+        print(f"  Repair attempts:  {repair.get('attempts', '?')}")
+        print(f"  Consumer rows:    {result.get('consumer_row_count', 0)}\n")
+    return 0 if result.get("outcome") == "repaired_and_committed" else 1
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -96,9 +138,24 @@ def main(argv: list[str] | None = None) -> int:
 
     dash = sub.add_parser("dashboard", help="Generate mesh trust dashboard HTML")
     dash.add_argument("--proofs-dir", help="Steward proofs directory (local or mounted S3)")
+    dash.add_argument("--cloudwatch", action="store_true", help="Pull live metrics from CloudWatch")
+    dash.add_argument("--region", help="AWS region for CloudWatch")
     dash.add_argument("--output", default="mesh-trust-dashboard.html")
     dash.add_argument("--open", dest="open_browser", action="store_true")
     dash.set_defaults(func=_cmd_dashboard)
+
+    canary = sub.add_parser("canary", help="Run VRP canary comparison before promotion")
+    canary.add_argument("--records", type=int, default=1000)
+    canary.add_argument("--drift", action="store_true", help="Inject canary row-count drift")
+    canary.add_argument("--max-divergence", type=float, default=1.0)
+    canary.add_argument("--json", action="store_true")
+    canary.set_defaults(func=_cmd_canary)
+
+    repro = sub.add_parser("reprocess-demo", help="Demo auto VRP repair after dropped records")
+    repro.add_argument("--records", type=int, default=100)
+    repro.add_argument("--drop", type=int, default=5)
+    repro.add_argument("--json", action="store_true")
+    repro.set_defaults(func=_cmd_reprocess_demo)
 
     args = parser.parse_args(argv)
     return int(args.func(args))

@@ -15,6 +15,8 @@ from serverless_data_mesh.types.workload import (
     DomainTransactionBoundary,
     WriteOutcome,
 )
+from serverless_data_mesh.metrics.mesh_trust import publish_vrp_metric
+from serverless_data_mesh.orchestration.reprocess import attempt_vrp_repair
 from serverless_data_mesh.verification.backend import create_proof_generator
 from serverless_data_mesh.verification.vrp import validate_then_commit
 
@@ -166,6 +168,12 @@ class LocalPVDMRuntime:
         verification = validate_then_commit(proof)
         proof_path = self._persist_proof(proof, workload=workload, chunk_index=0)
         verdict = proof["reconciliation"]["verdict"]
+        publish_vrp_metric(
+            domain_id=workload.boundary.domain_id,
+            verdict=verdict,
+            row_count=record_count,
+            workload_id=workload_id,
+        )
 
         if verification.outcome != "PASS":
             return LocalWriteResult(
@@ -252,6 +260,83 @@ class LocalPVDMRuntime:
             "snapshot_id": snapshot_id,
             "consumer_row_count": self.consumer_row_count,
             "domains_committed": len(domain_results),
+        }
+
+    def run_write_with_auto_repair(
+        self,
+        *,
+        workload_id: str = "auto-repair-demo",
+        record_count: int = 100,
+        drop_count: int = 5,
+        proof_generator: Any | None = None,
+    ) -> dict[str, Any]:
+        """Simulate dropped records, auto-repair via VRP reprocessing, then commit."""
+        workload = _default_workload(self.root, workload_id=workload_id, total_records=record_count)
+        if proof_generator is None:
+            gen, backend = create_proof_generator()
+        else:
+            gen = proof_generator
+            backend = getattr(gen, "producer", "custom")
+
+        source = _records(record_count)
+        sink = _records(record_count - drop_count)
+        repaired_sink = list(sink)
+
+        def _merge_missing(missing: list[dict[str, str]]) -> list[dict[str, str]]:
+            nonlocal repaired_sink
+            repaired_sink = repaired_sink + missing
+            return repaired_sink
+
+        repair = attempt_vrp_repair(
+            source_records=source,
+            sink_records=sink,
+            workload=workload,
+            chunk_start=0,
+            chunk_end=record_count,
+            proof_generator=gen,
+            write_repair_fn=_merge_missing,
+        )
+
+        if repair.outcome != "repaired_pass" or repair.proof is None:
+            return {
+                "outcome": repair.outcome,
+                "backend": backend,
+                "repair": {
+                    "outcome": repair.outcome,
+                    "attempts": repair.attempts,
+                    "missing_before": repair.missing_before,
+                    "missing_after": repair.missing_after,
+                    "message": repair.message,
+                },
+                "consumer_row_count": self.consumer_row_count,
+            }
+
+        self._write_physical(repaired_sink, part_name=f"{workload_id}-repaired")
+        proof_path = self._persist_proof(repair.proof, workload=workload, chunk_index=0)
+        publish_vrp_metric(
+            domain_id=workload.boundary.domain_id,
+            verdict="PASS",
+            row_count=record_count,
+            workload_id=workload_id,
+        )
+        snapshot_id = self._commit_metadata(
+            workload=workload,
+            row_count=record_count,
+            proof_id=repair.proof["proof_id"],
+        )
+        return {
+            "outcome": "repaired_and_committed",
+            "backend": backend,
+            "repair": {
+                "outcome": repair.outcome,
+                "attempts": repair.attempts,
+                "missing_before": repair.missing_before,
+                "missing_after": repair.missing_after,
+                "message": repair.message,
+            },
+            "snapshot_id": snapshot_id,
+            "proof_path": str(proof_path),
+            "consumer_row_count": self.consumer_row_count,
         }
 
     def run_demo_sequence(self) -> dict[str, Any]:

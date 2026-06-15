@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from serverless_data_mesh.dashboard.cloudwatch import fetch_cloudwatch_trust_rows
+
 
 def _demo_rows() -> list[dict[str, Any]]:
     now = datetime.now(timezone.utc).strftime("%I:%M %p")
@@ -66,14 +68,22 @@ def render_trust_dashboard(
     proofs_dir: str | None = None,
     output: str = "mesh-trust-dashboard.html",
     demo: bool = False,
+    cloudwatch: bool = False,
+    cloudwatch_region: str | None = None,
 ) -> Path:
-    """Render HTML trust dashboard from proof files or demo data."""
-    if demo or not proofs_dir:
+    """Render HTML trust dashboard from proofs, CloudWatch, or demo data."""
+    if cloudwatch:
+        rows = fetch_cloudwatch_trust_rows(region=cloudwatch_region)
+        mode = "cloudwatch"
+        if not rows:
+            rows = _demo_rows()
+            mode = "cloudwatch-fallback-demo"
+    elif demo or not proofs_dir:
         rows = _demo_rows()
         mode = "demo"
     else:
         rows = _scan_proofs(Path(proofs_dir))
-        mode = "live"
+        mode = "live-proofs"
 
     html = HTML_TEMPLATE.format(
         generated_at=datetime.now(timezone.utc).isoformat(),

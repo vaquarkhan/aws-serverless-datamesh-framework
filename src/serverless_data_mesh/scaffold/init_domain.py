@@ -45,6 +45,16 @@ def scaffold_domain(
         encoding="utf-8",
     )
 
+    (root / "consumer_sla.yaml").write_text(
+        CONSUMER_SLA_TEMPLATE.format(domain=domain, table=table),
+        encoding="utf-8",
+    )
+
+    (root / "step_function.asl.json").write_text(
+        STEP_FUNCTION_TEMPLATE.format(domain=domain, table=table),
+        encoding="utf-8",
+    )
+
     (root / "README.md").write_text(
         README_TEMPLATE.format(domain=domain, table=table),
         encoding="utf-8",
@@ -59,9 +69,21 @@ from __future__ import annotations
 
 from typing import Any
 
+from serverless_data_mesh.governance.consumer_sla import enforce_consumer_sla
+from serverless_data_mesh.metrics.mesh_trust import publish_vrp_metric
+from serverless_data_mesh.orchestration.reprocess import attempt_vrp_repair
+from serverless_data_mesh.types.workload import ConsumerSLAContract, DataWriteWorkload
+from serverless_data_mesh.verification.backend import create_proof_generator
+from serverless_data_mesh.verification.vrp import validate_then_commit
+
 
 def source_reader(start: int, end: int) -> list[dict[str, Any]]:
     return [{{"id": str(i), "payload_hash": f"h{{i}}"}} for i in range(start, end)]
+
+
+def sink_reader(start: int, end: int) -> list[dict[str, Any]]:
+    """Read physical sink for VRP; replace with Parquet reader in production."""
+    return source_reader(start, end)
 
 
 def batch_writer(start: int, end: int) -> list[str]:
@@ -70,7 +92,7 @@ def batch_writer(start: int, end: int) -> list[str]:
 
 
 def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
-    """Wire IceGuardDurableCoordinator - see examples/domain_writer/handler.py."""
+    """Wire IceGuardDurableCoordinator with auto-repair and consumer SLA gate."""
     raise NotImplementedError("Copy wiring from examples/domain_writer/handler.py")
 '''
 
@@ -136,6 +158,53 @@ serverless-data-mesh init --domain {domain} --table {table} --account YOUR_ACCOU
 ## Next steps
 
 1. Implement `handler.py` (copy from `examples/domain_writer/handler.py`)
-2. Deploy Terraform in `terraform/`
-3. Run `make demo` locally to verify PVDM gate
+2. Review `consumer_sla.yaml` for Lake Formation read gates
+3. Deploy `step_function.asl.json` durable workflow
+4. Deploy Terraform in `terraform/`
+5. Run `make demo` locally to verify PVDM gate
+"""
+
+CONSUMER_SLA_TEMPLATE = """# Consumer SLA for {table} (VRP-backed Lake Formation gate)
+consumer_id: analytics-team
+target_table: {table}
+max_freshness_minutes: 60
+min_completeness_pct: 99.9
+required_columns:
+  - id
+  - payload_hash
+enforcement: vrp_backed
+"""
+
+STEP_FUNCTION_TEMPLATE = """{{
+  "Comment": "PVDM durable write for {domain} -> {table}",
+  "StartAt": "WriteChunk",
+  "States": {{
+    "WriteChunk": {{
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {{
+        "FunctionName": "${{DomainWriterArn}}",
+        "Payload.$": "$"
+      }},
+      "Retry": [
+        {{
+          "ErrorEquals": ["VerificationRejectedError"],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }}
+      ],
+      "Next": "CommitMetadata"
+    }},
+    "CommitMetadata": {{
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {{
+        "FunctionName": "${{CatalogCommitArn}}",
+        "Payload.$": "$"
+      }},
+      "End": true
+    }}
+  }}
+}}
 """
