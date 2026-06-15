@@ -1,8 +1,10 @@
 locals {
   buckets = {
-    checkpoint = var.checkpoint_bucket_name
-    proof      = var.proof_bucket_name
-    lakehouse  = var.lakehouse_bucket_name
+    for name, bucket in {
+      checkpoint = var.checkpoint_bucket_name
+      proof      = var.proof_bucket_name
+      lakehouse  = var.lakehouse_bucket_name
+    } : name => bucket if bucket != null && bucket != ""
   }
 }
 
@@ -52,14 +54,16 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "mesh" {
 
 resource "aws_s3_bucket_lifecycle_configuration" "mesh" {
   for_each = {
-    checkpoint = {
-      bucket     = aws_s3_bucket.mesh["checkpoint"].id
-      expiration = var.checkpoint_retention_days
-    }
-    proof = {
-      bucket     = aws_s3_bucket.mesh["proof"].id
-      expiration = var.proof_retention_days
-    }
+    for name, cfg in {
+      checkpoint = {
+        bucket     = try(aws_s3_bucket.mesh["checkpoint"].id, null)
+        expiration = var.checkpoint_retention_days
+      }
+      proof = {
+        bucket     = try(aws_s3_bucket.mesh["proof"].id, null)
+        expiration = var.proof_retention_days
+      }
+    } : name => cfg if cfg.bucket != null
   }
 
   bucket = each.value.bucket

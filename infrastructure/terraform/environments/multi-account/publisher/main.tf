@@ -38,10 +38,8 @@ provider "aws" {
 module "storage" {
   source = "../../../modules/storage"
 
-  name_prefix            = var.name_prefix
-  checkpoint_bucket_name = "${var.lakehouse_bucket_name}-unused-chk"
-  proof_bucket_name      = "${var.lakehouse_bucket_name}-unused-prf"
-  lakehouse_bucket_name  = var.lakehouse_bucket_name
+  name_prefix           = var.name_prefix
+  lakehouse_bucket_name = var.lakehouse_bucket_name
 }
 
 resource "aws_s3_bucket_policy" "lakehouse_producer" {

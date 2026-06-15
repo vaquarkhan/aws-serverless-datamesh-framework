@@ -6,6 +6,8 @@
 
 **A new open framework for governed, exactly-once lakehouse writes on AWS Lambda.**
 
+Introduces the **[Vaquar Pattern](docs/vaquar-pattern.md)** to the data engineering world: **Proof-Gated Serverless Lakehouse Publication (PVDM)** - Physical → Verify → Durable → Metadata, with Steward notarization and VRP-gated Iceberg commits.
+
 Serverless Data Mesh coordinates **cross-domain data products** across a federated mesh: domain teams **produce** data, platform stewards **verify and govern** it, and a publish zone **exposes** curated Iceberg tables to the organization - with cryptographic proofs, not just logs.
 
 Combines [IceGuard](https://pypi.org/project/iceguard/), [veridata-recon](https://pypi.org/project/veridata-recon/), [AWS Durable Execution](https://docs.aws.amazon.com/durable-execution/), and [PyIceberg Glue REST](https://py.iceberg.apache.org/) into one transaction boundary for the world's data mesh teams.
@@ -23,7 +25,34 @@ Combines [IceGuard](https://pypi.org/project/iceguard/), [veridata-recon](https:
 | Federated AWS accounts | Producer · Steward · Publisher separation |
 | Tunable Lambda timeouts | Terraform `lambda_timeout_seconds` + derived SFN/rollback |
 
-**[Why this framework exists →](docs/why-serverless-data-mesh.md)** · **[Framework concepts & patterns →](docs/data-mesh-patterns.md)** · **[Full end-to-end guide →](docs/data-mesh-end-to-end.md)**
+**[Vaquar Pattern (new) →](docs/vaquar-pattern.md)** · **[Why this framework exists (blog) →](docs/why-serverless-data-mesh.md)** · **[Patterns catalog →](docs/data-mesh-patterns.md)** · **[End-to-end guide →](docs/data-mesh-end-to-end.md)**
+
+---
+
+## The Vaquar Pattern
+
+A **publishable architectural pattern** for federated data meshes - not just this repo's internals.
+
+| | |
+|--|--|
+| **Name** | Vaquar Pattern (PVDM) |
+| **Invariant** | `commit_metadata ⟹ VRP = PASS` |
+| **Structure** | Physical → Verify → Durable → Metadata |
+| **Accounts** | Producer · Steward (notary) · Publisher |
+
+```mermaid
+flowchart LR
+    P[Physical] --> V[Verify VRP]
+    V -->|PASS| D[Durable]
+    D --> M[Metadata commit]
+    V -->|FAIL| BLOCK[No consumer snapshot]
+
+    style BLOCK fill:#fee,stroke:#c00
+```
+
+**What is new vs existing patterns:** Outbox, Saga, Medallion, and Glue bookmarks do not gate Iceberg publication on cryptographic multiset proof. The Vaquar Pattern does.
+
+Full spec, citations, anti-patterns: **[docs/vaquar-pattern.md](docs/vaquar-pattern.md)**
 
 ---
 
@@ -163,12 +192,12 @@ python examples/tutorials/walkthrough.py
 ```
 serverless-data-mesh/
 ├── docs/
-│   ├── data-mesh-end-to-end.md  # ★ Full Producer/Steward/Publisher guide
-│   ├── why-serverless-data-mesh.md  # Why the framework exists (detailed article)
-│   ├── data-mesh-patterns.md    # Concepts, coverage matrix, named patterns
-│   ├── sparkrules-connector.md # SparkRules DRL on Lambda
-│   ├── pypi.md                  # PyPI install & publish
+│   ├── vaquar-pattern.md        # ★ Flagship pattern for the data engineering world
+│   ├── why-serverless-data-mesh.md  # Blog: problem, connectivity, thesis
 │   ├── data-mesh-end-to-end.md  # Producer / Steward / Publisher guide
+│   ├── data-mesh-patterns.md    # Concepts, coverage matrix, named patterns
+│   ├── sparkrules-connector.md  # SparkRules DRL on Lambda
+│   ├── pypi.md                  # PyPI install & publish
 │   ├── getting-started.md       # Step-by-step developer tutorial
 │   ├── architecture.md          # Components + 90-min execution model
 │   ├── terraform-guide.md       # Production Terraform walkthrough
@@ -207,8 +236,9 @@ terraform init && terraform apply
 
 | Document | Audience |
 |----------|----------|
-| **[Why Serverless Data Mesh](docs/why-serverless-data-mesh.md)** | Problem statement, trust gap, strategic thesis |
-| **[Data mesh patterns & concepts](docs/data-mesh-patterns.md)** | Coverage matrix, 12 patterns, roadmap |
+| **[Vaquar Pattern](docs/vaquar-pattern.md)** | **Architects, bloggers, pattern adopters (cite this)** |
+| **[Why Serverless Data Mesh](docs/why-serverless-data-mesh.md)** | Blog: problem, connectivity diagrams, portfolio stack |
+| **[Data mesh patterns & concepts](docs/data-mesh-patterns.md)** | Coverage matrix, 13 patterns, roadmap |
 | **[SparkRules connector](docs/sparkrules-connector.md)** | DRL business rules on Lambda (`[rules]` extra) |
 | **[PyPI install & publish](docs/pypi.md)** | pip install, Lambda zip, maintainer publish |
 | **[Data mesh end-to-end](docs/data-mesh-end-to-end.md)** | Architects, platform leads, auditors |

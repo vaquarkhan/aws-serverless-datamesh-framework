@@ -47,10 +47,9 @@ provider "aws" {
 module "storage" {
   source = "../../../modules/storage"
 
-  name_prefix              = var.name_prefix
-  checkpoint_bucket_name   = var.checkpoint_bucket_name
-  proof_bucket_name        = var.proof_bucket_name
-  lakehouse_bucket_name    = "${var.name_prefix}-internal-${data.aws_caller_identity.current.account_id}"
+  name_prefix               = var.name_prefix
+  checkpoint_bucket_name    = var.checkpoint_bucket_name
+  proof_bucket_name         = var.proof_bucket_name
   checkpoint_retention_days = var.durable_retention_days
   proof_retention_days      = 90
 }

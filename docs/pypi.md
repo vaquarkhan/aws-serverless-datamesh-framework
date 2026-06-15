@@ -1,6 +1,6 @@
 ﻿# PyPI: Publishing & Installing Serverless Data Mesh
 
-The framework is published to **PyPI** as [`serverless-data-mesh`](https://pypi.org/project/serverless-data-mesh/).
+The framework is published to **PyPI** as [`serverless-data-mesh`](https://pypi.org/project/serverless-data-mesh/) (create GitHub release `v0.1.1` to trigger [publish.yml](../.github/workflows/publish.yml)).
 
 ---
 

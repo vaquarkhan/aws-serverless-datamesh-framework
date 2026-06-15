@@ -10,6 +10,7 @@ This document maps **data mesh concepts** to **named patterns** in the framework
 
 | Data mesh concept | Pattern in framework | Code / infra | Doc |
 |-------------------|----------------------|--------------|-----|
+| **Proof-gated publication** | **Vaquar Pattern (PVDM)** | `IceGuardDurableCoordinator` | **[vaquar-pattern.md](vaquar-pattern.md)** |
 | Domain ownership | Domain Transaction Boundary | `DomainTransactionBoundary` | [domain-contracts.md](domain-contracts.md) |
 | Data product contract | Data Product Contract | `DataProductContract` | This doc §2 |
 | Federated governance | Steward Notary | Steward S3 proofs + Glue catalog | [data-mesh-end-to-end.md](data-mesh-end-to-end.md) |
@@ -34,11 +35,31 @@ This document maps **data mesh concepts** to **named patterns** in the framework
 | Lineage graph | OpenLineage hook | **Roadmap** | This doc §11 |
 | Cost per domain | `domain_id` tagging | Terraform `Domain` tag | [terraform-guide.md](terraform-guide.md) |
 
-**Coverage today:** 18 of 22 concepts have working patterns; 4 are explicit roadmap items.
+**Coverage today:** 19 of 23 concepts have working patterns; 4 are explicit roadmap items.
 
 ---
 
 ## Pattern catalog (with diagrams)
+
+### 0. The Vaquar Pattern (flagship)
+
+**Proof-Gated Serverless Lakehouse Publication** - the pattern this framework introduces to the data engineering world.
+
+Four phases (**PVDM**): Physical → Verify → Durable → Metadata. Three accounts: Producer · Steward · Publisher. One invariant: **no Iceberg snapshot without VRP PASS**.
+
+```mermaid
+flowchart LR
+    P[Physical<br/>IceGuard] --> V[Verify<br/>VRP gate]
+    V -->|PASS| D[Durable<br/>resume]
+    D --> M[Metadata<br/>Glue REST]
+    V -->|FAIL| X[Consumers unchanged]
+
+    style X fill:#fee,stroke:#c00
+```
+
+**Full specification, citations, and anti-patterns:** **[vaquar-pattern.md](vaquar-pattern.md)**
+
+---
 
 ### 1. Federated Three-Account Mesh
 
@@ -387,6 +408,8 @@ flowchart TB
 
 | Doc | Focus |
 |-----|-------|
+| **[vaquar-pattern.md](vaquar-pattern.md)** | **Flagship pattern: PVDM, citations, anti-patterns** |
+| [why-serverless-data-mesh.md](why-serverless-data-mesh.md) | Blog: problem, connectivity, thesis |
 | [data-mesh-end-to-end.md](data-mesh-end-to-end.md) | Three accounts, full backfill journey |
 | [glue-connector.md](glue-connector.md) | Lambda + Spark vs Glue ETL |
 | [architecture.md](architecture.md) | Component diagram |
@@ -395,4 +418,4 @@ flowchart TB
 
 ---
 
-*This framework introduces **validate-then-commit lakehouse writes on Lambda** as a first-class data mesh primitive - the world's domains get autonomy; the mesh gets proofs.*
+*This framework introduces the **[Vaquar Pattern](vaquar-pattern.md)**: proof-gated serverless lakehouse publication - domains get autonomy; the mesh gets cryptographic proofs.*

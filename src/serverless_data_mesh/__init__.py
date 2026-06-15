@@ -22,7 +22,13 @@ from serverless_data_mesh.types import (
 )
 
 def _read_version() -> str:
-    return (Path(__file__).resolve().parents[3] / "VERSION").read_text(encoding="utf-8").strip()
+    try:
+        from importlib.metadata import version
+
+        return version("serverless-data-mesh")
+    except Exception:
+        root = Path(__file__).resolve().parents[2]
+        return (root / "VERSION").read_text(encoding="utf-8").strip()
 
 
 __version__ = _read_version()

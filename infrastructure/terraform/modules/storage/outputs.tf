@@ -1,23 +1,23 @@
 output "checkpoint_bucket_name" {
-  value = aws_s3_bucket.mesh["checkpoint"].id
+  value = try(aws_s3_bucket.mesh["checkpoint"].id, null)
 }
 
 output "checkpoint_bucket_arn" {
-  value = aws_s3_bucket.mesh["checkpoint"].arn
+  value = try(aws_s3_bucket.mesh["checkpoint"].arn, null)
 }
 
 output "proof_bucket_name" {
-  value = aws_s3_bucket.mesh["proof"].id
+  value = try(aws_s3_bucket.mesh["proof"].id, null)
 }
 
 output "proof_bucket_arn" {
-  value = aws_s3_bucket.mesh["proof"].arn
+  value = try(aws_s3_bucket.mesh["proof"].arn, null)
 }
 
 output "lakehouse_bucket_name" {
-  value = aws_s3_bucket.mesh["lakehouse"].id
+  value = try(aws_s3_bucket.mesh["lakehouse"].id, null)
 }
 
 output "lakehouse_bucket_arn" {
-  value = aws_s3_bucket.mesh["lakehouse"].arn
+  value = try(aws_s3_bucket.mesh["lakehouse"].arn, null)
 }

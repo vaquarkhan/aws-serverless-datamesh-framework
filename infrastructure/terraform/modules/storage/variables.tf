@@ -4,18 +4,21 @@ variable "name_prefix" {
 }
 
 variable "checkpoint_bucket_name" {
-  description = "Globally unique S3 bucket for IceGuard checkpoints."
+  description = "Globally unique S3 bucket for IceGuard checkpoints. Omit to skip."
   type        = string
+  default     = null
 }
 
 variable "proof_bucket_name" {
-  description = "Globally unique S3 bucket for VRP proofs."
+  description = "Globally unique S3 bucket for VRP proofs. Omit to skip."
   type        = string
+  default     = null
 }
 
 variable "lakehouse_bucket_name" {
-  description = "S3 bucket for lakehouse Parquet data (physical writes)."
+  description = "S3 bucket for lakehouse Parquet data (physical writes). Omit to skip."
   type        = string
+  default     = null
 }
 
 variable "kms_key_arn" {
