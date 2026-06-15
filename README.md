@@ -1,67 +1,159 @@
-﻿# Serverless Data Mesh
+﻿<div align="center">
+
+# Serverless Data Mesh
+
+**Governed, exactly-once lakehouse writes on AWS Lambda - with cryptographic proof, not just green job logs.**
+
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE)
+[![AWS Lambda](https://img.shields.io/badge/AWS-Lambda%20%2B%20Durable%20Execution-orange.svg)](https://docs.aws.amazon.com/lambda/)
+[![Iceberg](https://img.shields.io/badge/Apache-Iceberg-00A4EF.svg)](https://iceberg.apache.org/)
 
 <p align="center">
-  <img src="docs/images/serverless-data-mesh-hero.png" alt="Serverless Data Mesh: exactly-once lakehouse writes on AWS Lambda" width="900" />
+  <img src="docs/images/serverless-data-mesh-hero.png" alt="Serverless Data Mesh: governed exactly-once lakehouse writes on AWS Lambda" width="920" />
 </p>
 
-**A new open framework for governed, exactly-once lakehouse writes on AWS Lambda.**
+An open Python framework for **federated data meshes** on AWS.<br/>
+Domain teams **produce** data · Platform stewards **verify and govern** it · A publish zone **exposes** curated Iceberg tables.
 
-Introduces the **[Vaquar Pattern](docs/vaquar-pattern.md)** to the data engineering world: **Proof-Gated Serverless Lakehouse Publication (PVDM)** - Physical → Verify → Durable → Metadata, with Steward notarization and VRP-gated Iceberg commits.
+[**Vaquar Pattern**](docs/vaquar-pattern.md) · [**Why it exists (blog)**](docs/why-serverless-data-mesh.md) · [**Getting started**](docs/getting-started.md) · [**Deploy**](infrastructure/terraform/README.md)
 
-Serverless Data Mesh coordinates **cross-domain data products** across a federated mesh: domain teams **produce** data, platform stewards **verify and govern** it, and a publish zone **exposes** curated Iceberg tables to the organization - with cryptographic proofs, not just logs.
-
-Combines [IceGuard](https://pypi.org/project/iceguard/), [veridata-recon](https://pypi.org/project/veridata-recon/), [AWS Durable Execution](https://docs.aws.amazon.com/durable-execution/), and [PyIceberg Glue REST](https://py.iceberg.apache.org/) into one transaction boundary for the world's data mesh teams.
-
----
-
-## Why this framework exists
-
-| Problem | Serverless Data Mesh answer |
-|---------|----------------------------|
-| Domain teams need autonomy | Each domain ships a small Lambda handler |
-| Consumers need trust | veridata-recon VRP proof per chunk |
-| Lambda times out at 15 min | Durable Execution + Step Functions resume (90+ min) |
-| Silent data loss on backfill | `validate_then_commit` blocks metadata on FAIL |
-| Federated AWS accounts | Producer · Steward · Publisher separation |
-| Tunable Lambda timeouts | Terraform `lambda_timeout_seconds` + derived SFN/rollback |
-
-**[Vaquar Pattern (new) →](docs/vaquar-pattern.md)** · **[Why this framework exists (blog) →](docs/why-serverless-data-mesh.md)** · **[Patterns catalog →](docs/data-mesh-patterns.md)** · **[End-to-end guide →](docs/data-mesh-end-to-end.md)**
+</div>
 
 ---
 
-## The Vaquar Pattern
+## What is this project?
 
-A **publishable architectural pattern** for federated data meshes - not just this repo's internals.
+**Serverless Data Mesh** is a coordination framework that turns AWS Lambda into a production-grade **domain write primitive** for lakehouse data meshes.
 
-| | |
-|--|--|
-| **Name** | Vaquar Pattern (PVDM) |
-| **Invariant** | `commit_metadata ⟹ VRP = PASS` |
-| **Structure** | Physical → Verify → Durable → Metadata |
-| **Accounts** | Producer · Steward (notary) · Publisher |
+Instead of routing every backfill through a central Glue fleet, each domain ships a small Lambda handler. The framework wraps that handler in a governed **transaction boundary**: physical safety, cryptographic verification, durable orchestration, and proof-gated Iceberg metadata commits.
 
-```mermaid
-flowchart LR
-    P[Physical] --> V[Verify VRP]
-    V -->|PASS| D[Durable]
-    D --> M[Metadata commit]
-    V -->|FAIL| BLOCK[No consumer snapshot]
+It combines four proven building blocks into one contract:
 
-    style BLOCK fill:#fee,stroke:#c00
-```
+| Building block | Role |
+|----------------|------|
+| [IceGuard](https://pypi.org/project/iceguard/) | Chunked Parquet writes, timeout rollback, S3 resume |
+| [veridata-recon](https://pypi.org/project/veridata-recon/) | Verifiable Reconciliation Proof (VRP) per chunk |
+| [AWS Durable Execution](https://docs.aws.amazon.com/durable-execution/) | Replay completed steps across 15-min Lambda segments |
+| [PyIceberg Glue REST](https://py.iceberg.apache.org/) | SigV4 metadata commit via `GlueCatalogConnector` |
 
-**What is new vs existing patterns:** Outbox, Saga, Medallion, and Glue bookmarks do not gate Iceberg publication on cryptographic multiset proof. The Vaquar Pattern does.
-
-Full spec, citations, anti-patterns: **[docs/vaquar-pattern.md](docs/vaquar-pattern.md)**
+Optional: [SparkRules](https://pypi.org/project/sparkrules/) for DRL business rules on Lambda (`pip install serverless-data-mesh[rules]`).
 
 ---
 
-## Three-account data mesh
+## The problem it solves
 
-Production federated meshes use **three AWS accounts** with clear ownership:
+Most data mesh programs reorganize teams but leave the **write path** centralized. Domains file tickets; a platform team runs Glue; everyone gets a green "success" email. Then analysts find missing rows, auditors get log exports, and nobody can **prove** the partition is correct.
 
 <p align="center">
-  <img src="docs/images/three-account-data-mesh.png" alt="Producer, Steward, and Publisher accounts in a federated data mesh" width="900" />
+  <img src="docs/images/why-sdm-trust-gap.png" alt="Traditional pipeline success vs VRP proof: corrupt data blocked before consumers" width="920" />
+</p>
+
+| Pain | What happens today | What Serverless Data Mesh does |
+|------|-------------------|-------------------------------|
+| **Silent data loss** | Partition row counts drift; discovered days later | VRP `FAIL` blocks Iceberg snapshot; consumers never see bad data |
+| **"Job succeeded" ≠ correct** | Glue exit code 0 with 6 missing rows | Multiset cryptographic proof per chunk |
+| **Lambda 15-min limit** | "Use EMR/Glue for real backfills" | Durable Execution + Step Functions resume → **90+ minutes** |
+| **Retry duplicates data** | Re-invoke creates duplicate Parquet | IceGuard rollback + `workload_id` checkpoints |
+| **Platform bottleneck** | Every domain waits on central ETL | Each domain owns a Lambda writer + declared contract |
+| **No audit evidence** | Sample rows and debate | Immutable VRP proofs in Steward S3; offline `verify_proof` |
+| **Glue cost for nightly jobs** | DPUs idle 23 hours/day | Lambda scales to zero between backfills |
+| **Federated blast radius** | One misconfigured job wipes consumer data | Producer · Steward · Publisher account separation |
+
+**Full problem analysis:** [Why Serverless Data Mesh exists](docs/why-serverless-data-mesh.md)
+
+---
+
+## The solution: Vaquar Pattern
+
+This framework introduces the **[Vaquar Pattern](docs/vaquar-pattern.md)**: a publishable architectural pattern for the data engineering world.
+
+> **Proof-Gated Serverless Lakehouse Publication (PVDM)**  
+> Physical → Verify → Durable → Metadata  
+> Invariant: `commit_metadata ⟹ VRP = PASS`
+
+<p align="center">
+  <img src="docs/images/why-sdm-four-phase-connectivity.png" alt="Vaquar Pattern four phases: Physical, Verify, Durable, Metadata with cross-account flows" width="920" />
+</p>
+
+| Phase | Component | Outcome |
+|-------|-----------|---------|
+| **Physical** | IceGuard SafeWriter | Parquet in Publisher S3; checkpoints in Steward S3 |
+| **Verify** | veridata-recon | VRP proof stored; `validate_then_commit` gate |
+| **Durable** | AWS Durable SDK + Step Functions | 15-min segments chain into 90+ min workloads |
+| **Metadata** | GlueCatalogConnector | Iceberg snapshot commit **only after proof PASS** |
+
+What makes this new vs Outbox, Saga, Medallion, and Glue bookmarks: **Iceberg publication is gated on cryptographic multiset proof**, not executor success.
+
+**Pattern spec, citations, anti-patterns:** [docs/vaquar-pattern.md](docs/vaquar-pattern.md)
+
+---
+
+## Key features
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### Domain autonomy
+- Per-domain Lambda handler (`examples/domain_writer/`)
+- `DomainTransactionBoundary` declares write scope
+- `DataProductContract` for registry-facing metadata
+- No central Glue ETL as the write primitive
+
+### Cryptographic trust
+- VRP proof per chunk (veridata-recon)
+- `validate_then_commit` blocks metadata on `FAIL`
+- Consumer safety benchmark: drop / duplicate / mutation attacks
+- Offline auditor verification without source access
+
+</td>
+<td width="50%" valign="top">
+
+### Serverless at scale
+- 15-min Lambda segments → 90+ min backfills
+- IceGuard watchdog rollback before hard timeout
+- Durable step replay: no duplicate committed chunks
+- Terraform-tunable `lambda_timeout_seconds`
+
+### Production ready
+- Step Functions orchestrator + DLQ + monitoring
+- Single-account `prod` and multi-account Terraform roots
+- SAM template alternative
+- CI: tests, benchmark, walkthrough, terraform validate
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### Federated governance
+- **Producer**: domain compute
+- **Steward**: proofs, checkpoints, Glue catalog (notary)
+- **Publisher**: lakehouse S3, consumer Iceberg tables
+- Lake Formation cross-account grants
+
+</td>
+<td width="50%" valign="top">
+
+### Extensible
+- `GlueCatalogConnector`: metadata only, not Glue ETL
+- PySpark / Polars / PyArrow on Lambda
+- `SparkRulesConnector`: DRL rules before VRP (`[rules]` extra)
+- PyPI extras: `[rules]`, `[spark]`, `[all]`, `[dev]`
+
+</td>
+</tr>
+</table>
+
+---
+
+## Architecture
+
+### Three-account federated mesh
+
+<p align="center">
+  <img src="docs/images/three-account-data-mesh.png" alt="Producer, Steward, and Publisher accounts in a federated data mesh" width="920" />
 </p>
 
 | Account | Owner | Responsibility |
@@ -72,14 +164,18 @@ Production federated meshes use **three AWS accounts** with clear ownership:
 
 **Flow:** Producer Lambda reads source → writes Parquet to Publisher → stores proofs in Steward → commits metadata via Steward Glue REST → consumers query Publisher.
 
-Details, IAM, and deploy order: **[docs/data-mesh-end-to-end.md](docs/data-mesh-end-to-end.md)**
+→ [Full deploy guide](docs/data-mesh-end-to-end.md)
 
 ---
 
-## How Lambda runs the mesh
+### Lambda execution model
 
 <p align="center">
-  <img src="docs/images/lambda-execution-flow.png" alt="Lambda durable execution flow: IceGuard, VRP, Durable SDK, Glue REST" width="900" />
+  <img src="docs/images/why-sdm-hero-connectivity.png" alt="Four primitives connected across Producer, Steward, and Publisher" width="920" />
+</p>
+
+<p align="center">
+  <img src="docs/images/lambda-execution-flow.png" alt="Lambda durable execution: IceGuard, VRP, Durable SDK, Glue REST" width="920" />
 </p>
 
 **Compute on Lambda. Catalog via Glue connector. No Glue ETL jobs.**
@@ -87,12 +183,9 @@ Details, IAM, and deploy order: **[docs/data-mesh-end-to-end.md](docs/data-mesh-
 | Layer | Runs on Lambda? | Component |
 |-------|-----------------|-----------|
 | Physical transforms | Yes | PySpark-on-Lambda, Polars, PyArrow |
-| AWS Glue ETL jobs | **No** | Not used: separate managed service |
+| Business rules (optional) | Yes | SparkRules `LocalRuleExecutor` |
+| AWS Glue ETL jobs | **No** | Separate managed service; not used for writes |
 | Glue Data Catalog metadata | API only | `GlueCatalogConnector` (HTTPS + SigV4) |
-
-See **[Glue Catalog Connector guide](docs/glue-connector.md)** for diagrams and Spark wiring.
-
-Each domain writer is an AWS Lambda function (Python 3.12+) with **Durable Execution** enabled:
 
 ```
 Event / Step Functions
@@ -100,23 +193,18 @@ Event / Step Functions
         ▼
 Lambda :live  (15-min segments, up to 90+ min total)
         │
-        ├── Spark / Polars    → physical Parquet writes (NOT Glue ETL)
-        ├── IceGuard        → chunked writes + S3 checkpoints + rollback
-        ├── veridata-recon  → VRP proof per chunk
-        ├── Durable SDK     → replay completed steps on resume
-        └── GlueCatalogConnector → Glue Iceberg REST metadata commit (2PC)
+        ├── Read source        → domain-specific reader
+        ├── SparkRules         → optional DRL filter
+        ├── IceGuard           → chunked Parquet + S3 checkpoints + rollback
+        ├── veridata-recon     → VRP proof per chunk
+        ├── Durable SDK        → replay completed steps on resume
+        └── GlueCatalogConnector → Glue Iceberg REST metadata commit
         │
         ▼
-   committed | rolled_back → resume | verification_failed
+   committed │ rolled_back → resume │ verification_failed
 ```
 
-| Package | Role |
-|---------|------|
-| **iceguard** | Timeout watchdog, S3 checkpoint resume, orphan cleanup |
-| **veridata-recon** | Rust-backed VRP proofs (`pip install veridata-recon`) |
-| **aws-durable-execution-sdk-python** | Checkpoint/replay beyond Lambda's 15-minute ceiling |
-| **pyiceberg[glue,rest-sigv4]** | Glue Catalog Connector: metadata over REST (not Glue ETL) |
-| **[sparkrules](https://pypi.org/project/sparkrules/)** | Optional `[rules]`: DRL business rules on Lambda |
+→ [Glue connector guide](docs/glue-connector.md) · [Architecture](docs/architecture.md)
 
 ---
 
@@ -125,13 +213,16 @@ Lambda :live  (15-min segments, up to 90+ min total)
 **Requires Python 3.12+**
 
 ```bash
+git clone https://github.com/vaquarkhan/aws-serveless-datamesh-framwork.git
+cd aws-serveless-datamesh-framwork
+
 make install
-# with SparkRules rules engine:
-pip install -e ".[rules,dev]"
 make test
+make walkthrough    # 12-step local tutorial (no AWS)
+make benchmark      # consumer safety: corrupt data never commits
 ```
 
-### PyPI
+### Install from PyPI
 
 ```bash
 pip install serverless-data-mesh
@@ -139,90 +230,42 @@ pip install "serverless-data-mesh[rules]"   # + SparkRules on Lambda
 pip install "serverless-data-mesh[spark]"   # + PySpark + SparkRules
 ```
 
-See **[PyPI guide](docs/pypi.md)** for publishing and Lambda packaging.
+→ [PyPI guide](docs/pypi.md)
 
-### Consumer safety benchmark
-
-Quantitative proof that **corrupt data never reaches consumers** (metadata commit blocked):
-
-```bash
-make benchmark
-```
-
-Runs drop, mutation, and duplicate attack scenarios: all must return VRP `FAIL`.
-
-### Governance
-
-| Artifact | Purpose |
-|----------|---------|
-| `VERSION` | Single source of truth (synced to PyPI package) |
-| `.pre-commit-config.yaml` | Ruff + version check hooks |
-| `.github/dependabot.yml` | Automated dependency PRs |
-| `SECURITY.md` | Vulnerability reporting |
-| `eval/validate_then_commit_benchmark.py` | Trust boundary metrics |
-
-```bash
-make walkthrough      # 12-step local tutorial (no AWS)
-make version-check
-make pre-commit
-```
+### Minimal code example
 
 ```python
 from serverless_data_mesh import (
     IceGuardDurableCoordinator,
     GlueCatalogConnector,
-    SparkRulesConnector,       # pip install serverless-data-mesh[rules]
     DataProductContract,
     DomainTransactionBoundary,
     VRPProofGenerator,
     DataWriteWorkload,
 )
+
+boundary = DomainTransactionBoundary(
+    domain_id="orders-domain",
+    source_namespace="raw_orders",
+    target_table="orders_curated",
+    partition_spec={"dt": "2026-06-14"},
+)
+
+coordinator = IceGuardDurableCoordinator(
+    durable_context=durable_ctx,
+    lambda_context=lambda_ctx,
+    proof_generator=VRPProofGenerator(),
+    catalog_adapter=glue_adapter,
+)
+outcome = coordinator.run_workload(workload)
+# outcome ∈ {committed, rolled_back, verification_failed}
 ```
 
-Run the interactive tutorial:
-
-```bash
-python examples/tutorials/walkthrough.py
-```
+→ [13-step developer tutorial](docs/getting-started.md)
 
 ---
 
-## Project layout
-
-```
-serverless-data-mesh/
-├── docs/
-│   ├── vaquar-pattern.md        # ★ Flagship pattern for the data engineering world
-│   ├── why-serverless-data-mesh.md  # Blog: problem, connectivity, thesis
-│   ├── data-mesh-end-to-end.md  # Producer / Steward / Publisher guide
-│   ├── data-mesh-patterns.md    # Concepts, coverage matrix, named patterns
-│   ├── sparkrules-connector.md  # SparkRules DRL on Lambda
-│   ├── pypi.md                  # PyPI install & publish
-│   ├── getting-started.md       # Step-by-step developer tutorial
-│   ├── architecture.md          # Components + 90-min execution model
-│   ├── terraform-guide.md       # Production Terraform walkthrough
-│   ├── deployment.md            # Lambda / IAM / env vars
-│   ├── domain-contracts.md      # Event schema + boundary contracts
-│   └── images/                  # Product & architecture diagrams
-├── examples/
-│   ├── tutorials/               # Runnable walkthrough
-│   └── domain_writer/           # Reference Lambda handler
-├── infrastructure/
-│   ├── terraform/               # Step Functions + Durable Lambda + alarms
-│   └── sam/                     # AWS SAM alternative
-├── src/serverless_data_mesh/    # Library source
-└── tests/
-```
-
----
-
-## Deploy
-
-| Path | Use when |
-|------|----------|
-| **[Terraform (production)](infrastructure/terraform/README.md)** | Step Functions orchestrator, DLQ, monitoring |
-| [SAM alternative](infrastructure/sam/README.md) | SAM-native teams |
-| [Deployment guide](docs/deployment.md) | Manual Lambda / IAM setup |
+## Deploy to AWS
 
 ```bash
 ./infrastructure/terraform/scripts/package_lambda.sh
@@ -230,35 +273,97 @@ cd infrastructure/terraform/environments/prod
 terraform init && terraform apply
 ```
 
+| Path | Use when |
+|------|----------|
+| **[Terraform (production)](infrastructure/terraform/README.md)** | Step Functions, DLQ, monitoring, configurable timeouts |
+| [Multi-account mesh](infrastructure/terraform/environments/multi-account/README.md) | Producer / Steward / Publisher across AWS accounts |
+| [SAM alternative](infrastructure/sam/README.md) | SAM-native teams |
+| [Deployment guide](docs/deployment.md) | Manual Lambda / IAM setup |
+
+→ [Terraform step-by-step](docs/terraform-guide.md)
+
 ---
 
 ## Documentation
 
-| Document | Audience |
-|----------|----------|
-| **[Vaquar Pattern](docs/vaquar-pattern.md)** | **Architects, bloggers, pattern adopters (cite this)** |
-| **[Why Serverless Data Mesh](docs/why-serverless-data-mesh.md)** | Blog: problem, connectivity diagrams, portfolio stack |
-| **[Data mesh patterns & concepts](docs/data-mesh-patterns.md)** | Coverage matrix, 13 patterns, roadmap |
-| **[SparkRules connector](docs/sparkrules-connector.md)** | DRL business rules on Lambda (`[rules]` extra) |
-| **[PyPI install & publish](docs/pypi.md)** | pip install, Lambda zip, maintainer publish |
-| **[Data mesh end-to-end](docs/data-mesh-end-to-end.md)** | Architects, platform leads, auditors |
-| [Developer getting started](docs/getting-started.md) | Domain engineers (13-step tutorial) |
-| [Architecture](docs/architecture.md) | Component design + long-running Lambda |
-| [Terraform step-by-step](docs/terraform-guide.md) | Infrastructure engineers |
-| [Domain contracts](docs/domain-contracts.md) | Event schema + boundaries |
-| [Interactive walkthrough](examples/tutorials/walkthrough.py) | Hands-on local demo |
+| Document | What you will learn |
+|----------|---------------------|
+| **[Vaquar Pattern](docs/vaquar-pattern.md)** | The flagship pattern; cite this in architecture docs |
+| **[Why Serverless Data Mesh](docs/why-serverless-data-mesh.md)** | Blog: industry problem, connectivity, portfolio stack |
+| **[Data mesh patterns](docs/data-mesh-patterns.md)** | 13 named patterns + concept coverage matrix |
+| **[End-to-end guide](docs/data-mesh-end-to-end.md)** | Three-account journey, IAM, deploy order |
+| [Getting started](docs/getting-started.md) | Hands-on tutorial for domain engineers |
+| [Architecture](docs/architecture.md) | Components, failure modes, 90-min execution |
+| [Glue connector](docs/glue-connector.md) | Lambda + Spark vs Glue ETL |
+| [SparkRules connector](docs/sparkrules-connector.md) | DRL business rules on Lambda |
+| [Domain contracts](docs/domain-contracts.md) | Event schema and boundary contracts |
+| [Walkthrough](examples/tutorials/walkthrough.py) | Runnable local demo |
 
 ---
 
-## Transaction boundary (four phases)
+## Project structure
 
-1. **Physical**: IceGuard chunks Parquet writes with S3 checkpoints
-2. **Verify**: veridata-recon proof per chunk; FAIL blocks commit
-3. **Durable**: AWS Durable Execution replays completed steps on resume
-4. **Metadata**: `GlueCatalogConnector` → Glue Iceberg REST 2PC via SigV4 (not Glue ETL)
+```
+serverless-data-mesh/
+├── docs/
+│   ├── vaquar-pattern.md           # Flagship pattern for the data engineering world
+│   ├── why-serverless-data-mesh.md # Blog article with diagrams
+│   ├── data-mesh-end-to-end.md     # Three-account deploy guide
+│   ├── data-mesh-patterns.md       # Pattern catalog + coverage matrix
+│   └── images/                     # Architecture and product diagrams
+├── examples/
+│   ├── domain_writer/              # Reference Lambda handler
+│   └── tutorials/                  # Interactive walkthrough
+├── infrastructure/
+│   ├── terraform/                  # Prod + multi-account IaC
+│   └── sam/                        # AWS SAM template
+├── src/serverless_data_mesh/       # Framework library
+├── eval/                           # Consumer safety benchmark
+└── tests/
+```
+
+---
+
+## Governance and quality
+
+| Artifact | Purpose |
+|----------|---------|
+| `eval/validate_then_commit_benchmark.py` | Proves corrupt data never reaches consumers |
+| `SECURITY.md` | Vulnerability reporting policy |
+| `.pre-commit-config.yaml` | Ruff lint + version sync hooks |
+| `.github/dependabot.yml` | Automated dependency updates |
+| `VERSION` + `scripts/sync_version.py` | Single source of truth for releases |
+
+```bash
+make benchmark      # 5 attack scenarios; all must VRP FAIL
+make version-check  # VERSION / pyproject / __init__ in sync
+make pre-commit     # Local quality gates
+```
+
+---
+
+## Who is this for?
+
+| Role | Value |
+|------|-------|
+| **Domain data engineers** | Own your write path without operating clusters |
+| **Platform / data architects** | Federated mesh with proof notary and blast-radius control |
+| **Analytics consumers** | Trust VRP proofs + Iceberg snapshots, not job logs |
+| **Auditors / compliance** | Offline cryptographic verification per chunk |
+| **FinOps** | Lambda per backfill instead of always-on Glue DPUs |
 
 ---
 
 ## License
 
-Apache-2.0: see [LICENSE](LICENSE).
+Apache-2.0. See [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+
+**Serverless Data Mesh** · [Vaquar Pattern](docs/vaquar-pattern.md) · [GitHub](https://github.com/vaquarkhan/aws-serveless-datamesh-framwork)
+
+*Domain teams own the write path. The mesh proves correctness before consumers see a snapshot.*
+
+</div>
