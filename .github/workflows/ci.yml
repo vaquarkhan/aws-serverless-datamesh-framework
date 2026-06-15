@@ -111,6 +111,14 @@ jobs:
           terraform -chdir=infrastructure/terraform/environments/prod init -backend=false
           terraform -chdir=infrastructure/terraform/environments/prod validate
 
+      - name: Terraform validate dev
+        run: |
+          terraform -chdir=infrastructure/terraform/environments/dev init -backend=false
+          terraform -chdir=infrastructure/terraform/environments/dev validate
+
+      - name: Check Terraform files for UTF-8 BOM
+        run: python scripts/check_terraform_encoding.py
+
       - name: Local benchmark
         run: python benchmarks/run_local_benchmark.py
 

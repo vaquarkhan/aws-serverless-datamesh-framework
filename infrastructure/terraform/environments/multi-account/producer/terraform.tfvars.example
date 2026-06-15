@@ -1,4 +1,4 @@
-﻿aws_region   = "us-east-2"
+aws_region   = "us-east-2"
 name_prefix  = "sdm-producer"
 
 # From steward apply outputs

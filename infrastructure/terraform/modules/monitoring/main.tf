@@ -1,4 +1,4 @@
-﻿resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
+resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   alarm_name          = "${var.name_prefix}-domain-writer-errors"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1

@@ -1,4 +1,4 @@
-﻿# Copy to terraform.tfvars and customize bucket names (must be globally unique).
+# Copy to terraform.tfvars and customize bucket names (must be globally unique).
 
 aws_region   = "us-east-2"
 environment  = "prod"
