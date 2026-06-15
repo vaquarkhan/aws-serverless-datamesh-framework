@@ -1,40 +1,50 @@
-name: CI
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-
-jobs:
-  lint-and-test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.12"]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev,rules]"
-          pip install veridata-recon
-
-      - name: Ruff
-        run: ruff check src tests examples
-
-      - name: Ruff format check
-        run: ruff format --check src tests examples
-
-      - name: Pytest
-        run: pytest tests/ -v --tb=short
-
-      - name: Build package
-        run: pip install build && python -m build
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,rules]"
+          pip install veridata-recon
+
+      - name: Version sync check
+        run: python scripts/sync_version.py --check
+
+      - name: Ruff
+        run: ruff check src tests examples eval scripts
+
+      - name: Ruff format check
+        run: ruff format --check src tests examples eval scripts
+
+      - name: Pytest
+        run: pytest tests/ -v --tb=short
+
+      - name: Consumer safety benchmark
+        run: python eval/validate_then_commit_benchmark.py
+
+      - name: Tutorial walkthrough
+        run: python examples/tutorials/walkthrough.py
+
+      - name: Build package
+        run: pip install build && python -m build
+
