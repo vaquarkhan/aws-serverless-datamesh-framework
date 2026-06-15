@@ -98,9 +98,6 @@ pattern = "^(?P<version>[^\\s]+)$"
 [tool.hatch.build.targets.wheel]
 packages = ["src/serverless_data_mesh"]
 
-[tool.hatch.build.targets.wheel.force-include]
-"src/serverless_data_mesh/templates" = "serverless_data_mesh/templates"
-
 [tool.hatch.build.targets.sdist]
 include = [
     "/src",
