@@ -6,7 +6,9 @@
 |-------|-------|
 | **Pattern name** | Vaquar Pattern |
 | **Also known as** | PVDM (Physical · Verify · Durable · Metadata) |
-| **Origin** | [Serverless Data Mesh](https://github.com/vaquarkhan/aws-serveless-datamesh-framwork) |
+| **Version** | 1.0 |
+| **Canonical URL** | [vaquar-pattern.md](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md) |
+| **Origin** | [Serverless Data Mesh](https://github.com/vaquarkhan/aws-serverless-datamesh-framework) |
 | **Status** | Published reference pattern (Apache-2.0) |
 | **Problem class** | Governed domain writes on serverless compute without central ETL |
 
@@ -257,17 +259,45 @@ The Vaquar Pattern composes with (does not replace):
 
 ## How to cite
 
+**Canonical URL:**
+
+https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md
+
 **Academic / blog:**
 
-> Vaquar Pattern: Proof-Gated Serverless Lakehouse Publication (PVDM). Serverless Data Mesh reference implementation. https://github.com/vaquarkhan/aws-serveless-datamesh-framwork/blob/main/docs/vaquar-pattern.md
+> Vaquar Pattern: Proof-Gated Serverless Lakehouse Publication (PVDM). Serverless Data Mesh reference implementation. https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md
+
+**BibTeX:**
+
+```bibtex
+@misc{khan2026vaquar,
+  author       = {Vaquar Khan},
+  title        = {The Vaquar Pattern: Proof-Gated Serverless Lakehouse Publication},
+  year         = {2026},
+  version      = {1.0},
+  howpublished = {GitHub},
+  url          = {https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md}
+}
+```
 
 **Architecture docs:**
 
-> We apply the **Vaquar Pattern** for domain writes: Physical → Verify → Durable → Metadata, with Steward notarization and VRP-gated Iceberg commits.
+> We apply the **Vaquar Pattern** (PVDM) for domain writes: Physical → Verify → Durable → Metadata, with Steward notarization and VRP-gated Iceberg commits.
 
 **Terraform / runbooks:**
 
 > MeshRole tags: `producer`, `steward`, `publisher` per Vaquar three-account model.
+
+---
+
+## Known implementations
+
+| Implementation | Platform | Status |
+|----------------|----------|--------|
+| [Serverless Data Mesh](https://github.com/vaquarkhan/aws-serverless-datamesh-framework) | AWS Lambda + Iceberg + Glue REST | Reference implementation (this repo) |
+| *Your implementation* | Databricks, GCP, Azure, … | Open: submit a PR to list it here |
+
+The pattern is platform-agnostic. This repository is the **reference implementation** for AWS.
 
 ---
 

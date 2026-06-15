@@ -214,8 +214,8 @@ Lambda :live  (15-min segments, up to 90+ min total)
 **Requires Python 3.12+**
 
 ```bash
-git clone https://github.com/vaquarkhan/aws-serveless-datamesh-framwork.git
-cd aws-serveless-datamesh-framwork
+git clone https://github.com/vaquarkhan/aws-serverless-datamesh-framework.git
+cd aws-serverless-datamesh-framework
 
 make install
 make test
@@ -363,7 +363,7 @@ Apache-2.0. See [LICENSE](LICENSE).
 
 <div align="center">
 
-**Serverless Data Mesh** · [Vaquar Pattern](docs/vaquar-pattern.md) · [GitHub](https://github.com/vaquarkhan/aws-serveless-datamesh-framwork)
+**Serverless Data Mesh** · [Vaquar Pattern](docs/vaquar-pattern.md) · [GitHub](https://github.com/vaquarkhan/aws-serverless-datamesh-framework)
 
 *Domain teams own the write path. The mesh proves correctness before consumers see a snapshot.*
 

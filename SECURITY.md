@@ -12,7 +12,7 @@
 
 Report privately to the maintainers:
 
-1. Open a [GitHub Security Advisory](https://github.com/vaquarkhan/aws-serveless-datamesh-framwork/security/advisories/new) (preferred), or
+1. Open a [GitHub Security Advisory](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/security/advisories/new) (preferred), or
 2. Email the repository owner with subject: `SECURITY: serverless-data-mesh`
 
 Include:

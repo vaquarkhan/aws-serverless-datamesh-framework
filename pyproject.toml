@@ -77,10 +77,10 @@ publish = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/vaquarkhan/aws-serveless-datamesh-framwork"
-Documentation = "https://github.com/vaquarkhan/aws-serveless-datamesh-framwork#readme"
-Repository = "https://github.com/vaquarkhan/aws-serveless-datamesh-framwork"
-Changelog = "https://github.com/vaquarkhan/aws-serveless-datamesh-framwork/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/vaquarkhan/aws-serverless-datamesh-framework"
+Documentation = "https://github.com/vaquarkhan/aws-serverless-datamesh-framework#readme"
+Repository = "https://github.com/vaquarkhan/aws-serverless-datamesh-framework"
+Changelog = "https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/CHANGELOG.md"
 "PyPI" = "https://pypi.org/project/serverless-data-mesh/"
 
 [tool.hatch.version]

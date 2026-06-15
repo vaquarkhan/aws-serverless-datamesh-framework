@@ -8,7 +8,7 @@ An open Python framework for **domain-oriented**, **federated data mesh** teams 
 - **Steward** notaries enforce mesh contracts with VRP proofs
 - **Publisher** zones expose consumer-ready **Iceberg data products**
 
-Introduces the **[Vaquar Pattern](https://github.com/vaquarkhan/aws-serveless-datamesh-framwork/blob/main/docs/vaquar-pattern.md)** (PVDM): Physical → Verify → Durable → Metadata. Invariant: `commit_metadata ⟹ VRP = PASS`.
+Introduces the **[Vaquar Pattern](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md)** (PVDM): Physical → Verify → Durable → Metadata. Invariant: `commit_metadata ⟹ VRP = PASS`.
 
 ## Install
 
@@ -80,11 +80,11 @@ outcome = coordinator.run_workload(workload)
 
 ## Documentation
 
-- [GitHub README](https://github.com/vaquarkhan/aws-serveless-datamesh-framwork#readme)
-- [Vaquar Pattern](https://github.com/vaquarkhan/aws-serveless-datamesh-framwork/blob/main/docs/vaquar-pattern.md)
-- [Getting started](https://github.com/vaquarkhan/aws-serveless-datamesh-framwork/blob/main/docs/getting-started.md)
-- [PyPI guide](https://github.com/vaquarkhan/aws-serveless-datamesh-framwork/blob/main/docs/pypi.md)
-- [Full documentation](https://github.com/vaquarkhan/aws-serveless-datamesh-framwork/tree/main/docs)
+- [GitHub README](https://github.com/vaquarkhan/aws-serverless-datamesh-framework#readme)
+- [Vaquar Pattern](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md)
+- [Getting started](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/getting-started.md)
+- [PyPI guide](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/pypi.md)
+- [Full documentation](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/tree/main/docs)
 
 ## License
 

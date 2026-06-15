@@ -733,4 +733,4 @@ This is the capstone of a portfolio that spans write safety (IceGuard), proof (v
 
 ---
 
-*Apache-2.0 · Repository: [github.com/vaquarkhan/aws-serveless-datamesh-framwork](https://github.com/vaquarkhan/aws-serveless-datamesh-framwork) · Article: [why-serverless-data-mesh.md](https://github.com/vaquarkhan/aws-serveless-datamesh-framwork/blob/main/docs/why-serverless-data-mesh.md)*
+*Apache-2.0 · Repository: [github.com/vaquarkhan/aws-serverless-datamesh-framework](https://github.com/vaquarkhan/aws-serverless-datamesh-framework) · Article: [why-serverless-data-mesh.md](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/why-serverless-data-mesh.md)*
