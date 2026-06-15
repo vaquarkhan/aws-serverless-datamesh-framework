@@ -16,6 +16,11 @@ variable "role_arn" {
   type = string
 }
 
+variable "lambda_handler" {
+  type    = string
+  default = "handler.lambda_handler"
+}
+
 variable "package_path" {
   type = string
 }
@@ -62,6 +67,7 @@ module "layer_lambda" {
   name_prefix               = "${var.name_prefix}-${each.key}"
   role_arn                  = var.role_arn
   package_path              = var.package_path
+  handler                   = var.lambda_handler
   memory_size               = each.value.memory_mb
   timeout                   = var.timeout
   enable_durable_execution  = var.enable_durable_execution

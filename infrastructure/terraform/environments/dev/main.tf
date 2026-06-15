@@ -29,6 +29,9 @@ variable "checkpoint_bucket_name" { type = string }
 variable "proof_bucket_name" { type = string }
 variable "lakehouse_bucket_name" { type = string }
 variable "lambda_package_path" { default = "../../build/domain-writer.zip" }
+variable "lambda_handler" {
+  default = "examples.domain_writer.handler.lambda_handler"
+}
 
 variable "lambda_timeout_seconds" {
   description = "Per-invocation Lambda timeout (1-900)."
@@ -116,6 +119,7 @@ module "lambda" {
   name_prefix  = var.name_prefix
   role_arn     = module.iam.domain_writer_role_arn
   package_path = var.lambda_package_path
+  handler      = var.lambda_handler
   memory_size  = var.lambda_memory_mb
   timeout      = local.lambda_per_invocation_timeout
   durable_execution_timeout = local.durable_execution_timeout

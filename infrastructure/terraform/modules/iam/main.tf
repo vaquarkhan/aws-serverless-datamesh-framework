@@ -87,6 +87,26 @@ resource "aws_iam_role_policy" "domain_writer_data" {
   })
 }
 
+resource "aws_iam_role_policy" "domain_writer_metrics" {
+  name = "${var.name_prefix}-cloudwatch-metrics"
+  role = aws_iam_role.domain_writer.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = "PutVRPTrustMetrics"
+      Effect = "Allow"
+      Action = ["cloudwatch:PutMetricData"]
+      Resource = "*"
+      Condition = {
+        StringLike = {
+          "cloudwatch:namespace" = "ServerlessDataMesh*"
+        }
+      }
+    }]
+  })
+}
+
 resource "aws_iam_role" "stepfunctions" {
   name = "${var.name_prefix}-backfill-orchestrator"
 

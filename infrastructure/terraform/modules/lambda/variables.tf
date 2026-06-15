@@ -12,8 +12,9 @@ variable "package_path" {
 }
 
 variable "handler" {
-  type    = string
-  default = "examples.domain_writer.handler.lambda_handler"
+  type        = string
+  default     = "handler.lambda_handler"
+  description = "Lambda handler. Platform demo zip: examples.domain_writer.handler.lambda_handler"
 }
 
 variable "runtime" {

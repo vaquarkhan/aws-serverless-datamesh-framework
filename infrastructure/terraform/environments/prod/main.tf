@@ -68,6 +68,7 @@ module "lambda" {
   name_prefix              = var.name_prefix
   role_arn                 = module.iam.domain_writer_role_arn
   package_path             = var.lambda_package_path
+  handler                  = var.lambda_handler
   enable_durable_execution = var.enable_durable_execution
   durable_execution_timeout = local.durable_execution_timeout
   durable_retention_days    = var.durable_retention_days

@@ -375,6 +375,7 @@ def compile_medallion_mesh(
                 "engine": layer.runtime_engine,
                 "memory_mb": layer.lambda_memory_mb,
                 "package_extras": layer.package_extras,
+                "lambda_handler": "handler.lambda_handler",
                 "sfn_arn_key": f"{domain.domain_id}_{layer.layer}_writer_arn",
             }
     (mesh_root / "layer_lambda.manifest.json").write_text(

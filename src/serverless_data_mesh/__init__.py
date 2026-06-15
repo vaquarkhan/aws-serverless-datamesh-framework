@@ -27,8 +27,17 @@ def _read_version() -> str:
 
         return version("serverless-data-mesh")
     except Exception:
-        root = Path(__file__).resolve().parents[2]
-        return (root / "VERSION").read_text(encoding="utf-8").strip()
+        pass
+
+    pkg = Path(__file__).resolve().parent
+    for candidate in (
+        pkg / "VERSION",
+        pkg.parent / "VERSION",
+        Path(__file__).resolve().parents[2] / "VERSION",
+    ):
+        if candidate.is_file():
+            return candidate.read_text(encoding="utf-8").strip()
+    return "0.0.0"
 
 
 __version__ = _read_version()

@@ -42,6 +42,12 @@ variable "lambda_package_path" {
   default     = "../../build/domain-writer.zip"
 }
 
+variable "lambda_handler" {
+  description = "Lambda handler. Platform zip: examples.domain_writer.handler.lambda_handler; compiled pipeline: handler.lambda_handler"
+  type        = string
+  default     = "examples.domain_writer.handler.lambda_handler"
+}
+
 variable "enable_durable_execution" {
   type    = bool
   default = true

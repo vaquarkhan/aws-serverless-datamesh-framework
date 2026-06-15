@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Lambda VERSION path**: `__init__.py` tries `serverless_data_mesh/VERSION`, repo root, and metadata; wheel bundles `VERSION` in package
+- **IAM**: `cloudwatch:PutMetricData` for `ServerlessDataMesh*` namespace on domain writer role
+- **Terraform storage**: lifecycle `for_each` uses static bucket keys (not computed `.id` map keys)
+- **Metrics**: `SDM_METRICS_ENABLED` / `SDM_DISABLE_METRICS` opt-out; PutMetricData failures are non-fatal
+- **Lambda packaging**: `SDM_PIPELINE_SRC` overlays compiled `handler.py` at zip root; `handler.lambda_handler` in manifest and Terraform
+
 ## [1.1.0] - 2026-06-14
 
 Enterprise completeness: reference readers, per-layer Lambda fleet, deploy CLI, Backstage, schemas, UI, benchmarks, multi-cloud stubs.

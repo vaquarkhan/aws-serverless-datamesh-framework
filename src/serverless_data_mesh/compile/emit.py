@@ -132,8 +132,15 @@ def batch_writer(start: int, end: int) -> list[str]:
 
 def _emit_lambda_tf(contract: MeshPipelineContract) -> str:
     extras = contract.runtime.package_extras or "core"
-    return f'''# GENERATED Lambda sizing for {contract.domain_id}
-# Build: SDM_EXTRAS={extras} ./infrastructure/terraform/scripts/package_lambda.sh
+    return f'''# GENERATED Lambda wiring for {contract.domain_id}
+# Build compiled pipeline zip:
+#   SDM_PIPELINE_SRC={contract.domain_id} SDM_EXTRAS={extras} \\
+#     ./infrastructure/terraform/scripts/package_lambda.sh
+
+variable "lambda_handler" {{
+  default     = "handler.lambda_handler"
+  description = "Flat handler from compile output (handler.py at zip root)"
+}}
 
 variable "lambda_memory_mb" {{
   default = {contract.runtime.lambda_memory_mb}
@@ -144,9 +151,15 @@ variable "lambda_timeout_seconds" {{
 }}
 
 variable "lambda_package_extras" {{
-  default = "{extras}"
+  default     = "{extras}"
   description = "pip extra for domain writer zip: rules | spark | all"
 }}
+
+# module "lambda" {{
+#   handler = var.lambda_handler
+#   memory_size = var.lambda_memory_mb
+#   timeout = var.lambda_timeout_seconds
+# }}
 
 # runtime.engine = {contract.runtime.engine}
 # Use container image when engine=pyspark (JVM + PySpark exceed zip limits)
@@ -446,6 +459,11 @@ def compile_pipeline(
         "api_version": contract.api_version,
         "domain_id": contract.domain_id,
         "product_id": contract.product_id,
+        "lambda_handler": "handler.lambda_handler",
+        "package_env": {
+            "SDM_PIPELINE_SRC": "<path-to-this-directory>",
+            "SDM_EXTRAS": contract.runtime.package_extras or "",
+        },
         "files": written,
     }
     write("pipeline.manifest.json", json.dumps(manifest, indent=2))

@@ -13,6 +13,11 @@ variable "lambda_package_path" {
   default = "../../../build/domain-writer.zip"
 }
 
+variable "lambda_handler" {
+  type    = string
+  default = "examples.domain_writer.handler.lambda_handler"
+}
+
 variable "steward_account_id" {
   type = string
 }
@@ -100,6 +105,7 @@ module "lambda" {
   name_prefix               = var.name_prefix
   role_arn                  = module.iam.domain_writer_role_arn
   package_path              = var.lambda_package_path
+  handler                   = var.lambda_handler
   timeout                   = local.lambda_timeout
   durable_execution_timeout = var.durable_execution_timeout_seconds
   dlq_arn                   = module.messaging.dlq_arn

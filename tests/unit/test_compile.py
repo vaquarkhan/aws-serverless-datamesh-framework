@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -33,6 +34,8 @@ def test_compile_pipeline_writes_artifacts(
     root = result.output_root
     assert (root / "mesh.pipeline.yaml").exists()
     assert (root / "handler.py").exists()
+    manifest = json.loads((root / "pipeline.manifest.json").read_text(encoding="utf-8"))
+    assert manifest["lambda_handler"] == "handler.lambda_handler"
     assert (root / "readers.py").exists()
     assert (root / "pipeline_config.py").exists()
     assert (root / "step_function.asl.json").exists()

@@ -24,13 +24,20 @@ Reference `readers.py` files are generated for bronze (S3 landing) and silver/go
 
 ## 3. Package Lambda
 
-```bash
-# Linux/macOS
-./infrastructure/terraform/scripts/package_lambda.sh
+**Platform demo** (`examples.domain_writer.handler.lambda_handler`):
 
-# Windows
-.\infrastructure\terraform\scripts\package_lambda.ps1
+```bash
+./infrastructure/terraform/scripts/package_lambda.sh
+# Windows: .\infrastructure\terraform\scripts\package_lambda.ps1
 ```
+
+**Compiled pipeline layer** (`handler.lambda_handler` at zip root):
+
+```bash
+SDM_PIPELINE_SRC=my-mesh/generated/orders/bronze ./infrastructure/terraform/scripts/package_lambda.sh
+```
+
+Medallion Terraform `lambda-fleet` defaults to `handler.lambda_handler`. Build one zip per layer or share a zip when readers differ.
 
 ## 4. Configure Terraform
 

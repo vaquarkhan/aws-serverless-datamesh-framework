@@ -53,27 +53,18 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "mesh" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "mesh" {
-  for_each = {
-    for name, cfg in {
-      checkpoint = {
-        bucket     = try(aws_s3_bucket.mesh["checkpoint"].id, null)
-        expiration = var.checkpoint_retention_days
-      }
-      proof = {
-        bucket     = try(aws_s3_bucket.mesh["proof"].id, null)
-        expiration = var.proof_retention_days
-      }
-    } : name => cfg if cfg.bucket != null
-  }
+  for_each = toset([
+    for name in keys(local.buckets) : name if contains(["checkpoint", "proof"], name)
+  ])
 
-  bucket = each.value.bucket
+  bucket = aws_s3_bucket.mesh[each.key].id
 
   rule {
     id     = "expire-objects"
     status = "Enabled"
 
     expiration {
-      days = each.value.expiration
+      days = each.key == "checkpoint" ? var.checkpoint_retention_days : var.proof_retention_days
     }
 
     noncurrent_version_expiration {
