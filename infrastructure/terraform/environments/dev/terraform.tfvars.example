@@ -1,0 +1,10 @@
+aws_region = "us-east-2"
+name_prefix = "sdm-dev"
+checkpoint_bucket_name = "sdm-dev-checkpoints-ACCOUNT_ID"
+proof_bucket_name      = "sdm-dev-proofs-ACCOUNT_ID"
+lakehouse_bucket_name  = "sdm-dev-lakehouse-ACCOUNT_ID"
+
+# Shorter dev timeouts (override in terraform.tfvars or -var)
+lambda_timeout_seconds            = 600
+durable_execution_timeout_seconds = 3600
+lambda_memory_mb                  = 2048

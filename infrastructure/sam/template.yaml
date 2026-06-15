@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless Data Mesh — domain writer Lambda (Durable Function)
+
+Parameters:
+  CheckpointBucketName:
+    Type: String
+    Description: S3 bucket for IceGuard checkpoints and resume state
+  ProofBucketName:
+    Type: String
+    Default: ""
+    Description: S3 bucket for VRP proofs (defaults to checkpoint bucket)
+  IcebergTableBucket:
+    Type: String
+    Description: S3 Tables / lakehouse bucket for Glue REST warehouse
+  DomainNamespace:
+    Type: String
+    Default: raw_orders
+  TargetTable:
+    Type: String
+    Default: orders_curated
+
+Conditions:
+  UseSeparateProofBucket: !Not [!Equals [!Ref ProofBucketName, ""]]
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 900
+    MemorySize: 4096
+    Architectures:
+      - x86_64
+
+Resources:
+  DomainWriterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-domain-writer"
+      Handler: examples.domain_writer.handler.lambda_handler
+      CodeUri: ../..
+      Description: Governed cross-domain lakehouse writer with IceGuard + VRP + Durable Execution
+      Environment:
+        Variables:
+          ICEGUARD_CHECKPOINT_BUCKET: !Ref CheckpointBucketName
+          VRP_PROOF_BUCKET: !If
+            - UseSeparateProofBucket
+            - !Ref ProofBucketName
+            - !Ref CheckpointBucketName
+          ICEBERG_TABLE_BUCKET: !Ref IcebergTableBucket
+          ICEGUARD_CHECKPOINT_INTERVAL: "5000"
+          ICEGUARD_ROLLBACK_THRESHOLD_MS: "30000"
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref CheckpointBucketName
+        - S3CrudPolicy:
+            BucketName: !If
+              - UseSeparateProofBucket
+              - !Ref ProofBucketName
+              - !Ref CheckpointBucketName
+        - Statement:
+            - Effect: Allow
+              Action:
+                - glue:GetTable
+                - glue:GetDatabase
+                - glue:UpdateTable
+                - lakeformation:GetDataAccess
+              Resource: "*"
+      Events:
+        BackfillSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+            Enabled: false
+            Input: !Sub |
+              {
+                "workload_id": "scheduled-backfill",
+                "total_records": 1000,
+                "domain_id": "orders-domain"
+              }
+
+Outputs:
+  DomainWriterArn:
+    Description: Domain writer Lambda ARN
+    Value: !GetAtt DomainWriterFunction.Arn

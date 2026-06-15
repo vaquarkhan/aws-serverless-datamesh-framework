@@ -1,0 +1,61 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+*.whl
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# IDE / editor
+.idea/
+.vscode/
+.cursor/
+*.swp
+
+# AWS SAM
+.aws-sam/
+samconfig.toml
+
+# Terraform
+infrastructure/terraform/build/*
+!infrastructure/terraform/build/.gitkeep
+.terraform/
+*.tfplan
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+terraform.tfvars
+**/terraform.tfvars
+!**/terraform.tfvars.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets / keys
+.env
+.env.*
+*.pem
+VRP_SIGNING_KEY*
+
+# Local scratch / agent artifacts
+tests/_scratch_*
+agent-transcripts/

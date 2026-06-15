@@ -1,0 +1,110 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "serverless-data-mesh"
+version = "0.1.0"
+description = "Cross-domain transaction coordinator for exactly-once, audit-provable lakehouse writes on AWS Lambda."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.12"
+authors = [{ name = "Serverless Data Mesh Contributors" }]
+keywords = [
+    "aws",
+    "lambda",
+    "iceberg",
+    "data-mesh",
+    "durable-execution",
+    "lakehouse",
+    "serverless",
+    "sparkrules",
+    "rule-engine",
+    "pyiceberg",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+    "Topic :: System :: Distributed Computing",
+]
+dependencies = [
+    "iceguard>=1.0.0",
+    "veridata-recon>=0.1.0",
+    "aws-durable-execution-sdk-python>=1.0.0",
+    "pyiceberg[glue,rest-sigv4]>=0.7.0",
+    "boto3>=1.34",
+]
+
+[project.optional-dependencies]
+rules = [
+    "sparkrules>=1.2.0",
+]
+spark = [
+    "pyspark>=3.5.0",
+    "sparkrules>=1.2.0",
+]
+all = [
+    "sparkrules>=1.2.0",
+    "pyspark>=3.5.0",
+]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "mypy>=1.8",
+    "ruff>=0.4",
+    "build>=1.2",
+    "twine>=5",
+]
+publish = [
+    "build>=1.2",
+    "twine>=5",
+]
+
+[project.urls]
+Homepage = "https://github.com/serverless-datamesh/serverless-data-mesh"
+Documentation = "https://github.com/serverless-datamesh/serverless-data-mesh#readme"
+Repository = "https://github.com/serverless-datamesh/serverless-data-mesh"
+Changelog = "https://github.com/serverless-datamesh/serverless-data-mesh/blob/main/CHANGELOG.md"
+"PyPI" = "https://pypi.org/project/serverless-data-mesh/"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/serverless_data_mesh"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/examples",
+    "/docs",
+    "/infrastructure",
+    "/README.md",
+    "/LICENSE",
+    "/CHANGELOG.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+addopts = "-ra -p no:logfire"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests", "examples"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["serverless_data_mesh"]
+
+[tool.coverage.run]
+source = ["serverless_data_mesh"]
+branch = true
