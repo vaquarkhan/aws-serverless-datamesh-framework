@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-Interactive walkthrough — run each step locally without AWS.
+Interactive walkthrough: run each step locally without AWS.
 
 Usage:
     python examples/tutorials/walkthrough.py
@@ -179,7 +179,7 @@ def step_8_catalog() -> None:
     props = adapter._rest_properties()
     print(f"REST URI: {props['uri']}")
     print(f"SigV4 enabled: {props['rest.sigv4-enabled']}")
-    print("(connect() requires live AWS credentials — skipped in tutorial)")
+    print("(connect() requires live AWS credentials: skipped in tutorial)")
 
 
 def step_9_coordinator() -> None:
@@ -231,8 +231,8 @@ def step_12_outcomes() -> None:
     outcomes = {
         "committed": "All chunks verified; Iceberg snapshot published.",
         "resumed": "Continued from durable checkpoint (normal for long jobs).",
-        "verification_failed": "VRP blocked commit — fix data drift and re-invoke.",
-        "rolled_back": "IceGuard timeout rollback — re-invoke to resume safely.",
+        "verification_failed": "VRP blocked commit: fix data drift and re-invoke.",
+        "rolled_back": "IceGuard timeout rollback: re-invoke to resume safely.",
     }
     for name, desc in outcomes.items():
         print(f"  {name:22s} → {desc}")

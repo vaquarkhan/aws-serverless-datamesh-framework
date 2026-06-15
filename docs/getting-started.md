@@ -1,4 +1,4 @@
-# Developer Getting Started — Step by Step
+﻿# Developer Getting Started: Step by Step
 
 This guide walks you through building a **domain lakehouse writer** with serverless-data-mesh.
 Each step explains **what it is** and **what we are trying to achieve** before showing code.
@@ -7,7 +7,7 @@ Each step explains **what it is** and **what we are trying to achieve** before s
 
 ---
 
-## Step 1 — Install the framework
+## Step 1: Install the framework
 
 ### What is this?
 
@@ -40,7 +40,7 @@ print(sdm.__version__)  # 0.1.0
 
 ---
 
-## Step 2 — Declare your domain transaction boundary
+## Step 2: Declare your domain transaction boundary
 
 ### What is this?
 
@@ -65,11 +65,11 @@ boundary = DomainTransactionBoundary(
 )
 ```
 
-**Key idea:** The boundary is not optional metadata — the coordinator refuses to commit metadata outside this declared scope.
+**Key idea:** The boundary is not optional metadata: the coordinator refuses to commit metadata outside this declared scope.
 
 ---
 
-## Step 3 — Describe the workload (backfill / copy job)
+## Step 3: Describe the workload (backfill / copy job)
 
 ### What is this?
 
@@ -114,15 +114,15 @@ When deployed, the same structure arrives as JSON:
 
 ---
 
-## Step 4 — Implement your source reader
+## Step 4: Implement your source reader
 
 ### What is this?
 
-A `source_reader(start, end)` callable that returns the **logical records** for offsets `[start, end)`. The framework uses these records only for VRP fingerprinting — not for the physical Parquet write.
+A `source_reader(start, end)` callable that returns the **logical records** for offsets `[start, end)`. The framework uses these records only for VRP fingerprinting: not for the physical Parquet write.
 
 ### What we try to achieve
 
-Produce a deterministic, hashable view of the source payload so veridata-recon can cryptographically prove the sink matches the source — without exposing raw PII in the proof.
+Produce a deterministic, hashable view of the source payload so veridata-recon can cryptographically prove the sink matches the source: without exposing raw PII in the proof.
 
 ### Code (replace the demo stub)
 
@@ -145,11 +145,11 @@ def source_reader(start: int, end: int) -> list[dict[str, Any]]:
     return records
 ```
 
-**Rule:** Field values must be coercible to strings — veridata-recon canonicalizes strings for hashing.
+**Rule:** Field values must be coercible to strings: veridata-recon canonicalizes strings for hashing.
 
 ---
 
-## Step 5 — Implement your Parquet batch writer
+## Step 5: Implement your Parquet batch writer
 
 ### What is this?
 
@@ -173,11 +173,11 @@ def batch_writer(start: int, end: int) -> list[str]:
     return [f"{base}/part-{offset:08d}.parquet" for offset in range(start, end)]
 ```
 
-**Important:** Use `iceguard.protect()` via the coordinator — a bare `df.write.save()` inside the Lambda is **not** protected against the commit-durability gap.
+**Important:** Use `iceguard.protect()` via the coordinator: a bare `df.write.save()` inside the Lambda is **not** protected against the commit-durability gap.
 
 ---
 
-## Step 6 — Configure runtime settings
+## Step 6: Configure runtime settings
 
 ### What is this?
 
@@ -214,7 +214,7 @@ print(settings.rollback_threshold_ms)     # 30000
 
 ---
 
-## Step 7 — Add cryptographic verification (VRP)
+## Step 7: Add cryptographic verification (VRP)
 
 ### What is this?
 
@@ -222,7 +222,7 @@ print(settings.rollback_threshold_ms)     # 30000
 
 ### What we try to achieve
 
-Enforce **validate-then-commit**: bad data never receives an Iceberg snapshot. Auditors can verify proofs offline with only the public key — no access to raw data required.
+Enforce **validate-then-commit**: bad data never receives an Iceberg snapshot. Auditors can verify proofs offline with only the public key: no access to raw data required.
 
 ### Code
 
@@ -257,7 +257,7 @@ print(uri)  # s3://my-vrp-proofs/orders-domain/backfill-.../proofs/chunk-000000.
 
 ---
 
-## Step 8 — Connect the Glue Catalog Connector
+## Step 8: Connect the Glue Catalog Connector
 
 ### What is this?
 
@@ -287,14 +287,14 @@ parquet_paths = [
     "s3://lakehouse/orders_curated/dt=2026-06-14/part-00000000.parquet",
 ]
 
-connector.prepare_commit(parquet_paths)   # Phase 1 — stage files
-snapshot_id = connector.commit()          # Phase 2 — publish snapshot
+connector.prepare_commit(parquet_paths)   # Phase 1: stage files
+snapshot_id = connector.commit()          # Phase 2: publish snapshot
 print(f"Committed snapshot {snapshot_id}")
 ```
 
 ---
 
-## Step 9 — Compose the durable coordinator
+## Step 9: Compose the durable coordinator
 
 ### What is this?
 
@@ -304,7 +304,7 @@ print(f"Committed snapshot {snapshot_id}")
 
 Run 90+ minute backfills on Lambda without duplicating data: each verified chunk is a durable step; timeouts trigger IceGuard rollback; the next invocation resumes from the last checkpoint.
 
-### Code (local simulation — no Lambda required)
+### Code (local simulation: no Lambda required)
 
 ```python
 from unittest.mock import MagicMock
@@ -341,7 +341,7 @@ after all chunks:
 
 ---
 
-## Step 10 — Wire the Lambda handler
+## Step 10: Wire the Lambda handler
 
 ### What is this?
 
@@ -396,7 +396,7 @@ lambda_handler = handler
 
 ---
 
-## Step 11 — Deploy to AWS (Terraform recommended)
+## Step 11: Deploy to AWS (Terraform recommended)
 
 ### What is this?
 
@@ -404,7 +404,7 @@ Production infrastructure-as-code: S3 buckets, IAM, Lambda Durable Function, Ste
 
 ### What we try to achieve
 
-A deployable production stack you can `terraform apply` directly — with a Step Functions resume loop that re-invokes the domain writer after IceGuard `rolled_back` outcomes.
+A deployable production stack you can `terraform apply` directly: with a Step Functions resume loop that re-invokes the domain writer after IceGuard `rolled_back` outcomes.
 
 ### Terraform (recommended)
 
@@ -433,7 +433,7 @@ Full reference: [infrastructure/terraform/README.md](../infrastructure/terraform
 
 ---
 
-## Step 12 — Invoke and interpret outcomes
+## Step 12: Invoke and interpret outcomes
 
 ### What is this?
 
@@ -441,7 +441,7 @@ The JSON response from your handler describing the terminal state of the domain 
 
 ### What we try to achieve
 
-Give operators a clear signal: success, verification failure, or rollback-with-resume — without guessing from CloudWatch exit codes alone.
+Give operators a clear signal: success, verification failure, or rollback-with-resume: without guessing from CloudWatch exit codes alone.
 
 ### Invoke
 
@@ -461,7 +461,7 @@ cat response.json
 | `committed` | All chunks verified; snapshot published | Done |
 | `resumed` | Continued from a prior durable checkpoint | Normal for long jobs |
 | `verification_failed` | VRP blocked a chunk | Fix source/sink mismatch; re-invoke |
-| `rolled_back` | IceGuard rolled back near-timeout Parquet | Re-invoke — durable steps resume without duplicating committed chunks |
+| `rolled_back` | IceGuard rolled back near-timeout Parquet | Re-invoke: durable steps resume without duplicating committed chunks |
 
 Example success:
 
@@ -478,11 +478,11 @@ Example success:
 
 ---
 
-## Step 13 — Verify proofs offline (audit trail)
+## Step 13: Verify proofs offline (audit trail)
 
 ### What is this?
 
-Independent verification of VRP proof files stored in S3 — no AWS access required beyond downloading the `.vrp.json` file.
+Independent verification of VRP proof files stored in S3: no AWS access required beyond downloading the `.vrp.json` file.
 
 ### What we try to achieve
 
@@ -508,7 +508,7 @@ s3://{proof_bucket}/{domain_id}/{workload_id}/proofs/chunk-{NNNNNN}.vrp.json
 
 ---
 
-## Quick reference — component map
+## Quick reference: component map
 
 | Step | Component | Package |
 |------|-----------|---------|

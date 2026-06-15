@@ -1,4 +1,4 @@
-# Security Policy
+﻿# Security Policy
 
 ## Supported versions
 
@@ -34,7 +34,7 @@ In scope:
 
 Out of scope:
 
-- Upstream packages (IceGuard, veridata-recon, AWS SDK) — report to those projects directly
+- Upstream packages (IceGuard, veridata-recon, AWS SDK): report to those projects directly
 - Customer-deployed AWS account misconfiguration (overly broad IAM, public S3 buckets)
 
 ## Security model
@@ -55,4 +55,4 @@ This framework enforces **validate-then-commit**: corrupted or dropped data must
 
 ## Dependency updates
 
-Automated dependency PRs are managed via Dependabot (`.github/dependabot.yml`). Review updates to `veridata-recon`, `iceguard`, and `pyiceberg` carefully — they affect the trust boundary.
+Automated dependency PRs are managed via Dependabot (`.github/dependabot.yml`). Review updates to `veridata-recon`, `iceguard`, and `pyiceberg` carefully: they affect the trust boundary.

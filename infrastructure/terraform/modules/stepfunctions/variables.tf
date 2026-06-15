@@ -1,4 +1,4 @@
-variable "name_prefix" {
+﻿variable "name_prefix" {
   type = string
 }
 
@@ -15,7 +15,7 @@ variable "lambda_invoke_timeout_seconds" {
   description = <<-EOT
     How long Step Functions waits for ONE Lambda segment to return.
     Must exceed per-invocation Lambda timeout (900s) but is NOT the 90-minute
-    total — use max_resume_attempts for multi-segment backfills.
+    total: use max_resume_attempts for multi-segment backfills.
   EOT
   type        = number
   default     = 960

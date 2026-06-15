@@ -1,6 +1,6 @@
-# SparkRules Connector — Business Rules on Lambda
+﻿# SparkRules Connector: Business Rules on Lambda
 
-[SparkRules](https://pypi.org/project/sparkrules/) is a Drools-style rule engine on PyPI. It runs on **AWS Lambda** in pure Python mode—no Glue ETL, no Spark cluster required for chunk-level enrichment and quality gates.
+[SparkRules](https://pypi.org/project/sparkrules/) is a Drools-style rule engine on PyPI. It runs on **AWS Lambda** in pure Python mode - no Glue ETL, no Spark cluster required for chunk-level enrichment and quality gates.
 
 Serverless Data Mesh integrates SparkRules **before** VRP verification and physical writes.
 
@@ -17,7 +17,7 @@ pip install "serverless-data-mesh[rules]"
 SparkRules alone:
 
 ```bash
-pip install sparkrules          # core — Lambda-safe
+pip install sparkrules          # core: Lambda-safe
 pip install "sparkrules[spark]" # + PySpark cluster / Lambda layer
 ```
 
@@ -27,7 +27,7 @@ pip install "sparkrules[spark]" # + PySpark cluster / Lambda layer
 
 ```mermaid
 flowchart TB
-    subgraph lambda_pure [Lambda — Pure Python DEFAULT]
+    subgraph lambda_pure [Lambda: Pure Python DEFAULT]
         SRC[source_reader chunk]
         SR[SparkRulesConnector.apply_chunk]
         VRP[veridata-recon VRP]
@@ -35,7 +35,7 @@ flowchart TB
         SRC --> SR --> VRP --> WRT
     end
 
-    subgraph lambda_spark [Lambda — Spark optional]
+    subgraph lambda_spark [Lambda: Spark optional]
         SP[PySpark Session]
         AD[apply_drl DataFrame]
         SP --> AD
@@ -50,9 +50,9 @@ flowchart TB
 
 | Mode | API | When |
 |------|-----|------|
-| **Pure Python** | `SparkRulesConnector.from_drl(drl).apply_chunk(records)` | Default — sub-ms per fact, small Lambda package |
+| **Pure Python** | `SparkRulesConnector.from_drl(drl).apply_chunk(records)` | Default: sub-ms per fact, small Lambda package |
 | **Spark-on-Lambda** | `SparkRulesConnector.apply_drl_spark(spark, df, drl)` | Large partitions, same DRL at scale |
-| **Glue ETL** | — | **Not used** by this framework |
+| **Glue ETL** |: | **Not used** by this framework |
 
 ---
 
@@ -182,7 +182,7 @@ SDM_EXTRAS=rules ./infrastructure/terraform/scripts/package_lambda.sh
 | `ImportError` | Install `[rules]` extra |
 | DRL parse error | Fix rule syntax (Drools-style DRL) |
 
-Failed rule evaluation **blocks** the chunk before VRP—consistent with validate-then-commit philosophy.
+Failed rule evaluation **blocks** the chunk before VRP - consistent with validate-then-commit philosophy.
 
 ---
 

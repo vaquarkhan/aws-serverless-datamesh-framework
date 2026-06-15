@@ -1,4 +1,4 @@
-# Glue Catalog Connector — Lambda, Spark, and What Glue Does *Not* Do Here
+﻿# Glue Catalog Connector: Lambda, Spark, and What Glue Does *Not* Do Here
 
 Serverless Data Mesh separates **compute** (Lambda) from **catalog** (Glue Data Catalog).
 This guide explains the **Glue Catalog Connector**, why **AWS Glue ETL jobs cannot run on Lambda**,
@@ -25,16 +25,16 @@ how **Spark on Lambda** fits the physical layer, and where mermaid diagrams map 
 
 | Capability | Runs on Lambda? | Used by this framework? |
 |------------|-----------------|-------------------------|
-| **PySpark / Spark-on-Lambda** (physical Parquet writes) | Yes (with JVM layer/container) | Yes — domain `batch_writer` |
-| **Polars / PyArrow / DuckDB** (physical writes) | Yes | Yes — lighter alternative to Spark |
-| **AWS Glue ETL job** (managed Spark runner) | **No** | **No** — separate service |
+| **PySpark / Spark-on-Lambda** (physical Parquet writes) | Yes (with JVM layer/container) | Yes: domain `batch_writer` |
+| **Polars / PyArrow / DuckDB** (physical writes) | Yes | Yes: lighter alternative to Spark |
+| **AWS Glue ETL job** (managed Spark runner) | **No** | **No**: separate service |
 | **Glue Interactive Sessions** | **No** | **No** |
-| **Glue Data Catalog** (table metadata) | N/A (API only) | **Yes** — via Glue Catalog Connector |
-| **Glue Iceberg REST** (`add_files` 2PC) | N/A (HTTPS + SigV4) | **Yes** — metadata commit |
+| **Glue Data Catalog** (table metadata) | N/A (API only) | **Yes**: via Glue Catalog Connector |
+| **Glue Iceberg REST** (`add_files` 2PC) | N/A (HTTPS + SigV4) | **Yes**: metadata commit |
 
 ```mermaid
 flowchart TB
-    subgraph lambda [Lambda Domain Writer — COMPUTE]
+    subgraph lambda [Lambda Domain Writer: COMPUTE]
         SPARK[PySpark / Polars / PyArrow]
         IG[IceGuard SafeWriter]
         VRP[veridata-recon VRP]
@@ -43,13 +43,13 @@ flowchart TB
         IG --> VRP
     end
 
-    subgraph glue_api [Glue Data Catalog — METADATA ONLY]
+    subgraph glue_api [Glue Data Catalog: METADATA ONLY]
         REST[Glue Iceberg REST API]
         CAT[Table / Snapshot Registry]
         REST --> CAT
     end
 
-    subgraph glue_etl [AWS Glue ETL Jobs — NOT USED HERE]
+    subgraph glue_etl [AWS Glue ETL Jobs: NOT USED HERE]
         JOB[Glue Job Runner]
         STUDIO[Glue Studio]
         JOB -.-x lambda
@@ -71,7 +71,7 @@ You get Iceberg table registration in the Steward Glue catalog without ever star
 
 ```mermaid
 flowchart LR
-    subgraph physical [Physical Plane — Lambda]
+    subgraph physical [Physical Plane: Lambda]
         direction TB
         READ[Read source chunk]
         TRANS[Transform / aggregate]
@@ -79,7 +79,7 @@ flowchart LR
         READ --> TRANS --> WRITE
     end
 
-    subgraph metadata [Metadata Plane — Glue REST]
+    subgraph metadata [Metadata Plane: Glue REST]
         direction TB
         PREP[prepare_commit paths]
         TX[Iceberg transaction]
@@ -87,7 +87,7 @@ flowchart LR
         PREP --> TX --> SNAP
     end
 
-    subgraph verify [Verification Plane — Steward S3]
+    subgraph verify [Verification Plane: Steward S3]
         PROOF[VRP proof JSON]
     end
 
@@ -117,10 +117,10 @@ connector = GlueCatalogConnector.from_environment(
     table_name="orders_curated",  # Iceberg table
 )
 
-# Phase 1 — stage data file paths (already on S3 from Spark/PyArrow)
+# Phase 1: stage data file paths (already on S3 from Spark/PyArrow)
 connector.prepare_commit(parquet_paths)
 
-# Phase 2 — publish snapshot (only after VRP PASS)
+# Phase 2: publish snapshot (only after VRP PASS)
 snapshot_id = connector.commit(snapshot_properties={"app-id": "orders-domain"})
 ```
 
@@ -162,7 +162,7 @@ No `spark.hadoop.*`, no Glue job `JobRunId`, no DPUs.
 
 ## 4. Spark on Lambda (physical layer)
 
-Glue ETL cannot replace this — if you need Spark transforms, run **PySpark inside Lambda**
+Glue ETL cannot replace this: if you need Spark transforms, run **PySpark inside Lambda**
 (or use Polars/PyArrow for smaller chunks).
 
 ```mermaid
@@ -175,13 +175,13 @@ flowchart TB
         COORD --> SR
     end
 
-    subgraph spark_impl [Your domain code — pick one]
+    subgraph spark_impl [Your domain code: pick one]
         DEMO[examples/domain_writer/io.py demo]
         SPARK[examples/domain_writer/spark_io.py]
         POLARS[Polars / PyArrow]
     end
 
-    subgraph connector [Metadata — always framework]
+    subgraph connector [Metadata: always framework]
         GCC[GlueCatalogConnector]
     end
 
@@ -195,7 +195,7 @@ flowchart TB
 ```python
 from serverless_data_mesh import IceGuardDurableCoordinator, GlueCatalogConnector
 
-# Inside handler — Spark session created once per cold start (domain code):
+# Inside handler: Spark session created once per cold start (domain code):
 # spark = create_spark_session()  # JVM layer required
 
 coordinator = IceGuardDurableCoordinator(
@@ -264,8 +264,8 @@ sequenceDiagram
 If IceGuard rolls back near 15 minutes, **Spark and connector split cleanly**:
 
 - Spark may have written partial Parquet → IceGuard rolls back uncommitted files
-- `GlueCatalogConnector.abort()` — no snapshot published
-- Next segment resumes from S3 checkpoint — **no duplicate metadata**
+- `GlueCatalogConnector.abort()`: no snapshot published
+- Next segment resumes from S3 checkpoint: **no duplicate metadata**
 
 ---
 
@@ -289,7 +289,7 @@ flowchart TB
         DATA[Lakehouse S3 Parquet]
     end
 
-    subgraph consumers [Consumption — any compute]
+    subgraph consumers [Consumption: any compute]
         ATH[Athena]
         EMR[EMR / Glue ETL read]
         BI[BI tools]
@@ -305,7 +305,7 @@ flowchart TB
     BI --> DATA
 ```
 
-**Downstream Glue ETL jobs** may *read* curated tables for further aggregation — that is
+**Downstream Glue ETL jobs** may *read* curated tables for further aggregation: that is
 normal consumption. The **domain writer** that lands the mesh product does **not** invoke them.
 
 ---
@@ -377,7 +377,7 @@ lands in **Publisher** S3.
 |----------|-------|
 | [Data mesh end-to-end](data-mesh-end-to-end.md) | Producer / Steward / Publisher journey |
 | [Architecture](architecture.md) | Four-phase transaction boundary |
-| [Getting started — Step 8](getting-started.md) | Connector setup in tutorial |
+| [Getting started: Step 8](getting-started.md) | Connector setup in tutorial |
 | [Domain contracts](domain-contracts.md) | `source_namespace` / `target_table` |
 | `examples/domain_writer/spark_io.py` | Spark physical layer stub |
 

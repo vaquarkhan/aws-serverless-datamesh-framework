@@ -1,4 +1,4 @@
-aws_region   = "us-east-2"
+﻿aws_region   = "us-east-2"
 name_prefix  = "sdm-producer"
 
 # From steward apply outputs
@@ -13,5 +13,5 @@ lakehouse_bucket     = "sdm-publisher-lakehouse-PUBLISHER_ACCOUNT_ID"
 lambda_timeout_seconds            = 900
 durable_execution_timeout_seconds = 5400
 
-# Optional SparkRules on Lambda — set after packaging with SDM_EXTRAS=rules
+# Optional SparkRules on Lambda: set after packaging with SDM_EXTRAS=rules
 # SPARKRULES_DRL_S3_URI in Lambda env (add to module block when rules enabled)

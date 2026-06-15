@@ -1,4 +1,4 @@
-# Terraform — Production Infrastructure
+﻿# Terraform: Production Infrastructure
 
 Production-grade AWS infrastructure for serverless-data-mesh.
 
@@ -95,9 +95,9 @@ cat response.json
 
 ### `modules/lambda`
 
-- `timeout` — per-invocation container limit (**max 900s / 15 min**, AWS hard cap)
-- `durable_config.execution_timeout` — total durable budget (default **5400s / 90 min**)
-- `durable_config.retention_period` — durable checkpoint retention days (default 14)
+- `timeout`: per-invocation container limit (**max 900s / 15 min**, AWS hard cap)
+- `durable_config.execution_timeout`: total durable budget (default **5400s / 90 min**)
+- `durable_config.retention_period`: durable checkpoint retention days (default 14)
 - Publishes `live` alias (**required** for durable invocation)
 
 ### `modules/stepfunctions`

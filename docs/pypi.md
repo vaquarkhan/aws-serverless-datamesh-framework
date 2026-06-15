@@ -1,4 +1,4 @@
-# PyPI — Publishing & Installing Serverless Data Mesh
+﻿# PyPI: Publishing & Installing Serverless Data Mesh
 
 The framework is published to **PyPI** as [`serverless-data-mesh`](https://pypi.org/project/serverless-data-mesh/).
 
@@ -28,8 +28,8 @@ pip install "serverless-data-mesh[dev]"
 | Extra | Packages | Use on Lambda |
 |-------|----------|---------------|
 | *(core)* | iceguard, veridata-recon, durable-sdk, pyiceberg, boto3 | Yes |
-| `[rules]` | sparkrules | Yes — pure Python `LocalRuleExecutor` |
-| `[spark]` | pyspark + sparkrules | Yes — with JVM layer/container |
+| `[rules]` | sparkrules | Yes: pure Python `LocalRuleExecutor` |
+| `[spark]` | pyspark + sparkrules | Yes: with JVM layer/container |
 | `[all]` | rules + spark | Large Lambda package |
 
 **Also on PyPI (used by core):**
@@ -92,7 +92,7 @@ python -m twine upload dist/*
 
 ### Windows / veridata-recon
 
-`veridata-recon` includes Rust extensions. **Use Python 3.12+ on Linux (CI) or install the cp312 wheel.** Building from source on Windows often fails — use WSL, Docker, or rely on GitHub Actions for full test + benchmark runs.
+`veridata-recon` includes Rust extensions. **Use Python 3.12+ on Linux (CI) or install the cp312 wheel.** Building from source on Windows often fails: use WSL, Docker, or rely on GitHub Actions for full test + benchmark runs.
 
 On git tag `v*`, the workflow `.github/workflows/publish.yml` builds and publishes using **PyPI trusted publishing** (configure on pypi.org → Your project → Publishing).
 
@@ -118,7 +118,7 @@ print(sdm.__version__)
 
 from serverless_data_mesh import GlueCatalogConnector, DataProductContract
 
-# Optional — requires [rules]
+# Optional: requires [rules]
 from serverless_data_mesh import SparkRulesConnector
 ```
 
@@ -126,6 +126,6 @@ from serverless_data_mesh import SparkRulesConnector
 
 ## Related docs
 
-- [SparkRules connector](sparkrules-connector.md) — rules on Lambda
-- [Glue connector](glue-connector.md) — catalog metadata
-- [Getting started](getting-started.md) — full tutorial
+- [SparkRules connector](sparkrules-connector.md): rules on Lambda
+- [Glue connector](glue-connector.md): catalog metadata
+- [Getting started](getting-started.md): full tutorial

@@ -1,4 +1,4 @@
-"""AWS Lambda handler — domain team entry point for governed lakehouse writes."""
+﻿"""AWS Lambda handler: domain team entry point for governed lakehouse writes."""
 
 from __future__ import annotations
 

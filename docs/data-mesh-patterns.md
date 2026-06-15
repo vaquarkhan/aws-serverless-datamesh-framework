@@ -1,6 +1,6 @@
-# Serverless Data Mesh — Concepts & Patterns
+﻿# Serverless Data Mesh: Concepts & Patterns
 
-**A new framework for the world:** federated domain ownership, cryptographic verification, and exactly-once lakehouse writes—on AWS Lambda, without centralizing every pipeline.
+**A new framework for the world:** federated domain ownership, cryptographic verification, and exactly-once lakehouse writes - on AWS Lambda, without centralizing every pipeline.
 
 This document maps **data mesh concepts** to **named patterns** in the framework, shows what is **fully covered end-to-end** today, and lists **improvements** on the roadmap.
 
@@ -199,7 +199,7 @@ terraform output execution_timeouts
 
 ### 7. IceGuard Rollback–Resume
 
-Near timeout, IceGuard rolls back **uncommitted** Parquet, saves S3 checkpoint, returns `rolled_back`. Next segment resumes—no duplicate committed chunks.
+Near timeout, IceGuard rolls back **uncommitted** Parquet, saves S3 checkpoint, returns `rolled_back`. Next segment resumes - no duplicate committed chunks.
 
 ```mermaid
 stateDiagram-v2
@@ -217,7 +217,7 @@ stateDiagram-v2
 
 ### 8. Poison Pill Isolation
 
-`verification_failed` **stops** the Step Functions execution—no blind retries that could mask data quality incidents.
+`verification_failed` **stops** the Step Functions execution - no blind retries that could mask data quality incidents.
 
 ```mermaid
 flowchart TD
@@ -261,7 +261,7 @@ Steward account holds **immutable** proof artifacts. Producers cannot delete aud
 s3://{proof_bucket}/{domain_id}/{workload_id}/proofs/chunk-{NNNNNN}.vrp.json
 ```
 
-Consumers verify offline—trust is mathematical, not operational.
+Consumers verify offline - trust is mathematical, not operational.
 
 ---
 
@@ -293,7 +293,7 @@ flowchart LR
 
 ### 13. SparkRules on Lambda (business rules)
 
-[SparkRules](https://pypi.org/project/sparkrules/) evaluates Drools-style DRL per chunk in pure Python—before VRP and physical write.
+[SparkRules](https://pypi.org/project/sparkrules/) evaluates Drools-style DRL per chunk in pure Python - before VRP and physical write.
 
 ```mermaid
 flowchart LR
@@ -342,10 +342,10 @@ flowchart TB
 
 | Stage | Covered? | Gap |
 |-------|----------|-----|
-| Product registration | Partial | Auto-publish `to_registry_entry()` to portal — manual |
+| Product registration | Partial | Auto-publish `to_registry_entry()` to portal: manual |
 | IAM / LF setup | Documented | No multi-account Terraform module yet |
 | Trigger / schedule | Yes | EventBridge optional |
-| Physical write | Yes | Spark stub only — domain implements |
+| Physical write | Yes | Spark stub only: domain implements |
 | Verification | Yes | Requires `veridata-recon` install |
 | Metadata commit | Yes | Glue prerequisites manual |
 | Long execution | Yes | Terraform timeouts configurable |
@@ -353,7 +353,7 @@ flowchart TB
 | Consumer read | Documented | No subscription API |
 | Offline audit | Yes | `veridata-recon verify_proof` |
 
-**Verdict:** The framework covers the **write path end-to-end** for a new mesh domain. Remaining gaps are **platform ergonomics** (multi-account Terraform, registry automation, lineage)—not core transaction semantics.
+**Verdict:** The framework covers the **write path end-to-end** for a new mesh domain. Remaining gaps are **platform ergonomics** (multi-account Terraform, registry automation, lineage) - not core transaction semantics.
 
 ---
 
@@ -395,4 +395,4 @@ flowchart TB
 
 ---
 
-*This framework introduces **validate-then-commit lakehouse writes on Lambda** as a first-class data mesh primitive—the world's domains get autonomy; the mesh gets proofs.*
+*This framework introduces **validate-then-commit lakehouse writes on Lambda** as a first-class data mesh primitive - the world's domains get autonomy; the mesh gets proofs.*

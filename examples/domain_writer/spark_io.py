@@ -1,7 +1,7 @@
-"""Spark-on-Lambda I/O pattern (physical layer only).
+﻿"""Spark-on-Lambda I/O pattern (physical layer only).
 
 Use this module when your domain writer runs PySpark inside Lambda for Parquet
-materialization. Metadata commits still go through ``GlueCatalogConnector`` —
+materialization. Metadata commits still go through ``GlueCatalogConnector``  - 
 never through a Glue ETL job.
 
 Install optional deps: ``pip install serverless-data-mesh[spark]``

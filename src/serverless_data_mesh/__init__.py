@@ -1,4 +1,4 @@
-"""Serverless Data Mesh — cross-domain lakehouse write coordination on AWS Lambda."""
+﻿"""Serverless Data Mesh: cross-domain lakehouse write coordination on AWS Lambda."""
 
 from __future__ import annotations
 

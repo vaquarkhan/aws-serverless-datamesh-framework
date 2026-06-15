@@ -1,4 +1,4 @@
-# Domain Writer Example
+﻿# Domain Writer Example
 
 Reference Lambda handler for a data mesh domain team.
 
@@ -18,9 +18,9 @@ examples/domain_writer/
 | Layer | Module | Runs on Lambda? |
 |-------|--------|-----------------|
 | Physical Parquet writes | `io.py` or `spark_io.py` | Yes |
-| Business rules (DRL) | `rules_io.py` + `SparkRulesConnector` | Yes — `[rules]` extra |
+| Business rules (DRL) | `rules_io.py` + `SparkRulesConnector` | Yes: `[rules]` extra |
 | Glue metadata commit | `GlueCatalogConnector` in handler | Yes (REST client only) |
-| AWS Glue ETL jobs | — | **No** |
+| AWS Glue ETL jobs |: | **No** |
 
 See [docs/glue-connector.md](../../docs/glue-connector.md) and [docs/sparkrules-connector.md](../../docs/sparkrules-connector.md).
 

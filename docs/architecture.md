@@ -1,4 +1,4 @@
-# Architecture
+﻿# Architecture
 
 ## Overview
 
@@ -20,23 +20,23 @@ flowchart TB
         EVT[Lambda Event]
     end
 
-    subgraph physical [Physical Layer — IceGuard]
+    subgraph physical [Physical Layer: IceGuard]
         SW[SafeWriter]
         WD[Timeout Watchdog]
         CP[S3 Checkpoints]
     end
 
-    subgraph verify [Verification — veridata-recon]
+    subgraph verify [Verification: veridata-recon]
         VRP[VRP Proof Generator]
         VTC[validate_then_commit]
     end
 
-    subgraph durable [Orchestration — AWS Durable Execution]
+    subgraph durable [Orchestration: AWS Durable Execution]
         DS1[durable_write_chunk]
         DS2[durable_commit_metadata]
     end
 
-    subgraph metadata [Metadata — GlueCatalogConnector]
+    subgraph metadata [Metadata: GlueCatalogConnector]
         CONN[Glue Iceberg REST]
         PREP[prepare_commit]
         COMMIT[commit snapshot]
@@ -72,13 +72,13 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    subgraph lambda_compute [Lambda — physical compute]
+    subgraph lambda_compute [Lambda: physical compute]
         SPARK[PySpark / Polars / PyArrow]
         IG[IceGuard]
         SPARK --> IG
     end
 
-    subgraph lambda_meta [Lambda — metadata connector]
+    subgraph lambda_meta [Lambda: metadata connector]
         GCC[GlueCatalogConnector]
     end
 
@@ -102,9 +102,9 @@ Full guide: **[glue-connector.md](glue-connector.md)**.
 
 ## Failure modes
 
-- **VRP FAIL** — metadata commit blocked; physical files eligible for rollback
-- **Lambda timeout** — IceGuard rolls back uncommitted Parquet; durable steps resume
-- **Catalog error** — `CatalogCommitError`; abort without publishing snapshot
+- **VRP FAIL**: metadata commit blocked; physical files eligible for rollback
+- **Lambda timeout**: IceGuard rolls back uncommitted Parquet; durable steps resume
+- **Catalog error**: `CatalogCommitError`; abort without publishing snapshot
 
 ## Long-running execution (90+ minutes)
 
@@ -136,7 +136,7 @@ sequenceDiagram
     L-->>SFN: outcome=committed
 ```
 
-**Direct invoke** (qualified `:live` ARN, no Step Functions): durable execution can chain platform-managed replays within `execution_timeout` without returning `rolled_back` between segments — useful for jobs that fit entirely under the durable budget.
+**Direct invoke** (qualified `:live` ARN, no Step Functions): durable execution can chain platform-managed replays within `execution_timeout` without returning `rolled_back` between segments: useful for jobs that fit entirely under the durable budget.
 
 **Step Functions backfill**: each `rolled_back` ends one segment; the resume loop starts a new invocation. IceGuard S3 checkpoints (keyed by `workload_id`) carry the physical resume offset; durable step checkpoints prevent re-writing verified chunks.
 

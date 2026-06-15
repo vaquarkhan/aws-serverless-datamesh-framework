@@ -1,10 +1,10 @@
-# Terraform Deployment — Step by Step
+﻿# Terraform Deployment: Step by Step
 
 Each step explains **what it is** and **what we achieve** before commands.
 
 ---
 
-## Step 1 — Understand the stack
+## Step 1: Understand the stack
 
 ### What is this?
 
@@ -16,7 +16,7 @@ One `terraform apply` provisions the full production mesh: encrypted S3, durable
 
 ---
 
-## Step 2 — Choose region
+## Step 2: Choose region
 
 ### What is this?
 
@@ -32,7 +32,7 @@ aws_region = "us-east-2"
 
 ---
 
-## Step 3 — Build the Lambda package
+## Step 3: Build the Lambda package
 
 ### What is this?
 
@@ -54,7 +54,7 @@ Windows:
 
 ---
 
-## Step 4 — Configure tfvars
+## Step 4: Configure tfvars
 
 ### What is this?
 
@@ -98,7 +98,7 @@ resume_wait_seconds               = 60
 |---------|---------|
 | `lambda_timeout_seconds = 900` | AWS hard max per container (15 min) |
 | `durable_execution_timeout_seconds = 5400` | Total durable execution budget (90 min) |
-| `lambda_memory_mb` | Chunk throughput — raise if p99 duration nears timeout |
+| `lambda_memory_mb` | Chunk throughput: raise if p99 duration nears timeout |
 | `sfn_invoke_timeout_buffer_seconds` | SFN `TimeoutSeconds` = lambda + buffer |
 | `max_resume_attempts` | Resume loops after `rolled_back`; prod auto-bumps to `ceil(durable/lambda)+2` |
 | `iceguard_rollback_threshold_ms` | Null = auto (~33ms × lambda timeout, clamped 10s–60s) |
@@ -113,7 +113,7 @@ terraform output execution_timeouts
 
 ---
 
-## Step 5 — Initialize and plan
+## Step 5: Initialize and plan
 
 ### What is this?
 
@@ -121,7 +121,7 @@ Terraform downloads providers (AWS >= 6.25 for `durable_config`) and builds the 
 
 ### What we try to achieve
 
-Review every resource before apply — catch IAM/bucket naming issues early.
+Review every resource before apply: catch IAM/bucket naming issues early.
 
 ```bash
 terraform init
@@ -130,7 +130,7 @@ terraform plan -out=prod.tfplan
 
 ---
 
-## Step 6 — Apply infrastructure
+## Step 6: Apply infrastructure
 
 ### What is this?
 
@@ -154,7 +154,7 @@ terraform output example_stepfunctions_input
 
 ---
 
-## Step 7 — Run backfill via Step Functions (recommended)
+## Step 7: Run backfill via Step Functions (recommended)
 
 ### What is this?
 
@@ -186,7 +186,7 @@ aws stepfunctions describe-execution --execution-arn <arn>
 
 ---
 
-## Step 8 — Direct Lambda invoke (debug)
+## Step 8: Direct Lambda invoke (debug)
 
 ### What is this?
 
@@ -208,7 +208,7 @@ cat response.json    # Linux/macOS
 
 ---
 
-## Step 9 — Enable scheduled backfills
+## Step 9: Enable scheduled backfills
 
 ### What is this?
 
@@ -228,7 +228,7 @@ Re-apply. Default schedule: `cron(0 2 * * ? *)` (02:00 UTC daily). Customize in 
 
 ---
 
-## Step 10 — Monitor operations
+## Step 10: Monitor operations
 
 ### What is this?
 
@@ -252,7 +252,7 @@ s3://{proof_bucket}/{domain_id}/{workload_id}/proofs/chunk-000000.vrp.json
 
 ---
 
-## Step 11 — Glue prerequisites
+## Step 11: Glue prerequisites
 
 ### What is this?
 
@@ -260,7 +260,7 @@ Glue database + Iceberg table that the REST catalog adapter commits to.
 
 ### What we try to achieve
 
-Metadata target exists before first `committed` outcome. This stack does **not** create Glue tables — provision separately:
+Metadata target exists before first `committed` outcome. This stack does **not** create Glue tables: provision separately:
 
 - Database: `raw_orders`
 - Table: `orders_curated`

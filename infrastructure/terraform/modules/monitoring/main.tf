@@ -1,4 +1,4 @@
-resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
+﻿resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   alarm_name          = "${var.name_prefix}-domain-writer-errors"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
@@ -80,7 +80,7 @@ resource "aws_cloudwatch_metric_alarm" "rollback_near_timeout" {
   statistic           = "Sum"
   threshold           = 0
   treat_missing_data  = "notBreaching"
-  alarm_description   = "IceGuard rollback detected — near-timeout pressure on domain writer."
+  alarm_description   = "IceGuard rollback detected: near-timeout pressure on domain writer."
   alarm_actions       = var.alarm_actions
 
   tags = var.tags

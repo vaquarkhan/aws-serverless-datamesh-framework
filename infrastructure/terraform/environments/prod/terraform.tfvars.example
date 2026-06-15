@@ -1,4 +1,4 @@
-# Copy to terraform.tfvars and customize bucket names (must be globally unique).
+﻿# Copy to terraform.tfvars and customize bucket names (must be globally unique).
 
 aws_region   = "us-east-2"
 environment  = "prod"
@@ -26,7 +26,7 @@ sfn_invoke_timeout_buffer_seconds   = 60
 resume_wait_seconds                 = 30
 
 # Production backfills (uncomment / override):
-# lambda_timeout_seconds            = 900   # 15 min — AWS max per invocation
+# lambda_timeout_seconds            = 900   # 15 min: AWS max per invocation
 # durable_execution_timeout_seconds = 5400  # 90 min total durable budget
 # lambda_memory_mb                  = 4096
 # max_resume_attempts               = 10

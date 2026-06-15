@@ -1,8 +1,8 @@
-# Serverless Data Mesh — End-to-End Guide
+﻿# Serverless Data Mesh: End-to-End Guide
 
 **A new open framework for governed, exactly-once lakehouse writes on AWS Lambda.**
 
-This document explains how **Serverless Data Mesh** works from first principles through production deployment across a **three-account federated data mesh**: **Producer**, **Steward**, and **Publisher**. It is written for platform engineers, domain data owners, and auditors who need a complete picture—not just API reference.
+This document explains how **Serverless Data Mesh** works from first principles through production deployment across a **three-account federated data mesh**: **Producer**, **Steward**, and **Publisher**. It is written for platform engineers, domain data owners, and auditors who need a complete picture - not just API reference.
 
 ---
 
@@ -26,7 +26,7 @@ This document explains how **Serverless Data Mesh** works from first principles 
 
 ## 1. What problem we solve
 
-Traditional data platforms centralize ingestion in one account and one pipeline. **Data mesh** inverts that: each **domain team** owns its data products, quality, and SLAs—but consumers still need **trust**, **lineage**, and **exactly-once** semantics when data lands in a shared lakehouse.
+Traditional data platforms centralize ingestion in one account and one pipeline. **Data mesh** inverts that: each **domain team** owns its data products, quality, and SLAs - but consumers still need **trust**, **lineage**, and **exactly-once** semantics when data lands in a shared lakehouse.
 
 Serverless Data Mesh gives domain teams a **repeatable Lambda-native write contract**:
 
@@ -43,7 +43,7 @@ Without this framework, domain teams either:
 - Run fragile custom scripts with no proof of correctness, or
 - Centralize everything in a platform monolith that cannot scale to hundreds of domains.
 
-**Serverless Data Mesh is the missing coordination layer**—small enough to run in each domain's Lambda, strict enough for enterprise audit.
+**Serverless Data Mesh is the missing coordination layer** - small enough to run in each domain's Lambda, strict enough for enterprise audit.
 
 ![Serverless Data Mesh hero](../images/serverless-data-mesh-hero.png)
 
@@ -55,7 +55,7 @@ A production federated mesh **separates concerns across three AWS accounts**. Th
 
 ![Three-account data mesh architecture](../images/three-account-data-mesh.png)
 
-### Account A — Producer (Domain)
+### Account A: Producer (Domain)
 
 **Who owns it:** The domain team (e.g. Orders, Payments, Inventory).
 
@@ -84,11 +84,11 @@ DomainTransactionBoundary(
 
 ---
 
-### Account B — Steward (Platform / Governance)
+### Account B: Steward (Platform / Governance)
 
 **Who owns it:** The data platform or mesh governance team.
 
-**Responsibility:** **Trust infrastructure**—catalog, policies, checkpoints, proofs, and Lake Formation.
+**Responsibility:** **Trust infrastructure** - catalog, policies, checkpoints, proofs, and Lake Formation.
 
 | Resource | Purpose |
 |----------|---------|
@@ -110,7 +110,7 @@ s3://{proof_bucket}/{domain_id}/{workload_id}/proofs/   # chunk-000000.vrp.json,
 
 ---
 
-### Account C — Publisher (Curated / Consumption)
+### Account C: Publisher (Curated / Consumption)
 
 **Who owns it:** The analytics platform or data product office.
 
@@ -173,12 +173,12 @@ flowchart LR
 
 ## 3. How Lambda fits in
 
-Lambda is the **execution unit** for domain writes—not because batch EMR is wrong, but because:
+Lambda is the **execution unit** for domain writes - not because batch EMR is wrong, but because:
 
-1. **Domains are independent** — each team ships a small handler, not a shared cluster.
-2. **Cost follows usage** — backfills scale to zero between runs.
-3. **Durable Execution** — AWS now chains 15-minute segments into **90+ minute** jobs.
-4. **IceGuard** — turns Lambda's hard timeout into a **safe rollback + resume** primitive.
+1. **Domains are independent**: each team ships a small handler, not a shared cluster.
+2. **Cost follows usage**: backfills scale to zero between runs.
+3. **Durable Execution**: AWS now chains 15-minute segments into **90+ minute** jobs.
+4. **IceGuard**: turns Lambda's hard timeout into a **safe rollback + resume** primitive.
 
 ![Lambda execution flow](../images/lambda-execution-flow.png)
 
@@ -210,7 +210,7 @@ examples.domain_writer.handler.lambda_handler
 
 ## 4. Glue Catalog Connector (not Glue ETL)
 
-A common misconception: "we use Glue, so we need Glue jobs." **In this framework, Glue means the Data Catalog API—not the Glue ETL engine.**
+A common misconception: "we use Glue, so we need Glue jobs." **In this framework, Glue means the Data Catalog API - not the Glue ETL engine.**
 
 ```mermaid
 flowchart TB
@@ -237,7 +237,7 @@ flowchart TB
 
 | Component | What it is | On Lambda? |
 |-----------|------------|------------|
-| **PySpark-on-Lambda** | Your domain `batch_writer` — transforms + Parquet | Yes |
+| **PySpark-on-Lambda** | Your domain `batch_writer`: transforms + Parquet | Yes |
 | **GlueCatalogConnector** | Metadata-only REST client (`prepare_commit` / `commit`) | Yes (HTTPS client) |
 | **Glue Data Catalog** | Table/snapshot registry in Steward account | API target |
 | **AWS Glue ETL** | Managed Spark job runner (DPUs, JobRun) | **No** |
@@ -253,7 +253,7 @@ connector.prepare_commit(parquet_paths_from_spark)
 snapshot_id = connector.commit()  # after VRP PASS
 ```
 
-**Physical writes** use Spark, Polars, or PyArrow in your handler. **Metadata registration** uses the connector—never a Glue job submission from Lambda.
+**Physical writes** use Spark, Polars, or PyArrow in your handler. **Metadata registration** uses the connector - never a Glue job submission from Lambda.
 
 Full diagrams, sequences, and Spark wiring: **[glue-connector.md](glue-connector.md)**.
 
@@ -263,7 +263,7 @@ Full diagrams, sequences, and Spark wiring: **[glue-connector.md](glue-connector
 
 This section walks through **one complete backfill** of 250,000 order records from Producer to Publisher.
 
-### Step 0 — Contract published (before any code runs)
+### Step 0: Contract published (before any code runs)
 
 The Orders domain registers its data product in the mesh registry (Confluence / Backstage / internal portal):
 
@@ -277,7 +277,7 @@ Steward creates Lake Formation grants: Producer role may write Publisher lakehou
 
 ---
 
-### Step 1 — Trigger (Producer)
+### Step 1: Trigger (Producer)
 
 EventBridge fires at 02:00 UTC (or an operator starts Step Functions manually):
 
@@ -296,16 +296,16 @@ Step Functions state machine (`sdm-prod-backfill-orchestrator`) receives the inp
 
 ---
 
-### Step 2 — Lambda segment 1 (Producer Lambda)
+### Step 2: Lambda segment 1 (Producer Lambda)
 
 1. Handler parses event → `DataWriteWorkload`
-2. Coordinator loads IceGuard checkpoint from Steward (`checkpoint_bucket`) — empty on first run
+2. Coordinator loads IceGuard checkpoint from Steward (`checkpoint_bucket`): empty on first run
 3. **Chunk loop** (up to `max_chunk_records` per chunk):
    - Read source records `[offset, offset + chunk_size)`
    - Write Parquet to Publisher lakehouse path via **Spark-on-Lambda / Polars / PyArrow** (not Glue ETL)
    - Generate VRP proof → upload to Steward `proof_bucket`
-   - `validate_then_commit` — if **FAIL**, abort; metadata never committed
-   - `durable_write_chunk` checkpoint — replay skips completed chunks
+   - `validate_then_commit`: if **FAIL**, abort; metadata never committed
+   - `durable_write_chunk` checkpoint: replay skips completed chunks
 4. IceGuard watchdog detects ~30s before Lambda 15-min limit
 5. Rolls back **uncommitted** Parquet for current chunk
 6. Saves checkpoint `{next_offset: 125000, ...}` to Steward S3
@@ -322,15 +322,15 @@ Step Functions state machine (`sdm-prod-backfill-orchestrator`) receives the inp
 
 ---
 
-### Step 3 — Step Functions resume loop
+### Step 3: Step Functions resume loop
 
 State machine sees `outcome == rolled_back`, waits 60s, increments `resume_attempt`, re-invokes Lambda with **same** `workload_id`.
 
-IceGuard loads checkpoint — resumes at offset 125,000. Durable steps replay — chunks 0–24 are **not** re-written.
+IceGuard loads checkpoint: resumes at offset 125,000. Durable steps replay: chunks 0–24 are **not** re-written.
 
 ---
 
-### Step 4 — Lambda segment N (final)
+### Step 4: Lambda segment N (final)
 
 After offset 250,000:
 
@@ -352,7 +352,7 @@ Step Functions → **Success**.
 
 ---
 
-### Step 5 — Consumption (Publisher)
+### Step 5: Consumption (Publisher)
 
 Athena / Spark in Publisher account queries `orders_curated` WHERE `dt = '2026-06-14'`.
 
@@ -363,7 +363,7 @@ veridata-recon verify_proof \
   --proof s3://steward-proofs/orders-domain/backfill-2026q2-orders-20260614/proofs/chunk-000025.vrp.json
 ```
 
-**Trust chain:** Source multiset hash → VRP proof → Iceberg snapshot — all tied by `workload_id`.
+**Trust chain:** Source multiset hash → VRP proof → Iceberg snapshot: all tied by `workload_id`.
 
 ---
 
@@ -373,14 +373,14 @@ Every write passes through **four phases**. Skipping any phase breaks mesh guara
 
 ```mermaid
 flowchart TB
-    P1[Phase 1 — Physical Write<br/>IceGuard SafeWriter]
-    P2[Phase 2 — Verify<br/>veridata-recon VRP]
-    P3[Phase 3 — Durable Checkpoint<br/>AWS Durable SDK]
-    P4[Phase 4 — Metadata Commit<br/>Glue REST 2PC]
+    P1[Phase 1: Physical Write<br/>IceGuard SafeWriter]
+    P2[Phase 2: Verify<br/>veridata-recon VRP]
+    P3[Phase 3: Durable Checkpoint<br/>AWS Durable SDK]
+    P4[Phase 4: Metadata Commit<br/>Glue REST 2PC]
 
     P1 --> P2
     P2 -->|PASS| P3
-    P2 -->|FAIL| ABORT[Abort — no snapshot]
+    P2 -->|FAIL| ABORT[Abort: no snapshot]
     P3 --> P4
     P4 --> DONE[Data product published]
 ```
@@ -405,7 +405,7 @@ Lambda has a **hard 15-minute per-invocation limit**. The framework still suppor
 | `max_resume_attempts` | 10 | Step Functions loops after `rolled_back` |
 | Step Functions `TimeoutSeconds` | 960 | Waits for one segment, not 90 min |
 
-See [architecture.md — Long-running execution](architecture.md#long-running-execution-90-minutes) for sequence diagrams and Terraform tuning.
+See [architecture.md: Long-running execution](architecture.md#long-running-execution-90-minutes) for sequence diagrams and Terraform tuning.
 
 ---
 
@@ -421,14 +421,14 @@ s3://{proof_bucket}/{domain_id}/{workload_id}/proofs/chunk-{NNNNNN}.vrp.json
 
 Each proof binds:
 
-- **source_ref** — opaque locator (e.g. `source_uri` + byte range)
-- **sink_ref** — Parquet path in Publisher lakehouse
-- **content hash multiset** — cryptographic summary of records written
-- **policy** — `strict-zero-drop`, identity rules, tolerances
+- **source_ref**: opaque locator (e.g. `source_uri` + byte range)
+- **sink_ref**: Parquet path in Publisher lakehouse
+- **content hash multiset**: cryptographic summary of records written
+- **policy**: `strict-zero-drop`, identity rules, tolerances
 
 **FAIL** means: multiset mismatch (drops, duplicates, mutations). Metadata commit is **blocked**.
 
-Steward retention (default 90 days for proofs) is independent of Producer compute lifecycle—proofs survive Lambda deletion.
+Steward retention (default 90 days for proofs) is independent of Producer compute lifecycle - proofs survive Lambda deletion.
 
 ---
 
@@ -493,9 +493,9 @@ The included Terraform (`infrastructure/terraform/environments/prod`) deploys a 
 
 ### Minimum deploy order
 
-1. **Steward** — Glue DB/tables, checkpoint + proof buckets, LF admin
-2. **Publisher** — Lakehouse bucket, LF resource registration, consumer read roles
-3. **Producer** — Package Lambda (`scripts/package_lambda.sh`), deploy handler, wire cross-account ARNs in env vars:
+1. **Steward**: Glue DB/tables, checkpoint + proof buckets, LF admin
+2. **Publisher**: Lakehouse bucket, LF resource registration, consumer read roles
+3. **Producer**: Package Lambda (`scripts/package_lambda.sh`), deploy handler, wire cross-account ARNs in env vars:
 
 ```bash
 ICEGUARD_CHECKPOINT_BUCKET=steward-checkpoints-ACCOUNT_ID
@@ -504,7 +504,7 @@ ICEBERG_TABLE_BUCKET=publisher-lakehouse-ACCOUNT_ID
 ICEBERG_WAREHOUSE=STEWARD_ACCOUNT_ID:s3tablescatalog/publisher-lakehouse-ACCOUNT_ID
 ```
 
-4. **Validate** — Small workload (`total_records: 1000`), inspect proofs, query Publisher table
+4. **Validate**: Small workload (`total_records: 1000`), inspect proofs, query Publisher table
 
 Detailed Terraform steps: [terraform-guide.md](terraform-guide.md).
 
@@ -516,7 +516,7 @@ Detailed Terraform steps: [terraform-guide.md](terraform-guide.md).
 
 | `outcome` | Meaning | Action |
 |-----------|---------|--------|
-| `committed` | Snapshot published | None — success |
+| `committed` | Snapshot published | None: success |
 | `resumed` | Continued from checkpoint | Normal for long jobs |
 | `rolled_back` | IceGuard near-timeout rollback | Step Functions auto-resumes |
 | `verification_failed` | VRP FAIL | Inspect proofs; fix source; do not re-run blindly |
@@ -543,10 +543,10 @@ Detailed Terraform steps: [terraform-guide.md](terraform-guide.md).
 
 | Package | Role in mesh |
 |---------|--------------|
-| [iceguard](https://pypi.org/project/iceguard/) | Physical layer — SafeWriter, watchdog, S3 resume |
-| [veridata-recon](https://pypi.org/project/veridata-recon/) | Verification — Rust VRP, `validate_then_commit` |
-| [aws-durable-execution-sdk-python](https://pypi.org/project/aws-durable-execution-sdk-python/) | Orchestration — checkpoint/replay across segments |
-| [pyiceberg](https://pypi.org/project/pyiceberg/) | Metadata — Glue REST SigV4, `add_files` 2PC |
+| [iceguard](https://pypi.org/project/iceguard/) | Physical layer: SafeWriter, watchdog, S3 resume |
+| [veridata-recon](https://pypi.org/project/veridata-recon/) | Verification: Rust VRP, `validate_then_commit` |
+| [aws-durable-execution-sdk-python](https://pypi.org/project/aws-durable-execution-sdk-python/) | Orchestration: checkpoint/replay across segments |
+| [pyiceberg](https://pypi.org/project/pyiceberg/) | Metadata: Glue REST SigV4, `add_files` 2PC |
 
 ```python
 from serverless_data_mesh import (
@@ -564,8 +564,8 @@ from serverless_data_mesh import (
 
 | Audience | Start here |
 |----------|------------|
-| Domain developer | [getting-started.md](getting-started.md) — 13-step tutorial |
-| Platform engineer | [terraform-guide.md](terraform-guide.md) — production deploy |
+| Domain developer | [getting-started.md](getting-started.md): 13-step tutorial |
+| Platform engineer | [terraform-guide.md](terraform-guide.md): production deploy |
 | Architect / auditor | This document + [glue-connector.md](glue-connector.md) + [data-mesh-patterns.md](data-mesh-patterns.md) |
 | API contracts | [domain-contracts.md](domain-contracts.md) |
 
@@ -582,14 +582,14 @@ make install && make test
 
 **Serverless Data Mesh** is a new framework for the world because it combines:
 
-- **Federated ownership** — Producer domains ship independent Lambdas
-- **Centralized trust** — Steward holds catalog, proofs, checkpoints
-- **Safe publication** — Publisher exposes verified Iceberg products
-- **Serverless economics** — no always-on clusters for intermittent backfills
-- **Mathematical verification** — VRP proofs, not just "we logged success"
+- **Federated ownership**: Producer domains ship independent Lambdas
+- **Centralized trust**: Steward holds catalog, proofs, checkpoints
+- **Safe publication**: Publisher exposes verified Iceberg products
+- **Serverless economics**: no always-on clusters for intermittent backfills
+- **Mathematical verification**: VRP proofs, not just "we logged success"
 
 Three accounts. One transaction boundary. Exactly-once from source to consumption.
 
 ---
 
-*Apache-2.0 — [LICENSE](../LICENSE)*
+*Apache-2.0: [LICENSE](../LICENSE)*

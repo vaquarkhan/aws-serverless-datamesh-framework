@@ -1,12 +1,12 @@
-# Serverless Data Mesh
+﻿# Serverless Data Mesh
 
 <p align="center">
-  <img src="docs/images/serverless-data-mesh-hero.png" alt="Serverless Data Mesh — exactly-once lakehouse writes on AWS Lambda" width="900" />
+  <img src="docs/images/serverless-data-mesh-hero.png" alt="Serverless Data Mesh: exactly-once lakehouse writes on AWS Lambda" width="900" />
 </p>
 
 **A new open framework for governed, exactly-once lakehouse writes on AWS Lambda.**
 
-Serverless Data Mesh coordinates **cross-domain data products** across a federated mesh: domain teams **produce** data, platform stewards **verify and govern** it, and a publish zone **exposes** curated Iceberg tables to the organization—with cryptographic proofs, not just logs.
+Serverless Data Mesh coordinates **cross-domain data products** across a federated mesh: domain teams **produce** data, platform stewards **verify and govern** it, and a publish zone **exposes** curated Iceberg tables to the organization - with cryptographic proofs, not just logs.
 
 Combines [IceGuard](https://pypi.org/project/iceguard/), [veridata-recon](https://pypi.org/project/veridata-recon/), [AWS Durable Execution](https://docs.aws.amazon.com/durable-execution/), and [PyIceberg Glue REST](https://py.iceberg.apache.org/) into one transaction boundary for the world's data mesh teams.
 
@@ -23,7 +23,7 @@ Combines [IceGuard](https://pypi.org/project/iceguard/), [veridata-recon](https:
 | Federated AWS accounts | Producer · Steward · Publisher separation |
 | Tunable Lambda timeouts | Terraform `lambda_timeout_seconds` + derived SFN/rollback |
 
-**[Framework concepts & patterns →](docs/data-mesh-patterns.md)** · **[Full end-to-end guide →](docs/data-mesh-end-to-end.md)**
+**[Why this framework exists →](docs/why-serverless-data-mesh.md)** · **[Framework concepts & patterns →](docs/data-mesh-patterns.md)** · **[Full end-to-end guide →](docs/data-mesh-end-to-end.md)**
 
 ---
 
@@ -50,7 +50,7 @@ Details, IAM, and deploy order: **[docs/data-mesh-end-to-end.md](docs/data-mesh-
 ## How Lambda runs the mesh
 
 <p align="center">
-  <img src="docs/images/lambda-execution-flow.png" alt="Lambda durable execution flow — IceGuard, VRP, Durable SDK, Glue REST" width="900" />
+  <img src="docs/images/lambda-execution-flow.png" alt="Lambda durable execution flow: IceGuard, VRP, Durable SDK, Glue REST" width="900" />
 </p>
 
 **Compute on Lambda. Catalog via Glue connector. No Glue ETL jobs.**
@@ -58,7 +58,7 @@ Details, IAM, and deploy order: **[docs/data-mesh-end-to-end.md](docs/data-mesh-
 | Layer | Runs on Lambda? | Component |
 |-------|-----------------|-----------|
 | Physical transforms | Yes | PySpark-on-Lambda, Polars, PyArrow |
-| AWS Glue ETL jobs | **No** | Not used — separate managed service |
+| AWS Glue ETL jobs | **No** | Not used: separate managed service |
 | Glue Data Catalog metadata | API only | `GlueCatalogConnector` (HTTPS + SigV4) |
 
 See **[Glue Catalog Connector guide](docs/glue-connector.md)** for diagrams and Spark wiring.
@@ -86,8 +86,8 @@ Lambda :live  (15-min segments, up to 90+ min total)
 | **iceguard** | Timeout watchdog, S3 checkpoint resume, orphan cleanup |
 | **veridata-recon** | Rust-backed VRP proofs (`pip install veridata-recon`) |
 | **aws-durable-execution-sdk-python** | Checkpoint/replay beyond Lambda's 15-minute ceiling |
-| **pyiceberg[glue,rest-sigv4]** | Glue Catalog Connector — metadata over REST (not Glue ETL) |
-| **[sparkrules](https://pypi.org/project/sparkrules/)** | Optional `[rules]` — DRL business rules on Lambda |
+| **pyiceberg[glue,rest-sigv4]** | Glue Catalog Connector: metadata over REST (not Glue ETL) |
+| **[sparkrules](https://pypi.org/project/sparkrules/)** | Optional `[rules]`: DRL business rules on Lambda |
 
 ---
 
@@ -120,7 +120,7 @@ Quantitative proof that **corrupt data never reaches consumers** (metadata commi
 make benchmark
 ```
 
-Runs drop, mutation, and duplicate attack scenarios — all must return VRP `FAIL`.
+Runs drop, mutation, and duplicate attack scenarios: all must return VRP `FAIL`.
 
 ### Governance
 
@@ -164,7 +164,8 @@ python examples/tutorials/walkthrough.py
 serverless-data-mesh/
 ├── docs/
 │   ├── data-mesh-end-to-end.md  # ★ Full Producer/Steward/Publisher guide
-│   ├── data-mesh-patterns.md    # ★ Concepts, coverage matrix, named patterns
+│   ├── why-serverless-data-mesh.md  # Why the framework exists (detailed article)
+│   ├── data-mesh-patterns.md    # Concepts, coverage matrix, named patterns
 │   ├── sparkrules-connector.md # SparkRules DRL on Lambda
 │   ├── pypi.md                  # PyPI install & publish
 │   ├── data-mesh-end-to-end.md  # Producer / Steward / Publisher guide
@@ -206,6 +207,7 @@ terraform init && terraform apply
 
 | Document | Audience |
 |----------|----------|
+| **[Why Serverless Data Mesh](docs/why-serverless-data-mesh.md)** | Problem statement, trust gap, strategic thesis |
 | **[Data mesh patterns & concepts](docs/data-mesh-patterns.md)** | Coverage matrix, 12 patterns, roadmap |
 | **[SparkRules connector](docs/sparkrules-connector.md)** | DRL business rules on Lambda (`[rules]` extra) |
 | **[PyPI install & publish](docs/pypi.md)** | pip install, Lambda zip, maintainer publish |
@@ -220,13 +222,13 @@ terraform init && terraform apply
 
 ## Transaction boundary (four phases)
 
-1. **Physical** — IceGuard chunks Parquet writes with S3 checkpoints
-2. **Verify** — veridata-recon proof per chunk; FAIL blocks commit
-3. **Durable** — AWS Durable Execution replays completed steps on resume
-4. **Metadata** — `GlueCatalogConnector` → Glue Iceberg REST 2PC via SigV4 (not Glue ETL)
+1. **Physical**: IceGuard chunks Parquet writes with S3 checkpoints
+2. **Verify**: veridata-recon proof per chunk; FAIL blocks commit
+3. **Durable**: AWS Durable Execution replays completed steps on resume
+4. **Metadata**: `GlueCatalogConnector` → Glue Iceberg REST 2PC via SigV4 (not Glue ETL)
 
 ---
 
 ## License
 
-Apache-2.0 — see [LICENSE](LICENSE).
+Apache-2.0: see [LICENSE](LICENSE).

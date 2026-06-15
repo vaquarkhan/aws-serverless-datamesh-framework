@@ -1,11 +1,11 @@
-"""SparkRules engine connector for Lambda domain writers.
+﻿"""SparkRules engine connector for Lambda domain writers.
 
 SparkRules runs on Lambda in two modes:
 
-1. **Pure Python (default)** — ``LocalRuleExecutor`` evaluates DRL per chunk without
+1. **Pure Python (default)**: ``LocalRuleExecutor`` evaluates DRL per chunk without
    a Spark cluster or Glue ETL job. Ideal for enrichment and quality gates before VRP.
 
-2. **Spark-on-Lambda (optional)** — ``apply_drl`` when PySpark is bundled in the
+2. **Spark-on-Lambda (optional)**: ``apply_drl`` when PySpark is bundled in the
    Lambda layer/container.
 
 Install: ``pip install serverless-data-mesh[rules]`` or ``[spark]`` for PySpark path.

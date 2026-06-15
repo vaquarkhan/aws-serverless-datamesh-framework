@@ -1,4 +1,4 @@
-# Deployment Guide
+﻿# Deployment Guide
 
 ## Python runtime
 
@@ -14,7 +14,7 @@ pip install -e ".[dev]"
 
 | Variable | Required | Default |
 |----------|----------|---------|
-| `ICEGUARD_CHECKPOINT_BUCKET` | yes | — |
+| `ICEGUARD_CHECKPOINT_BUCKET` | yes |: |
 | `VRP_PROOF_BUCKET` | no | checkpoint bucket |
 | `ICEBERG_TABLE_BUCKET` | yes | `default` |
 | `ICEBERG_WAREHOUSE` | no | `{account}:s3tablescatalog/{bucket}` |

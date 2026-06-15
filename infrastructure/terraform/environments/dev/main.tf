@@ -1,4 +1,4 @@
-# Dev environment — lighter defaults, same timeout knobs as prod.
+﻿# Dev environment: lighter defaults, same timeout knobs as prod.
 
 terraform {
   required_version = ">= 1.5.0"

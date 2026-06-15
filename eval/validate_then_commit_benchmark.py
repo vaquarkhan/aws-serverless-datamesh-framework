@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-Consumer safety benchmark — quantify validate-then-commit guarantees.
+Consumer safety benchmark: quantify validate-then-commit guarantees.
 
 Demonstrates that corrupt data (drops, mutations) never receives a PASS verdict,
 so metadata commit would be blocked in production.
@@ -130,7 +130,7 @@ def main() -> int:
         print(json.dumps(report, indent=2))
     else:
         print("=" * 72)
-        print("Consumer Safety Benchmark — validate-then-commit")
+        print("Consumer Safety Benchmark: validate-then-commit")
         print("=" * 72)
         print(f"{'Scenario':<28} {'Expected':<8} {'Actual':<8} {'OK':<4} {'ms':>8}")
         print("-" * 72)
@@ -144,7 +144,7 @@ def main() -> int:
         if all_passed:
             print("RESULT: Corrupt data cannot reach consumers (metadata commit blocked).")
         else:
-            print("RESULT: FAILED — trust boundary regression detected.")
+            print("RESULT: FAILED: trust boundary regression detected.")
 
     return 0 if all_passed else 1
 

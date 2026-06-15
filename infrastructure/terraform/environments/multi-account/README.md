@@ -1,4 +1,4 @@
-# Multi-Account Data Mesh — Terraform Layout
+﻿# Multi-Account Data Mesh: Terraform Layout
 
 Deploy **Producer**, **Steward**, and **Publisher** across separate AWS accounts.
 
@@ -12,9 +12,9 @@ Deploy **Producer**, **Steward**, and **Publisher** across separate AWS accounts
 
 ## Deploy order
 
-1. **Steward** — checkpoint + proof buckets, Glue database (or import existing)
-2. **Publisher** — lakehouse bucket, register with Lake Formation in Steward
-3. **Producer** — domain writer Lambda with cross-account env vars:
+1. **Steward**: checkpoint + proof buckets, Glue database (or import existing)
+2. **Publisher**: lakehouse bucket, register with Lake Formation in Steward
+3. **Producer**: domain writer Lambda with cross-account env vars:
 
 ```hcl
 ICEGUARD_CHECKPOINT_BUCKET = "steward-checkpoints-ACCOUNT_ID"

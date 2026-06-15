@@ -1,4 +1,4 @@
-"""Evaluation and benchmark tests (require veridata-recon)."""
+﻿"""Evaluation and benchmark tests (require veridata-recon)."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_consumer_safety_benchmark_exits_zero() -> None:
-    """Corrupt data scenarios must never PASS — quantitative trust boundary."""
+    """Corrupt data scenarios must never PASS: quantitative trust boundary."""
     proc = subprocess.run(
         [sys.executable, str(ROOT / "eval" / "validate_then_commit_benchmark.py"), "--json"],
         capture_output=True,
