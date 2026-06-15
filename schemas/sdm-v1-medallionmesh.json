@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://serverless-data-mesh.dev/schemas/sdm-v1-medallionmesh.json",
+  "title": "sdm/v1 MedallionMesh",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "sdm/v1" },
+    "kind": { "const": "MedallionMesh" },
+    "metadata": {
+      "type": "object",
+      "required": ["organization"],
+      "properties": {
+        "organization": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": ["domains"],
+      "properties": {
+        "name_prefix": { "type": "string" },
+        "aws_region": { "type": "string" },
+        "accounts": { "type": "object" },
+        "mesh_transactions": { "type": "array" },
+        "domains": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["domain_id", "layers"],
+            "properties": {
+              "domain_id": { "type": "string" },
+              "owner_team": { "type": "string" },
+              "schedule_cron": { "type": "string" },
+              "layers": {
+                "type": "object",
+                "required": ["bronze", "silver", "gold"],
+                "properties": {
+                  "bronze": { "$ref": "#/$defs/layer" },
+                  "silver": { "$ref": "#/$defs/layer" },
+                  "gold": { "$ref": "#/$defs/layer" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "layer": {
+      "type": "object",
+      "required": ["target_table", "source_namespace"],
+      "properties": {
+        "target_table": { "type": "string" },
+        "source_namespace": { "type": "string" },
+        "upstream_layer": { "enum": ["bronze", "silver"] },
+        "identity_fields": { "type": "array", "items": { "type": "string" } },
+        "content_fields": { "type": "array", "items": { "type": "string" } },
+        "transforms": { "type": "array", "items": { "type": "string" } },
+        "runtime": {
+          "type": "object",
+          "properties": {
+            "engine": { "enum": ["pyarrow", "polars", "pyspark", "pure_python"] },
+            "lambda_memory_mb": { "type": "integer" },
+            "package_extras": { "type": "string" }
+          }
+        },
+        "consumer_slas": { "type": "array" },
+        "auto_repair": { "type": "boolean" }
+      }
+    }
+  }
+}

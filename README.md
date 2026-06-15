@@ -225,12 +225,13 @@ serverless-data-mesh demo
 
 ### Install from PyPI
 
-**Package:** [`serverless-data-mesh`](https://pypi.org/project/serverless-data-mesh/) · **Requires Python 3.12+** · **Latest:** [1.0.0](https://pypi.org/project/serverless-data-mesh/1.0.0/)
+**Package:** [`serverless-data-mesh`](https://pypi.org/project/serverless-data-mesh/) · **Requires Python 3.12+** · **Latest:** [1.1.0](https://pypi.org/project/serverless-data-mesh/1.1.0/)
 
 | | Link |
 |---|------|
 | **PyPI project** | https://pypi.org/project/serverless-data-mesh/ |
-| **Download files (1.0.0)** | https://pypi.org/project/serverless-data-mesh/1.0.0/#files |
+| **Download files (1.1.0)** | https://pypi.org/project/serverless-data-mesh/1.1.0/#files |
+| **5-min AWS guide** | [docs/first-mesh-on-aws.md](docs/first-mesh-on-aws.md) |
 
 **Recommended install (pip):**
 
@@ -239,7 +240,7 @@ serverless-data-mesh demo
 pip install serverless-data-mesh
 
 # Pin a version (recommended for production)
-pip install serverless-data-mesh==1.0.0
+pip install serverless-data-mesh==1.1.0
 
 # Upgrade
 pip install -U serverless-data-mesh

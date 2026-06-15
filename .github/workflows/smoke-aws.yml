@@ -1,0 +1,65 @@
+name: AWS Smoke Test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          pip install -e ".[dev]"
+          pip install veridata-recon
+
+      - name: Compile northstar mesh
+        run: |
+          serverless-data-mesh apply \
+            --contract examples/medallion-e2e/northstar.mesh.yaml \
+            --output /tmp/northstar-generated
+
+      - name: Doctor (reference readers)
+        run: serverless-data-mesh doctor --path /tmp/northstar-generated
+
+      - name: Backstage export
+        run: |
+          serverless-data-mesh catalog export \
+            --contract examples/medallion-e2e/northstar.mesh.yaml \
+            --output /tmp/backstage-entities
+
+      - name: Local PVDM demo
+        run: serverless-data-mesh demo --json
+
+      - name: Deploy dry-run
+        run: |
+          serverless-data-mesh deploy \
+            --contract examples/medallion-e2e/northstar.mesh.yaml \
+            --output /tmp/northstar-generated \
+            --dry-run \
+            --skip-terraform
+
+      - name: Configure AWS (optional live invoke)
+        if: vars.AWS_ROLE_ARN != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-2
+
+      - name: AWS Lambda benchmark (optional)
+        if: vars.AWS_ROLE_ARN != ''
+        env:
+          SDM_BENCHMARK_LAMBDA_ARN: ${{ vars.SDM_BENCHMARK_LAMBDA_ARN }}
+        run: python benchmarks/run_aws_benchmark.py
+        continue-on-error: true

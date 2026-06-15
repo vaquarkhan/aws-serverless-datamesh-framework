@@ -64,3 +64,8 @@ agent-transcripts/
 examples/retail-mesh/generated/
 examples/medallion-e2e/generated/
 domains/
+infrastructure/terraform/fixtures/generated-mesh/
+
+# Keep VS Code YAML schema mapping
+!.vscode/
+!.vscode/settings.json

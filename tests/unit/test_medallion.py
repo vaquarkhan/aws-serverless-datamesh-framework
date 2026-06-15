@@ -46,5 +46,8 @@ def test_compile_northstar_generates_six_pipelines(
     assert (tmp_path / "payments" / "gold" / "consumer_sla.yaml").exists()
 
     silver_readers = (tmp_path / "orders" / "silver" / "readers.py").read_text(encoding="utf-8")
-    assert "upstream bronze" in silver_readers.lower()
-    assert "join_lines" in silver_readers
+    assert "upstream_parquet" in silver_readers
+    assert "join_lines" in silver_readers or "batch_writer_upstream" in silver_readers
+    bronze_readers = (tmp_path / "orders" / "bronze" / "readers.py").read_text(encoding="utf-8")
+    assert "source_reader_s3_landing" in bronze_readers
+    assert (tmp_path / "layer_lambda.manifest.json").exists()

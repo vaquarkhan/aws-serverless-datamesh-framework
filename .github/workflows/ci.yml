@@ -111,4 +111,22 @@ jobs:
           terraform -chdir=infrastructure/terraform/environments/prod init -backend=false
           terraform -chdir=infrastructure/terraform/environments/prod validate
 
+      - name: Local benchmark
+        run: python benchmarks/run_local_benchmark.py
 
+      - name: Generate mesh fixture for Terraform validate
+        run: |
+          serverless-data-mesh apply \
+            --contract examples/medallion-e2e/northstar.mesh.yaml \
+            --output infrastructure/terraform/fixtures/generated-mesh
+
+      - name: Terraform validate medallion
+        run: |
+          terraform -chdir=infrastructure/terraform/environments/medallion init -backend=false
+          terraform -chdir=infrastructure/terraform/environments/medallion validate \
+            -var="mesh_generated_path=../../fixtures/generated-mesh" \
+            -var="layer_lambda_manifest_path=../../fixtures/generated-mesh/layer_lambda.manifest.json" \
+            -var="checkpoint_bucket_name=fixture-checkpoints" \
+            -var="proof_bucket_name=fixture-proofs" \
+            -var="lakehouse_bucket_name=fixture-lakehouse" \
+            -var="name_prefix=sdm-fixture"

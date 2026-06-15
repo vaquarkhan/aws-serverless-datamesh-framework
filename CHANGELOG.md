@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-14
+
+Enterprise completeness: reference readers, per-layer Lambda fleet, deploy CLI, Backstage, schemas, UI, benchmarks, multi-cloud stubs.
+
+### Added
+
+- **Reference readers**: S3 bronze landing + upstream Parquet (`serverless_data_mesh.readers`)
+- **Per-layer Lambda fleet** Terraform module (`lambda-fleet`) + `layer_lambda.manifest.json` from compile
+- **`serverless-data-mesh deploy`** — apply + terraform + optional Step Functions start
+- **`serverless-data-mesh catalog export`** — Backstage `catalog-info.yaml` entities
+- **`serverless-data-mesh ui`** — local mesh control panel (HTTP)
+- **JSON Schema** for `sdm/v1` contracts + VS Code YAML autocomplete
+- **Portable cloud** adapters (AWS production, GCP/Azure stubs)
+- **Docs**: `docs/first-mesh-on-aws.md` (5-minute guide)
+- **CI**: medallion Terraform validate, local benchmark, smoke-aws + benchmark workflows
+- **Benchmarks**: `run_local_benchmark.py`, `run_aws_benchmark.py`
+
 ## [1.0.0] - 2026-06-14
 
 Production release: metadata-driven medallion mesh, zero-friction CLI, and Terraform deploy path.

@@ -206,8 +206,9 @@ Pipelines: **{pipeline_count}**
 - [x] Pipelines compiled
 {pending_lines}
 - [ ] Package Lambda: `SDM_EXTRAS=spark ./infrastructure/terraform/scripts/package_lambda.sh`
-- [ ] Deploy terraform per layer under `{output_root}/`
-- [ ] Create Step Functions from `orchestrator.asl.json` / `mesh.orchestrator.asl.json`
+- [ ] Deploy: `serverless-data-mesh deploy --contract {contract_path} --output {output_root} --dry-run`
+- [ ] Export Backstage: `serverless-data-mesh catalog export --contract {contract_path}`
+- [ ] UI: `serverless-data-mesh ui --path {output_root}`
 - [ ] Run `serverless-data-mesh demo` locally to verify VRP gate
 
 ## One-liner re-apply after YAML edits

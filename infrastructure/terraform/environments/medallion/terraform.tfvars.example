@@ -10,7 +10,7 @@ lakehouse_bucket_name  = "sdm-medallion-lakehouse-YOUR_ACCOUNT_ID"
 
 # Path to compiled mesh (relative to this directory or absolute)
 mesh_generated_path = "../../../../examples/medallion-e2e/generated"
-domain_ids          = ["orders", "payments"]
+layer_lambda_manifest_path = "../../../../examples/medallion-e2e/generated/layer_lambda.manifest.json"
 
 enable_durable_execution = true
 enable_monitoring_alarms = true

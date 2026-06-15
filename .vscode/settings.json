@@ -1,0 +1,12 @@
+{
+  "yaml.schemas": [
+    {
+      "fileMatch": ["*mesh.pipeline.yaml", "*pipeline.yaml", "**/contracts/*.yaml"],
+      "url": "./schemas/sdm-v1-dataproductpipeline.json"
+    },
+    {
+      "fileMatch": ["*mesh.yaml", "*northstar.mesh.yaml", "**/medallion*.yaml"],
+      "url": "./schemas/sdm-v1-medallionmesh.json"
+    }
+  ]
+}

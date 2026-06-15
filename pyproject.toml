@@ -111,6 +111,8 @@ include = [
     "/VERSION",
     "/LICENSE",
     "/CHANGELOG.md",
+    "/schemas",
+    "/integrations",
 ]
 
 [tool.pytest.ini_options]

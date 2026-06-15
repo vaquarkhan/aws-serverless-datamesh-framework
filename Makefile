@@ -55,6 +55,18 @@ mesh-validate:
 mesh-northstar:
 	serverless-data-mesh apply --contract examples/medallion-e2e/northstar.mesh.yaml --output examples/medallion-e2e/generated
 
+mesh-deploy:
+	serverless-data-mesh deploy --contract my-mesh/mesh.yaml --output my-mesh/generated --dry-run
+
+mesh-ui:
+	serverless-data-mesh ui --path my-mesh/generated --open
+
+mesh-catalog:
+	serverless-data-mesh catalog export --contract my-mesh/mesh.yaml --output integrations/backstage/entities
+
+benchmark-local:
+	python benchmarks/run_local_benchmark.py
+
 version-check:
 	python scripts/sync_version.py --check
 

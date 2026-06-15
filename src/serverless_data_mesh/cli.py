@@ -310,6 +310,65 @@ def _cmd_apply(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_deploy(args: argparse.Namespace) -> int:
+    from serverless_data_mesh.deploy.runner import deploy_mesh, result_to_dict
+
+    try:
+        result = deploy_mesh(
+            contract=args.contract,
+            output=args.output,
+            terraform_dir=args.terraform_dir,
+            partition_dt=args.partition_dt,
+            skip_apply=args.skip_apply,
+            skip_terraform=args.skip_terraform,
+            terraform_auto_approve=args.auto_approve,
+            start_execution=args.start_execution,
+            dry_run=args.dry_run,
+        )
+    except (FileNotFoundError, RuntimeError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    if args.json:
+        print(json.dumps(result_to_dict(result), indent=2))
+    else:
+        print("\n  Deploy complete\n")
+        print(f"  Contract:   {result.contract_path}")
+        print(f"  Generated:  {result.generated_path}")
+        print(f"  Terraform:  {result.terraform_dir}")
+        print(f"  TF applied: {result.terraform_applied}")
+        if result.mesh_execution_arn:
+            print(f"  SFN started: {result.mesh_execution_arn}")
+        print()
+    return 0
+
+
+def _cmd_catalog(args: argparse.Namespace) -> int:
+    from serverless_data_mesh.catalog_export.backstage import export_backstage_catalog
+
+    paths = export_backstage_catalog(args.contract, output_dir=args.output)
+    if args.json:
+        print(json.dumps({"entities": [str(p) for p in paths]}, indent=2))
+    else:
+        print(f"\n  Backstage entities ({len(paths)}):\n")
+        for p in paths:
+            print(f"    {p}")
+        print()
+    return 0
+
+
+def _cmd_ui(args: argparse.Namespace) -> int:
+    from serverless_data_mesh.ui.server import serve_ui
+
+    serve_ui(
+        generated_path=args.path,
+        host=args.host,
+        port=args.port,
+        open_browser=args.open_browser,
+    )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="serverless-data-mesh",
@@ -402,6 +461,37 @@ def main(argv: list[str] | None = None) -> int:
     apply_p.add_argument("--output", default="generated", help="Output directory")
     apply_p.add_argument("--json", action="store_true")
     apply_p.set_defaults(func=_cmd_apply)
+
+    dep_p = sub.add_parser("deploy", help="Apply + Terraform + optional Step Functions start")
+    dep_p.add_argument("--contract", required=True)
+    dep_p.add_argument("--output", default="generated")
+    dep_p.add_argument(
+        "--terraform-dir",
+        help="Terraform env dir (default: infrastructure/terraform/environments/medallion)",
+    )
+    dep_p.add_argument("--partition-dt", default="2026-06-14")
+    dep_p.add_argument("--skip-apply", action="store_true")
+    dep_p.add_argument("--skip-terraform", action="store_true")
+    dep_p.add_argument("--auto-approve", action="store_true", help="terraform apply -auto-approve")
+    dep_p.add_argument("--start-execution", action="store_true", help="Start mesh SFN after apply")
+    dep_p.add_argument("--dry-run", action="store_true")
+    dep_p.add_argument("--json", action="store_true")
+    dep_p.set_defaults(func=_cmd_deploy)
+
+    cat_p = sub.add_parser("catalog", help="Export Backstage catalog-info.yaml entities")
+    cat_sub = cat_p.add_subparsers(dest="catalog_cmd", required=True)
+    cat_exp = cat_sub.add_parser("export", help="Generate catalog entities from mesh YAML")
+    cat_exp.add_argument("--contract", required=True)
+    cat_exp.add_argument("--output", default="integrations/backstage/entities")
+    cat_exp.add_argument("--json", action="store_true")
+    cat_exp.set_defaults(func=_cmd_catalog)
+
+    ui_p = sub.add_parser("ui", help="Mesh control panel (local HTTP UI)")
+    ui_p.add_argument("--path", default="generated", help="Generated mesh directory")
+    ui_p.add_argument("--host", default="127.0.0.1")
+    ui_p.add_argument("--port", type=int, default=8765)
+    ui_p.add_argument("--open", dest="open_browser", action="store_true")
+    ui_p.set_defaults(func=_cmd_ui)
 
     args = parser.parse_args(argv)
     return int(args.func(args))

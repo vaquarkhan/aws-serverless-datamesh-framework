@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://serverless-data-mesh.dev/schemas/sdm-v1-dataproductpipeline.json",
+  "title": "sdm/v1 DataProductPipeline",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "sdm/v1" },
+    "kind": { "const": "DataProductPipeline" },
+    "metadata": {
+      "type": "object",
+      "required": ["domain_id"],
+      "properties": {
+        "domain_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "product_id": { "type": "string" },
+        "owner_team": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "spec": {
+      "type": "object",
+      "required": ["accounts", "boundary"],
+      "properties": {
+        "accounts": {
+          "type": "object",
+          "required": ["producer"],
+          "properties": {
+            "producer": { "type": "string", "pattern": "^[0-9]{12}$" },
+            "steward": { "type": "string" },
+            "publisher": { "type": "string" }
+          }
+        },
+        "boundary": {
+          "type": "object",
+          "required": ["source_namespace", "target_table"],
+          "properties": {
+            "source_namespace": { "type": "string" },
+            "target_table": { "type": "string" },
+            "partition_key": { "type": "string", "default": "dt" },
+            "max_chunk_records": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "workload": { "type": "object" },
+        "runtime": {
+          "type": "object",
+          "properties": {
+            "engine": {
+              "enum": ["pyarrow", "polars", "pyspark", "pure_python"]
+            },
+            "lambda_memory_mb": { "type": "integer", "minimum": 128, "maximum": 10240 },
+            "package_extras": { "enum": ["", "rules", "spark", "all"] }
+          }
+        },
+        "governance": { "type": "object" },
+        "triggers": { "type": "array" },
+        "consumer_slas": { "type": "array" },
+        "aws_region": { "type": "string" },
+        "name_prefix": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

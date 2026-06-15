@@ -9,15 +9,20 @@ locals {
   durable_execution_timeout     = var.durable_execution_timeout_seconds
   checkpoint_retention_days     = max(7, var.durable_retention_days)
 
-  medallion_layers = ["bronze", "silver", "gold"]
-  layer_lambda_arns = merge([
-    for domain in var.domain_ids : {
-      for layer in local.medallion_layers :
-      "${domain}_${layer}_writer_arn" => module.lambda.qualified_invoke_arn
+  layer_manifest_path = var.layer_lambda_manifest_path != "" ? var.layer_lambda_manifest_path : "${var.mesh_generated_path}/layer_lambda.manifest.json"
+  layer_manifest      = jsondecode(file(local.layer_manifest_path))
+  layer_configs = {
+    for key, cfg in local.layer_manifest :
+    key => {
+      memory_mb = cfg.memory_mb
+      engine    = cfg.engine
+      domain_id = cfg.domain_id
+      layer     = cfg.layer
     }
-  ]...)
+  }
 
-  trust_domains = length(var.trust_dashboard_domains) > 0 ? var.trust_dashboard_domains : var.domain_ids
+  domain_ids = distinct([for cfg in local.layer_manifest : cfg.domain_id])
+  trust_domains = length(var.trust_dashboard_domains) > 0 ? var.trust_dashboard_domains : local.domain_ids
 }
 
 module "storage" {
@@ -51,23 +56,24 @@ module "iam" {
   tags                  = local.tags
 }
 
-module "lambda" {
-  source = "../../modules/lambda"
+module "lambda_fleet" {
+  source = "../../modules/lambda-fleet"
 
   name_prefix               = var.name_prefix
+  layers                    = local.layer_configs
   role_arn                  = module.iam.domain_writer_role_arn
   package_path              = var.lambda_package_path
   enable_durable_execution  = var.enable_durable_execution
   durable_execution_timeout = local.durable_execution_timeout
   durable_retention_days    = var.durable_retention_days
   timeout                   = local.lambda_per_invocation_timeout
-  memory_size               = var.lambda_memory_mb
   dlq_arn                   = module.messaging.dlq_arn
 
-  environment_variables = {
+  base_environment_variables = {
     ICEGUARD_CHECKPOINT_BUCKET = module.storage.checkpoint_bucket_name
     VRP_PROOF_BUCKET           = module.storage.proof_bucket_name
     ICEBERG_TABLE_BUCKET       = var.lakehouse_bucket_name
+    LAKEHOUSE_BUCKET           = var.lakehouse_bucket_name
     ICEBERG_WAREHOUSE          = local.iceberg_warehouse
     AWS_ACCOUNT_ID             = local.account_id
     LAMBDA_TIMEOUT_SECONDS     = tostring(local.lambda_per_invocation_timeout)
@@ -81,9 +87,9 @@ module "medallion_mesh" {
 
   name_prefix            = var.name_prefix
   mesh_generated_path    = var.mesh_generated_path
-  domain_ids             = var.domain_ids
-  layer_lambda_arns      = local.layer_lambda_arns
-  mesh_leader_lambda_arn = module.lambda.qualified_invoke_arn
+  domain_ids             = local.domain_ids
+  layer_lambda_arns      = module.lambda_fleet.layer_qualified_arns
+  mesh_leader_lambda_arn = module.lambda_fleet.mesh_leader_arn
   role_arn               = module.iam.stepfunctions_role_arn
   tags                   = local.tags
 }
@@ -93,8 +99,8 @@ module "monitoring" {
   source = "../../modules/monitoring"
 
   name_prefix             = var.name_prefix
-  lambda_function_name    = module.lambda.function_name
-  lambda_log_group_name   = module.lambda.log_group_name
+  lambda_function_name    = module.lambda_fleet.primary_function_name
+  lambda_log_group_name   = module.lambda_fleet.primary_log_group_name
   alarm_actions           = var.alarm_sns_topic_arns
   aws_region              = var.aws_region
   trust_dashboard_domains = local.trust_domains

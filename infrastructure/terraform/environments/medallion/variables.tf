@@ -34,9 +34,16 @@ variable "mesh_generated_path" {
   type        = string
 }
 
+variable "layer_lambda_manifest_path" {
+  description = "layer_lambda.manifest.json from apply output (per-layer Lambda sizing)"
+  type        = string
+  default     = ""
+}
+
 variable "domain_ids" {
-  description = "Domains from the medallion mesh contract."
+  description = "Deprecated: domains inferred from layer_lambda.manifest.json"
   type        = list(string)
+  default     = []
 }
 
 variable "enable_durable_execution" {

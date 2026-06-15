@@ -117,8 +117,11 @@ def _emit_domain_readers_stub(
     layer_name: str,
     layer_table: str,
     upstream: str | None,
+    upstream_table: str | None,
     transforms: tuple[str, ...],
     engine: str,
+    *,
+    reference: bool = True,
 ) -> str:
     upstream_note = (
         f"Read from upstream {upstream} Iceberg table in Publisher lakehouse."
@@ -126,6 +129,75 @@ def _emit_domain_readers_stub(
         else "Read from external landing zone (S3, API, CDC)."
     )
     transform_note = ", ".join(transforms) if transforms else "pass-through"
+
+    if reference and upstream is None and layer_name == "bronze":
+        return f'''"""GENERATED reference readers for {domain_id}/{layer_name} (S3 landing → Parquet).
+
+Layer: {layer_name} · Table: {layer_table} · Engine: {engine}
+Configure: BRONZE_LANDING_BUCKET, BRONZE_LANDING_KEY, ICEBERG_TABLE_BUCKET, TARGET_TABLE
+Transforms (metadata): {transform_note}
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from serverless_data_mesh.readers.s3_bronze import (
+    batch_writer_s3_parquet,
+    sink_reader_s3_parquet,
+    source_reader_s3_landing,
+)
+
+
+def source_reader(start: int, end: int) -> list[dict[str, Any]]:
+    return source_reader_s3_landing(start, end)
+
+
+def sink_reader(start: int, end: int) -> list[dict[str, Any]]:
+    return sink_reader_s3_parquet(start, end)
+
+
+def batch_writer(start: int, end: int) -> list[str]:
+    return batch_writer_s3_parquet(start, end)
+'''
+
+    if reference and upstream is not None:
+        return f'''"""GENERATED reference readers for {domain_id}/{layer_name} (upstream Parquet).
+
+Layer: {layer_name} · Table: {layer_table} · Engine: {engine}
+Upstream: {upstream}
+Configure: UPSTREAM_TABLE, TARGET_TABLE={layer_table}, ICEBERG_TABLE_BUCKET
+Transforms (metadata): {transform_note} — extend batch_writer for business logic.
+"""
+
+from __future__ import annotations
+
+import os
+from typing import Any
+
+from serverless_data_mesh.readers.upstream_parquet import (
+    batch_writer_upstream,
+    sink_reader_upstream,
+    source_reader_upstream,
+)
+
+os.environ.setdefault("UPSTREAM_TABLE", "{upstream_table or layer_table}")
+os.environ.setdefault("TARGET_TABLE", "{layer_table}")
+
+
+def source_reader(start: int, end: int) -> list[dict[str, Any]]:
+    return source_reader_upstream(start, end)
+
+
+def sink_reader(start: int, end: int) -> list[dict[str, Any]]:
+    return sink_reader_upstream(start, end)
+
+
+def batch_writer(start: int, end: int) -> list[str]:
+    # TODO: Apply transforms: {transform_note}
+    return batch_writer_upstream(start, end)
+'''
+
     return f'''"""GENERATED readers for {domain_id}/{layer_name} — implement business I/O.
 
 Layer: {layer_name} · Table: {layer_table} · Engine: {engine}
@@ -230,6 +302,7 @@ def compile_medallion_mesh(
         all_written.append(f"{domain.domain_id}/orchestrator.asl.json")
 
         domain_manifest_layers: list[str] = []
+        layer_by_name = {layer.layer: layer for layer in domain.layers}
 
         for layer in domain.layers:
             pipeline_count += 1
@@ -244,11 +317,16 @@ def compile_medallion_mesh(
             layer_paths[f"{domain.domain_id}/{layer.layer}"] = result.output_root
             domain_manifest_layers.append(layer.layer)
 
+            upstream_table: str | None = None
+            if layer.upstream_layer and layer.upstream_layer in layer_by_name:
+                upstream_table = layer_by_name[layer.upstream_layer].target_table
+
             readers_stub = _emit_domain_readers_stub(
                 domain.domain_id,
                 layer.layer,
                 layer.target_table,
                 layer.upstream_layer,
+                upstream_table,
                 layer.transforms,
                 layer.runtime_engine,
             )
@@ -285,6 +363,25 @@ def compile_medallion_mesh(
         encoding="utf-8",
     )
     all_written.append("mesh.manifest.json")
+
+    layer_lambda_manifest: dict[str, Any] = {}
+    for domain in contract.domains:
+        for layer in domain.layers:
+            key = f"{domain.domain_id}_{layer.layer}"
+            layer_lambda_manifest[key] = {
+                "domain_id": domain.domain_id,
+                "layer": layer.layer,
+                "target_table": layer.target_table,
+                "engine": layer.runtime_engine,
+                "memory_mb": layer.lambda_memory_mb,
+                "package_extras": layer.package_extras,
+                "sfn_arn_key": f"{domain.domain_id}_{layer.layer}_writer_arn",
+            }
+    (mesh_root / "layer_lambda.manifest.json").write_text(
+        json.dumps(layer_lambda_manifest, indent=2),
+        encoding="utf-8",
+    )
+    all_written.append("layer_lambda.manifest.json")
 
     readme = mesh_root / "README.md"
     readme.write_text(_emit_mesh_readme(contract, pipeline_count), encoding="utf-8")

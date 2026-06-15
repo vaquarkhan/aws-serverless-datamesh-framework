@@ -15,6 +15,7 @@ Production-grade AWS infrastructure for serverless-data-mesh.
 | **monitoring** | CloudWatch alarms + rollback metric + mesh trust dashboard | Ops visibility |
 | **governance** | Lake Formation consumer SLA grants (optional) | Federated read access |
 | **medallion-mesh** | Mesh + per-domain Step Functions from compiled YAML | Bronze/silver/gold orchestration |
+| **lambda-fleet** | Per-layer Lambda writers (memory/engine from manifest) | Sized medallion layers |
 
 ## Architecture
 

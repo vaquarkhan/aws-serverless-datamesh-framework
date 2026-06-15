@@ -1,0 +1,47 @@
+name: Benchmark
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 0"
+
+jobs:
+  local:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]" && pip install veridata-recon
+      - run: python benchmarks/run_local_benchmark.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-local
+          path: benchmarks/results/*-local.json
+
+  aws:
+    runs-on: ubuntu-latest
+    if: vars.AWS_ROLE_ARN != ''
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-2
+      - run: pip install -e ".[dev]"
+      - env:
+          SDM_BENCHMARK_LAMBDA_ARN: ${{ vars.SDM_BENCHMARK_LAMBDA_ARN }}
+        run: python benchmarks/run_aws_benchmark.py
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-aws
+          path: benchmarks/results/*-aws-live.json
