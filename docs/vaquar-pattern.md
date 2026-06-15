@@ -2,6 +2,8 @@
 
 **Proof-Gated Serverless Lakehouse Publication for Federated Data Meshes**
 
+> **Full blog (images, end-to-end journey, adoption playbook):** **[blog-the-vaquar-pattern.md](blog-the-vaquar-pattern.md)**
+
 | Field | Value |
 |-------|-------|
 | **Pattern name** | Vaquar Pattern |
@@ -241,7 +243,7 @@ The Vaquar Pattern composes with (does not replace):
 | **Data mesh contracts** | `DataProductContract` is the registry-facing envelope |
 | **SparkRules** | Business rules run **before** Phase V (optional) |
 | **Canary rollout** | First N rows through full PVDM before full partition |
-| **OpenLineage** (roadmap) | Emit lineage on `committed` only |
+| **OpenLineage** | Emit lineage on `committed` via `lineage/openlineage.py` |
 
 ---
 
@@ -305,6 +307,7 @@ The pattern is platform-agnostic. This repository is the **reference implementat
 
 | Doc | Focus |
 |-----|-------|
+| **[blog-the-vaquar-pattern.md](blog-the-vaquar-pattern.md)** | **Full blog: images, E2E journey, adoption** |
 | [why-serverless-data-mesh.md](why-serverless-data-mesh.md) | Blog: problem, connectivity, thesis |
 | [data-mesh-patterns.md](data-mesh-patterns.md) | Full pattern catalog + coverage matrix |
 | [data-mesh-end-to-end.md](data-mesh-end-to-end.md) | Three-account deploy journey |

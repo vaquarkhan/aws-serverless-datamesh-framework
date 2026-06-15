@@ -17,7 +17,7 @@ An open Python framework for **federated data mesh** lakehouse publication on AW
 **domain-oriented ownership**, **data as a product**, and **self-serve write infrastructure** for cross-domain teams.<br/>
 **Producer** domains publish governed **data products** · **Steward** notaries enforce **federated computational governance** · **Publisher** zones expose consumer-ready **Iceberg data products** to the mesh.
 
-[**Vaquar Pattern**](docs/vaquar-pattern.md) · [**Why it exists (blog)**](docs/why-serverless-data-mesh.md) · [**Getting started**](docs/getting-started.md) · [**Deploy**](infrastructure/terraform/README.md)
+[**Vaquar Pattern blog**](docs/blog-the-vaquar-pattern.md) · [**Vaquar Pattern spec**](docs/vaquar-pattern.md) · [**Why it exists**](docs/why-serverless-data-mesh.md) · [**Getting started**](docs/getting-started.md) · [**Deploy**](infrastructure/terraform/README.md)
 
 </div>
 
@@ -86,7 +86,7 @@ This framework introduces the **[Vaquar Pattern](docs/vaquar-pattern.md)**: a pu
 
 What makes this new vs Outbox, Saga, Medallion, and Glue bookmarks: **Iceberg publication is gated on cryptographic multiset proof**, not executor success.
 
-**Pattern spec, citations, anti-patterns:** [docs/vaquar-pattern.md](docs/vaquar-pattern.md)
+**Pattern spec:** [docs/vaquar-pattern.md](docs/vaquar-pattern.md) · **Full blog (images, E2E):** [docs/blog-the-vaquar-pattern.md](docs/blog-the-vaquar-pattern.md)
 
 ---
 
@@ -310,7 +310,8 @@ terraform init && terraform apply
 
 | Document | What you will learn |
 |----------|---------------------|
-| **[Vaquar Pattern](docs/vaquar-pattern.md)** | The flagship pattern; cite this in architecture docs |
+| **[Vaquar Pattern blog](docs/blog-the-vaquar-pattern.md)** | **Full article: images, E2E journey, adoption playbook** |
+| **[Vaquar Pattern spec](docs/vaquar-pattern.md)** | Formal spec - cite this in architecture docs |
 | **[Why Serverless Data Mesh](docs/why-serverless-data-mesh.md)** | Blog: industry problem, connectivity, portfolio stack |
 | **[Data mesh patterns](docs/data-mesh-patterns.md)** | 13 named patterns + concept coverage matrix |
 | **[End-to-end guide](docs/data-mesh-end-to-end.md)** | Three-account journey, IAM, deploy order |
@@ -328,7 +329,8 @@ terraform init && terraform apply
 ```
 serverless-data-mesh/
 ├── docs/
-│   ├── vaquar-pattern.md           # Flagship pattern for the data engineering world
+│   ├── blog-the-vaquar-pattern.md  # Full Vaquar Pattern blog (images, E2E)
+│   ├── vaquar-pattern.md           # Formal pattern spec (cite this)
 │   ├── why-serverless-data-mesh.md # Blog article with diagrams
 │   ├── data-mesh-end-to-end.md     # Three-account deploy guide
 │   ├── data-mesh-patterns.md       # Pattern catalog + coverage matrix
@@ -384,7 +386,7 @@ Apache-2.0. See [LICENSE](LICENSE).
 
 <div align="center">
 
-**Serverless Data Mesh** · [Vaquar Pattern](docs/vaquar-pattern.md) · [GitHub](https://github.com/vaquarkhan/aws-serverless-datamesh-framework)
+**Serverless Data Mesh** · [Vaquar Pattern blog](docs/blog-the-vaquar-pattern.md) · [GitHub](https://github.com/vaquarkhan/aws-serverless-datamesh-framework)
 
 *Domain teams own the write path. The mesh proves correctness before consumers see a snapshot.*
 

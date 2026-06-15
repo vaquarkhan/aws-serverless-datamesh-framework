@@ -45,6 +45,8 @@ This document maps **data mesh concepts** to **named patterns** in the framework
 
 **Proof-Gated Serverless Lakehouse Publication** - the pattern this framework introduces to the data engineering world.
 
+**Full blog:** **[blog-the-vaquar-pattern.md](blog-the-vaquar-pattern.md)** (images, end-to-end journey, adoption)
+
 Four phases (**PVDM**): Physical → Verify → Durable → Metadata. Three accounts: Producer · Steward · Publisher. One invariant: **no Iceberg snapshot without VRP PASS**.
 
 ```mermaid
