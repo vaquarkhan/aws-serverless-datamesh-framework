@@ -18,7 +18,7 @@ An open Python framework for **federated data mesh** lakehouse publication on AW
 **domain-oriented ownership**, **data as a product**, and **self-serve write infrastructure** for cross-domain teams.<br/>
 **Producer** domains publish governed **data products** · **Steward** notaries enforce **federated computational governance** · **Publisher** zones expose consumer-ready **Iceberg data products** to the mesh.
 
-[**PyPI**](https://pypi.org/project/serverless-data-mesh/) · [**Vaquar Pattern blog**](docs/blog-the-vaquar-pattern.md) · [**Vaquar Pattern spec**](docs/vaquar-pattern.md) · [**Why it exists**](docs/why-serverless-data-mesh.md) · [**Getting started**](docs/getting-started.md) · [**Deploy**](infrastructure/terraform/README.md)
+[**PyPI**](https://pypi.org/project/serverless-data-mesh/) · [**Create pipelines**](docs/metadata-driven-pipeline.md) · [**Vaquar Pattern blog**](docs/blog-the-vaquar-pattern.md) · [**Vaquar Pattern spec**](docs/vaquar-pattern.md) · [**Why it exists**](docs/why-serverless-data-mesh.md) · [**Getting started**](docs/getting-started.md) · [**Deploy**](infrastructure/terraform/README.md)
 
 </div>
 
@@ -150,6 +150,73 @@ What makes this new vs Outbox, Saga, Medallion, and Glue bookmarks: **Iceberg pu
 
 ---
 
+## Create pipelines from YAML
+
+**Metadata-driven pipeline creation** — define your mesh in YAML; the compiler generates proof-gated Lambda pipelines, Step Functions orchestrators, VRP config, consumer SLAs, and Terraform manifests. Domain teams only implement `readers.py` (source/sink I/O).
+
+<p align="center">
+  <img src="docs/images/pipeline-creation-flow.png" alt="Metadata-driven pipeline creation: Write YAML, compile with serverless-data-mesh apply, deploy to AWS" width="920" />
+</p>
+
+### Two commands to a full mesh
+
+```bash
+pip install serverless-data-mesh
+
+# 1. Starter template (medallion, single pipeline, or northstar retail)
+serverless-data-mesh new --template medallion --output my-mesh
+
+# 2. Validate + compile + doctor + deploy checklist
+serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generated
+```
+
+| Command | What it does |
+|---------|----------------|
+| `new` | Copy starter YAML (`medallion`, `single`, `northstar`) |
+| `apply` | validate → compile → doctor → `GETTING_STARTED.md` |
+| `compile` | Generate pipelines only (advanced) |
+| `validate` | Fast CI gate on YAML schema |
+| `doctor` | List which `readers.py` still need your code |
+| `deploy` | apply + Terraform + optional Step Functions start |
+
+### One YAML → bronze / silver / gold medallion
+
+A single `MedallionMesh` contract expands into **N domains × 3 layers** plus mesh-wide orchestration. The [northstar example](examples/medallion-e2e/northstar.mesh.yaml) produces **6 PVDM pipelines** (orders + payments) from one file.
+
+<p align="center">
+  <img src="docs/images/medallion-one-yaml-mesh.png" alt="One northstar.mesh.yaml generates orders and payments bronze silver gold pipelines plus orchestrators" width="920" />
+</p>
+
+```bash
+serverless-data-mesh apply \
+  --contract examples/medallion-e2e/northstar.mesh.yaml \
+  --output examples/medallion-e2e/generated
+```
+
+### What `apply` generates
+
+<p align="center">
+  <img src="docs/images/pipeline-generated-artifacts.png" alt="Generated artifacts: handler, readers stub, Step Functions, orchestrators, consumer SLA, layer Lambda manifest" width="920" />
+</p>
+
+| You write | Framework generates |
+|-----------|---------------------|
+| `mesh.yaml` metadata | Lambda handlers, durable Step Functions |
+| `readers.py` per layer | VRP proof config, auto-repair hooks, tests |
+| One-time Terraform wiring | Per-layer `layer_lambda.manifest.json`, mesh orchestrator ASL |
+
+**Single-table pipeline** (add one data product without full medallion):
+
+```bash
+serverless-data-mesh compile \
+  --contract examples/contracts/payments.mesh.pipeline.yaml \
+  --output domains/
+```
+
+→ [Metadata-driven pipeline guide](docs/metadata-driven-pipeline.md) · [5-min AWS deploy](docs/first-mesh-on-aws.md) · [Medallion E2E example](examples/medallion-e2e/README.md)
+
+---
+
 ## Architecture
 
 ### Three-account federated mesh
@@ -259,9 +326,9 @@ pip install -U serverless-data-mesh
 ```bash
 python -c "import serverless_data_mesh as sdm; print(sdm.__version__)"
 serverless-data-mesh demo          # local PVDM gate demo (<60s, no AWS)
-serverless-data-mesh init --help   # minimal contract → full pipeline
-serverless-data-mesh compile --contract mesh.pipeline.yaml --output domains/
-serverless-data-mesh dashboard     # mesh trust dashboard HTML
+serverless-data-mesh new --template medallion --output my-mesh
+serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generated
+serverless-data-mesh ui --path my-mesh/generated --open   # mesh control panel
 ```
 
 **Platform notes:**
@@ -282,43 +349,17 @@ serverless-data-mesh dashboard     # mesh trust dashboard HTML
 
 Details: [benchmarks/README.md](benchmarks/README.md) · `make cost-estimate`
 
-### Scaffold or compile a pipeline (30 seconds)
-
-**From YAML contract (recommended):**
-
-```bash
-serverless-data-mesh compile \
-  --contract examples/contracts/payments.mesh.pipeline.yaml \
-  --output domains/
-```
-
-**Quick init (minimal contract):**
-
-```bash
-serverless-data-mesh init --domain payments --table fact_payments --account 123456789012
-```
-
-Generates handler, Step Functions ASL, EventBridge schedule, consumer SLA, Terraform stubs, and tests from `mesh.pipeline.yaml`. Domain teams only implement `readers.py`.
-
-**Full medallion mesh (bronze → silver → gold) — one YAML, all pipelines:**
-
-```bash
-serverless-data-mesh new --template northstar --output my-mesh
-serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generated
-# → 6 PVDM pipelines + domain + mesh orchestrators (orders + payments)
-```
-
-→ [Medallion E2E guide](examples/medallion-e2e/README.md)  
-→ [Metadata-driven pipeline guide](docs/metadata-driven-pipeline.md)
+### More CLI tools
 
 ```bash
 serverless-data-mesh dashboard              # HTML trust dashboard (proofs / CloudWatch / demo)
 serverless-data-mesh dashboard --cloudwatch # live VRP metrics from CloudWatch
 serverless-data-mesh canary                 # VRP canary before promotion
 serverless-data-mesh reprocess-demo         # auto-repair dropped records after VRP FAIL
+serverless-data-mesh catalog export --contract my-mesh/mesh.yaml  # Backstage entities
 ```
 
-**11/10 production features** (all implemented): auto VRP reprocessing, live CloudWatch + Grafana trust dashboard, Lake Formation consumer SLA enforcement. See [docs/mesh-trust-dashboard.md](docs/mesh-trust-dashboard.md).
+**Production features:** auto VRP reprocessing, live CloudWatch + Grafana trust dashboard, Lake Formation consumer SLA enforcement. See [docs/mesh-trust-dashboard.md](docs/mesh-trust-dashboard.md).
 
 ### Full development setup
 
