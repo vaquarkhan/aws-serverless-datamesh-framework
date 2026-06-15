@@ -2,14 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-
-veridata = pytest.importorskip("veridata_recon")
-
 from serverless_data_mesh.local.runtime import LocalPVDMRuntime
 
 
-@pytest.mark.eval
 def test_local_demo_blocks_corrupt_data() -> None:
     runtime = LocalPVDMRuntime()
     result = runtime.run_demo_sequence()
@@ -18,18 +13,11 @@ def test_local_demo_blocks_corrupt_data() -> None:
     assert result["phases"]["corrupt_write"]["outcome"] == "verification_failed"
 
 
-@pytest.mark.eval
 def test_mesh_atomicity_on_payments_fail() -> None:
-    runtime = LocalPVDMRuntime()
-    import veridata_recon as vr
-    from serverless_data_mesh.verification.vrp import VRPProofGenerator
+    from serverless_data_mesh.verification.backend import create_proof_generator
 
-    keys = vr.generate_keypair()
-    gen = VRPProofGenerator(
-        private_key_b64=keys["private_key"],
-        public_key_b64=keys["public_key"],
-        salt_hex=vr.generate_salt(),
-    )
+    runtime = LocalPVDMRuntime()
+    gen, _ = create_proof_generator()
     orders = runtime.run_write(
         workload_id="orders",
         record_count=100,

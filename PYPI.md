@@ -21,7 +21,7 @@ pip install "serverless-data-mesh[all]"     # rules + spark
 pip install "serverless-data-mesh[dev]"     # pytest, ruff, pre-commit
 ```
 
-**Requires Python 3.12+**
+**Works on **Windows, Mac, and Linux**. Uses veridata-recon cryptographic VRP when wheels are available; **pure-Python fallback** otherwise (same PASS/FAIL gate).**
 
 ## What it solves
 

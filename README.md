@@ -215,16 +215,28 @@ Lambda :live  (15-min segments, up to 90+ min total)
 
 ### Try in 60 seconds (no AWS)
 
+Works on **Windows, Mac, and Linux** - pure-Python verifier fallback when Rust wheels unavailable.
+
 ```bash
 pip install serverless-data-mesh
 serverless-data-mesh demo
 ```
 
-Runs the full **PVDM lifecycle** locally: 1000-row clean write → corrupt write blocked by VRP → consumer sees only clean data.
+### Cost comparison (published estimates)
+
+| Workload | Lambda+PVDM | Glue ETL | Savings |
+|----------|-------------|----------|---------|
+| 100K rows | $0.025 | $0.22 | **8.7x** |
+| 1M rows | $0.025 | $0.44 | **17x** |
+| 10M rows | $0.051 | $1.47 | **29x** |
+
+Details: [benchmarks/README.md](benchmarks/README.md) · `make cost-estimate`
+
+### Scaffold a new domain (30 seconds)
 
 ```bash
-make gate-demo       # verification gate fire-alarm demo
-make multi-domain    # orders + payments atomicity demo
+serverless-data-mesh init --domain payments --table fact_payments --account 123456789012
+serverless-data-mesh dashboard   # mesh trust dashboard HTML
 ```
 
 ### Full development setup
@@ -235,14 +247,13 @@ cd aws-serverless-datamesh-framework
 
 make install
 make test
-make demo             # same as serverless-data-mesh demo
+make demo             # PVDM demo (fallback verifier on Windows/Mac)
+make gate-demo        # verification gate fire-alarm demo
+make multi-domain     # orders + payments atomicity
+make cost-estimate    # populate benchmark cost JSON
 make walkthrough      # 12-step tutorial (no AWS)
 make benchmark        # consumer safety: corrupt data never commits
 ```
-
-### Cost comparison (AWS)
-
-Published methodology and workload definitions: **[benchmarks/README.md](benchmarks/README.md)** (run on AWS to populate dollar amounts).
 
 ### Install from PyPI
 

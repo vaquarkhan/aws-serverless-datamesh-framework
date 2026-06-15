@@ -1,7 +1,52 @@
 {
-  "benchmark_version": "0.1.0",
-  "status": "placeholder",
-  "note": "Run benchmarks/run_benchmark.sh on AWS to populate measured costs",
+  "benchmark_version": "0.1.3",
+  "status": "pricing_model_estimated",
+  "note": "Estimated from AWS public pricing. Validate with benchmarks/run_benchmark.sh on AWS.",
   "methodology_url": "benchmarks/README.md",
-  "runs": []
+  "generated_at": "2026-06-15T01:44:53+00:00",
+  "region": "us-east-2",
+  "assumptions": {
+    "lambda_memory_mb": 1024,
+    "lambda_segments": "auto from 14-min chunks",
+    "glue_dpus": 2,
+    "emr_vcpu": 4,
+    "emr_memory_gb": 16,
+    "workload_type": "nightly_intermittent_backfill"
+  },
+  "runs": [
+    {
+      "workload_id": "bench-100k",
+      "row_count": 100000,
+      "lambda_usd": 0.0154,
+      "glue_usd": 0.22,
+      "emr_usd": 0.0505,
+      "lambda_wall_min": 1.0,
+      "glue_wall_min": 15,
+      "vrp_gate": true
+    },
+    {
+      "workload_id": "bench-1m",
+      "row_count": 1000000,
+      "lambda_usd": 0.0154,
+      "glue_usd": 0.22,
+      "emr_usd": 0.0505,
+      "lambda_wall_min": 8.3,
+      "glue_wall_min": 15,
+      "vrp_gate": true
+    },
+    {
+      "workload_id": "bench-10m",
+      "row_count": 10000000,
+      "lambda_usd": 0.0922,
+      "glue_usd": 0.3056,
+      "emr_usd": 0.1403,
+      "lambda_wall_min": 83.3,
+      "glue_wall_min": 20.8,
+      "vrp_gate": true
+    }
+  ],
+  "summary": {
+    "lambda_cheaper_than_glue_all_workloads": true,
+    "avg_lambda_vs_glue_ratio": 10.6
+  }
 }

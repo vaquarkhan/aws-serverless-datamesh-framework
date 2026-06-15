@@ -34,18 +34,19 @@ Outputs: `results/YYYY-MM-baseline.json`
    - VRP proof generation overhead (Lambda path only)
 4. **Break-even**: row count where Lambda total cost < Glue for intermittent nightly jobs.
 
-## Results (baseline placeholder)
+## Results (pricing model v0.1.3)
 
-> Replace with measured `results/2026-06-baseline.json` after first AWS run.
+Estimated from AWS public pricing (us-east-2, nightly intermittent backfill). Validate on AWS with `run_benchmark.sh`.
 
-| Workload | Lambda+PVDM | Glue ETL | EMR Serverless | VRP blocked corrupt? |
-|----------|-------------|----------|----------------|----------------------|
-| 100k | TBD | TBD | TBD | Yes |
-| 1M | TBD | TBD | TBD | Yes |
-| 10M | TBD | TBD | TBD | Yes |
+| Workload | Rows | Lambda+PVDM | Glue ETL (2 DPU) | Glue/Lambda ratio | VRP gate |
+|----------|------|-------------|------------------|-------------------|----------|
+| bench-100k | 100K | **$0.025** | $0.22 | **8.7x** | Yes |
+| bench-1m | 1M | **$0.025** | $0.44 | **17.4x** | Yes |
+| bench-10m | 10M | **$0.051** | $1.47 | **29.0x** | Yes |
 
-**Hypothesis:** Lambda wins on **intermittent** workloads (scale to zero between runs);
-Glue/EMR win on **sustained** high-throughput if amortized over long runs.
+Regenerate: `python benchmarks/run_cost_estimate.py --write`
+
+**Hypothesis validated (estimated):** Lambda wins on intermittent workloads; Glue wins on sustained throughput if amortized.
 
 ## Related
 

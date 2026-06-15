@@ -9,7 +9,7 @@ Usage:
     python eval/validate_then_commit_benchmark.py
     python eval/validate_then_commit_benchmark.py --json
 
-Requires: Python 3.12+, veridata-recon (Linux CI wheel; Windows needs cp312 wheel).
+Requires: Python 3.12+. Uses veridata-recon when available; pure-Python fallback otherwise.
 """
 
 from __future__ import annotations
@@ -26,14 +26,13 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 try:
-    import veridata_recon as vr
+    import veridata_recon as vr  # noqa: F401
 except ImportError:
-    print("ERROR: veridata-recon required. Use Python 3.12+ on Ubuntu CI or install wheel.")
-    print("       pip install veridata-recon")
-    sys.exit(2)
+    vr = None
 
 from serverless_data_mesh.types.workload import DataWriteWorkload, DomainTransactionBoundary
-from serverless_data_mesh.verification.vrp import VRPProofGenerator, validate_then_commit
+from serverless_data_mesh.verification.backend import create_proof_generator
+from serverless_data_mesh.verification.vrp import validate_then_commit
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,12 +70,7 @@ def _records(n: int, *, mutate_last: bool = False) -> list[dict[str, str]]:
 
 
 def run_benchmark() -> list[ScenarioResult]:
-    keys = vr.generate_keypair()
-    gen = VRPProofGenerator(
-        private_key_b64=keys["private_key"],
-        public_key_b64=keys["public_key"],
-        salt_hex=vr.generate_salt(),
-    )
+    gen, backend = create_proof_generator()
     workload = _workload()
     scenarios: list[tuple[str, list[dict[str, str]], list[dict[str, str]], str]] = [
         ("identical_source_sink", _records(500), _records(500), "PASS"),
@@ -123,6 +117,7 @@ def main() -> int:
     if args.json:
         report = {
             "benchmark": "validate_then_commit_consumer_safety",
+            "verifier_backend": backend,
             "all_scenarios_passed": all_passed,
             "corrupt_data_never_passes": corrupt_blocked,
             "scenarios": [asdict(r) for r in results],

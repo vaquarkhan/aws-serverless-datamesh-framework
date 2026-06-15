@@ -12,11 +12,24 @@ from datetime import datetime, timezone
 from typing import Any
 
 import boto3
-import veridata_recon as vr
 
 from serverless_data_mesh.types.workload import DataWriteWorkload
 
 logger = logging.getLogger(__name__)
+
+
+def _vr() -> Any:
+    try:
+        import veridata_recon as vr
+
+        return vr
+    except ImportError as exc:
+        msg = (
+            "veridata-recon is required for VRPProofGenerator. "
+            "Use create_proof_generator() for automatic fallback, or "
+            "pip install veridata-recon (Python 3.12+, Linux/macOS wheels)."
+        )
+        raise ImportError(msg) from exc
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,6 +67,7 @@ class VRPProofGenerator:
     def from_env(cls) -> VRPProofGenerator:
         """Load signing keys from ``VRP_SIGNING_KEY_B64`` or generate ephemeral ones."""
         raw = os.environ.get("VRP_SIGNING_KEY_B64")
+        vr = _vr()
         if raw:
             keys = vr.keypair_from_private(raw)
         else:
@@ -75,6 +89,7 @@ class VRPProofGenerator:
         prev_proof_hash: str | None = None,
     ) -> dict[str, Any]:
         """Hash and compare source vs target partition, returning a proof envelope."""
+        vr = _vr()
         identity_rule = _identity_rule(workload.identity_fields)
         content_fields = list(workload.content_fields)
 
@@ -168,6 +183,7 @@ def validate_then_commit(
     pubkey = public_key_b64 or proof.get("public_key")
     if pubkey:
         try:
+            vr = _vr()
             with tempfile.NamedTemporaryFile(
                 mode="w",
                 suffix=".vrp.json",

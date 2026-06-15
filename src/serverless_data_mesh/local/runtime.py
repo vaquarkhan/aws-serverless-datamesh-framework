@@ -15,7 +15,8 @@ from serverless_data_mesh.types.workload import (
     DomainTransactionBoundary,
     WriteOutcome,
 )
-from serverless_data_mesh.verification.vrp import VRPProofGenerator, validate_then_commit
+from serverless_data_mesh.verification.backend import create_proof_generator
+from serverless_data_mesh.verification.vrp import validate_then_commit
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,7 +68,7 @@ def _records(n: int, *, corrupt_last: bool = False) -> list[dict[str, str]]:
 class LocalPVDMRuntime:
     """Simulate Physical → Verify → Durable → Metadata on a laptop.
 
-    Uses real veridata-recon VRP proofs and validate_then_commit gate.
+    Uses veridata-recon when available; pure-Python fallback on Windows/Mac without wheels.
     Checkpoints, proofs, and catalog snapshots are stored on local disk.
     """
 
@@ -139,22 +140,16 @@ class LocalPVDMRuntime:
         workload_id: str = "local-demo-001",
         record_count: int = 1000,
         corrupt_sink: bool = False,
-        proof_generator: VRPProofGenerator | None = None,
+        proof_generator: Any | None = None,
         defer_snapshot: bool = False,
     ) -> LocalWriteResult:
         """Execute one PVDM write cycle on local disk."""
-        import veridata_recon as vr
-
         workload = _default_workload(self.root, workload_id=workload_id, total_records=record_count)
         if proof_generator is None:
-            keys = vr.generate_keypair()
-            gen = VRPProofGenerator(
-                private_key_b64=keys["private_key"],
-                public_key_b64=keys["public_key"],
-                salt_hex=vr.generate_salt(),
-            )
+            gen, self._last_backend = create_proof_generator()
         else:
             gen = proof_generator
+            self._last_backend = getattr(gen, "producer", "custom")
 
         source = _records(record_count)
         sink = _records(record_count, corrupt_last=corrupt_sink)
@@ -261,14 +256,7 @@ class LocalPVDMRuntime:
 
     def run_demo_sequence(self) -> dict[str, Any]:
         """Run clean write, corrupt write, and consumer visibility check."""
-        import veridata_recon as vr
-
-        keys = vr.generate_keypair()
-        gen = VRPProofGenerator(
-            private_key_b64=keys["private_key"],
-            public_key_b64=keys["public_key"],
-            salt_hex=vr.generate_salt(),
-        )
+        gen, backend = create_proof_generator()
 
         started = time.perf_counter()
         clean = self.run_write(
@@ -287,6 +275,7 @@ class LocalPVDMRuntime:
 
         return {
             "mode": "local-pvdm",
+            "verifier_backend": backend,
             "root": str(self.root),
             "elapsed_ms": elapsed_ms,
             "phases": {

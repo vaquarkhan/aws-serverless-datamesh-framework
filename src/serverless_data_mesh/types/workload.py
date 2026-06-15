@@ -82,6 +82,28 @@ class DataProductContract:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class ConsumerSLAContract:
+    """Consumer-declared SLA enforced via VRP-backed proofs before read access."""
+
+    consumer_id: str
+    target_table: str
+    max_freshness_minutes: int = 60
+    min_completeness_pct: float = 99.9
+    required_columns: tuple[str, ...] = ()
+    enforcement: str = "vrp_backed"
+
+    def to_dict(self) -> dict[str, str | int | float | tuple[str, ...]]:
+        return {
+            "consumer_id": self.consumer_id,
+            "target_table": self.target_table,
+            "max_freshness_minutes": self.max_freshness_minutes,
+            "min_completeness_pct": self.min_completeness_pct,
+            "required_columns": self.required_columns,
+            "enforcement": self.enforcement,
+        }
+
+
 @dataclass(slots=True)
 class ChunkWriteResult:
     """Outcome of one durable chunk step."""

@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
-"""
-Verification gate demo: show VRP blocking corrupt data before consumers see it.
-
-Usage:
-    python examples/tutorials/verification_gate_demo.py
-    python examples/tutorials/verification_gate_demo.py --json
-
-No AWS credentials required. Requires Python 3.12+ and veridata-recon.
-"""
+"""VRP gate demo: PASS then FAIL. Works on Windows/Mac without Rust wheels."""
 
 from __future__ import annotations
 
@@ -27,12 +19,6 @@ def main() -> int:
     if src not in sys.path:
         sys.path.insert(0, src)
 
-    try:
-        import veridata_recon  # noqa: F401
-    except ImportError:
-        print("ERROR: pip install veridata-recon (Python 3.12+)", file=sys.stderr)
-        return 2
-
     from serverless_data_mesh.local.runtime import LocalPVDMRuntime
 
     print("\n" + "=" * 72)
@@ -50,6 +36,7 @@ def main() -> int:
     clean = result["phases"]["clean_write"]
     corrupt = result["phases"]["corrupt_write"]
 
+    print(f"Verifier: {result.get('verifier_backend', 'unknown')}\n")
     print("Step 1: Write 1000 rows correctly")
     print(f"         outcome={clean['outcome']}, snapshot={clean['snapshot_id']}")
     print(f"         consumer rows={clean['consumer_row_count']}\n")

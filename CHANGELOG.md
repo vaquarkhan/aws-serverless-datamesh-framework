@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2026-06-15
+
+### Added
+
+- **Pure-Python fallback verifier** when veridata-recon wheels unavailable (Windows/Mac demo works)
+- `serverless-data-mesh init` domain scaffold CLI
+- `serverless-data-mesh dashboard` mesh trust dashboard HTML
+- `benchmarks/run_cost_estimate.py` with published cost estimates (100K/1M/10M)
+- `ConsumerSLAContract` type and `run_canary_comparison` for progressive delivery
+- Tests: fallback verifier, scaffold, dashboard
+
+### Changed
+
+- Local demo, gate demo, multi-domain, and benchmark use `create_proof_generator()` auto-backend
+- `benchmarks/results/2026-06-baseline.json` populated (pricing model estimated)
+
 ## [0.1.2] - 2026-06-15
 
 ### Added

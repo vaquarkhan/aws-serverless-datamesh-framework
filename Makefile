@@ -1,4 +1,4 @@
-.PHONY: install install-rules lint format test benchmark walkthrough demo gate-demo multi-domain version-check version-sync build clean pre-commit
+.PHONY: install install-rules lint format test benchmark cost-estimate walkthrough demo gate-demo multi-domain dashboard init-domain version-check version-sync build clean pre-commit
 
 install:
 	pip install -e ".[dev]"
@@ -22,6 +22,9 @@ test:
 benchmark:
 	python eval/validate_then_commit_benchmark.py
 
+cost-estimate:
+	python benchmarks/run_cost_estimate.py --write
+
 walkthrough:
 	python examples/tutorials/walkthrough.py
 
@@ -33,6 +36,9 @@ gate-demo:
 
 multi-domain:
 	python examples/multi-domain-orders-payments/test_atomicity.py
+
+dashboard:
+	serverless-data-mesh dashboard --open
 
 version-check:
 	python scripts/sync_version.py --check
