@@ -28,9 +28,13 @@ keywords = [
     "pyiceberg",
     "sparkrules",
     "rule-engine",
+    "medallion",
+    "metadata-driven",
+    "bronze-silver-gold",
+    "etl",
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
@@ -48,6 +52,7 @@ dependencies = [
     "aws-durable-execution-sdk-python>=1.0.0",
     "pyiceberg[glue,rest-sigv4]>=0.7.0",
     "boto3>=1.34",
+    "pyyaml>=6",
 ]
 
 [project.optional-dependencies]
@@ -92,6 +97,9 @@ pattern = "^(?P<version>[^\\s]+)$"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/serverless_data_mesh"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/serverless_data_mesh/templates" = "serverless_data_mesh/templates"
 
 [tool.hatch.build.targets.sdist]
 include = [

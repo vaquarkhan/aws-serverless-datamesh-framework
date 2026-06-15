@@ -15,12 +15,14 @@ def test_scaffold_domain_creates_files(tmp_path: Path) -> None:
         account_id="123456789012",
         output_dir=str(tmp_path),
     )
+    assert (root / "mesh.pipeline.yaml").exists()
     assert (root / "handler.py").exists()
-    assert (root / "contract.yaml").exists()
+    assert (root / "readers.py").exists()
+    assert (root / "pipeline_config.py").exists()
     assert (root / "consumer_sla.yaml").exists()
     assert (root / "step_function.asl.json").exists()
     assert (root / "terraform" / "main.tf").exists()
-    assert (root / "tests" / "test_payments.py").exists()
+    assert (root / "tests" / "test_payments_pipeline.py").exists()
 
 
 def test_trust_dashboard_demo(tmp_path: Path) -> None:

@@ -1,0 +1,58 @@
+apiVersion: sdm/v1
+kind: DataProductPipeline
+metadata:
+  domain_id: orders
+  product_id: orders-curated-nightly
+  owner_team: orders-platform
+  description: >
+    Nightly OMS export — join order lines, dedup, aggregate totals.
+    ~8M rows/night. PySpark on Lambda for physical Parquet materialization.
+spec:
+  accounts:
+    producer: "111111111111"
+    steward: "234567890123"
+    publisher: "345678901234"
+  boundary:
+    source_namespace: raw_orders
+    target_table: orders_curated
+    partition_key: dt
+    quality_policy_id: strict-zero-drop
+    max_chunk_records: 5000
+  workload:
+    identity_fields:
+      - order_id
+    content_fields:
+      - order_id
+      - customer_id
+      - order_total
+      - line_count
+      - status
+    checkpoint_interval: 5000
+    rollback_threshold_ms: 45000
+  runtime:
+    engine: pyspark
+    package_extras: spark
+    lambda_memory_mb: 10240
+    lambda_timeout_seconds: 900
+    spark_shuffle_partitions: 16
+    spark_rules_enabled: false
+  governance:
+    sla_freshness_hours: 4
+    auto_repair: true
+    canary_max_divergence_pct: 0.5
+    schema_version: "2.1.0"
+  triggers:
+    - type: schedule
+      cron: "0 1 * * *"
+      description: Daily 01:00 UTC after OMS export lands in S3
+  consumer_slas:
+    - consumer_id: analytics-team
+      target_table: orders_curated
+      max_freshness_minutes: 360
+      required_columns: [order_id, customer_id, order_total, status]
+    - consumer_id: finance-close
+      target_table: orders_curated
+      max_freshness_minutes: 480
+      required_columns: [order_id, order_total]
+  aws_region: us-east-2
+  name_prefix: sdm-orders

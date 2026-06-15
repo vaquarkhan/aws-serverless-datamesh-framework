@@ -1,0 +1,34 @@
+apiVersion: sdm/v1
+kind: DataProductPipeline
+metadata:
+  domain_id: "{{DOMAIN}}"
+  product_id: "{{DOMAIN}}-{{TABLE}}"
+  owner_team: "{{DOMAIN}}-platform"
+  description: Single-table pipeline starter
+spec:
+  accounts:
+    producer: "{{PRODUCER_ACCOUNT}}"
+    steward: "{{STEWARD_ACCOUNT}}"
+    publisher: "{{PUBLISHER_ACCOUNT}}"
+  boundary:
+    source_namespace: raw_{{DOMAIN}}
+    target_table: "{{TABLE}}"
+    partition_key: dt
+  workload:
+    identity_fields: [id]
+    content_fields: [id, payload_hash]
+  runtime:
+    engine: pyarrow
+    lambda_memory_mb: 3008
+  governance:
+    auto_repair: true
+  triggers:
+    - type: schedule
+      cron: "0 2 * * *"
+  consumer_slas:
+    - consumer_id: analytics-team
+      target_table: "{{TABLE}}"
+      max_freshness_minutes: 120
+      required_columns: [id, payload_hash]
+  aws_region: us-east-2
+  name_prefix: sdm-{{DOMAIN}}

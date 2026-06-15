@@ -1,0 +1,48 @@
+apiVersion: sdm/v1
+kind: DataProductPipeline
+metadata:
+  domain_id: payments
+  product_id: payments-fact_payments
+  owner_team: payments-platform
+  description: Nightly curated payments fact table for the federated mesh
+spec:
+  accounts:
+    producer: "123456789012"
+    steward: "234567890123"
+    publisher: "345678901234"
+  boundary:
+    source_namespace: raw_payments
+    target_table: fact_payments
+    partition_key: dt
+    quality_policy_id: strict-zero-drop
+    max_chunk_records: 5000
+  workload:
+    identity_fields:
+      - payment_id
+    content_fields:
+      - payment_id
+      - amount
+      - currency
+    checkpoint_interval: 5000
+    rollback_threshold_ms: 30000
+  governance:
+    sla_freshness_hours: 2
+    auto_repair: true
+    canary_max_divergence_pct: 1.0
+    schema_version: "1.0.0"
+  triggers:
+    - type: schedule
+      cron: "0 2 * * *"
+      description: Nightly at 02:00 UTC
+  consumer_slas:
+    - consumer_id: analytics-team
+      target_table: fact_payments
+      max_freshness_minutes: 120
+      min_completeness_pct: 99.9
+      required_columns:
+        - payment_id
+        - amount
+        - currency
+      enforcement: vrp_backed
+  aws_region: us-east-2
+  name_prefix: sdm-payments

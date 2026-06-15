@@ -144,3 +144,21 @@ variable "iceguard_rollback_threshold_ms" {
   type        = number
   default     = null
 }
+
+variable "trust_dashboard_domains" {
+  description = "Domain IDs on the mesh trust CloudWatch dashboard."
+  type        = list(string)
+  default     = ["orders", "payments", "inventory"]
+}
+
+variable "enable_lake_formation_governance" {
+  description = "Deploy Lake Formation consumer SLA grant hooks (requires consumer_principal_arn)."
+  type        = bool
+  default     = false
+}
+
+variable "consumer_principal_arn" {
+  description = "IAM principal ARN for analytics consumers (Athena role). Required when enable_lake_formation_governance is true."
+  type        = string
+  default     = ""
+}

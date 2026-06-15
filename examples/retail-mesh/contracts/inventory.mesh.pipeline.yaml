@@ -1,0 +1,34 @@
+apiVersion: sdm/v1
+kind: DataProductPipeline
+metadata:
+  domain_id: inventory
+  product_id: inventory-snapshot-nightly
+  owner_team: supply-chain-platform
+  description: WMS stock by SKU and location — PySpark wide aggregates (~2M rows)
+spec:
+  accounts:
+    producer: "133333333333"
+    steward: "234567890123"
+    publisher: "345678901234"
+  boundary:
+    source_namespace: raw_inventory
+    target_table: inventory_snapshot
+    partition_key: dt
+    max_chunk_records: 10000
+  workload:
+    identity_fields: [sku, location_id]
+    content_fields: [sku, location_id, quantity_on_hand, quantity_reserved]
+  runtime:
+    engine: pyspark
+    package_extras: spark
+    lambda_memory_mb: 10240
+    spark_shuffle_partitions: 24
+  triggers:
+    - type: schedule
+      cron: "0 3 * * *"
+  consumer_slas:
+    - consumer_id: ops-dashboard
+      target_table: inventory_snapshot
+      max_freshness_minutes: 720
+  aws_region: us-east-2
+  name_prefix: sdm-inventory

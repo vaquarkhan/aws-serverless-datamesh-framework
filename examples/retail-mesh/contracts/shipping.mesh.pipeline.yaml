@@ -1,0 +1,33 @@
+apiVersion: sdm/v1
+kind: DataProductPipeline
+metadata:
+  domain_id: shipping
+  product_id: shipments-fact
+  owner_team: logistics-platform
+  description: TMS shipment facts — event-triggered after orders_curated VRP PASS
+spec:
+  accounts:
+    producer: "155555555555"
+    steward: "234567890123"
+    publisher: "345678901234"
+  boundary:
+    source_namespace: raw_shipping
+    target_table: fact_shipments
+    partition_key: dt
+  workload:
+    identity_fields: [shipment_id]
+    content_fields: [shipment_id, order_id, carrier, shipped_at, delivered_at]
+  runtime:
+    engine: pyarrow
+    lambda_memory_mb: 3008
+  governance:
+    auto_repair: false
+  triggers:
+    - type: event
+      description: EventBridge on orders.pipeline.success with partition dt
+  consumer_slas:
+    - consumer_id: ops-dashboard
+      target_table: fact_shipments
+      max_freshness_minutes: 1440
+  aws_region: us-east-2
+  name_prefix: sdm-shipping

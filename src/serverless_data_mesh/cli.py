@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 
 def _cmd_demo(args: argparse.Namespace) -> int:
@@ -51,12 +52,91 @@ def _cmd_init(args: argparse.Namespace) -> int:
         account_id=args.account,
         output_dir=args.output,
     )
-    print(f"\n  Domain scaffold created: {root}\n")
+    print(f"\n  Metadata-driven pipeline created: {root}\n")
     print("  Next steps:")
-    print(f"    1. Edit {root}/handler.py")
-    print(f"    2. Review {root}/contract.yaml")
-    print(f"    3. Deploy {root}/terraform/ (copy tfvars.example -> tfvars)")
+    print(f"    1. Edit {root}/mesh.pipeline.yaml (source of truth)")
+    print(f"    2. Implement {root}/readers.py")
+    print(f"    3. Deploy {root}/terraform/")
     print(f"    4. Run tests: pytest {root}/tests/\n")
+    return 0
+
+
+def _cmd_compile(args: argparse.Namespace) -> int:
+    from serverless_data_mesh.compile.emit import compile_pipeline
+    from serverless_data_mesh.compile.loader import load_contract_document
+    from serverless_data_mesh.compile.medallion import MedallionMeshContract
+    from serverless_data_mesh.compile.medallion_emit import compile_medallion_mesh
+    from serverless_data_mesh.compile.medallion_validate import validate_medallion_contract
+    from serverless_data_mesh.compile.validate import validate_contract
+
+    doc = load_contract_document(args.contract)
+
+    if isinstance(doc, MedallionMeshContract):
+        errors = validate_medallion_contract(doc)
+        if errors:
+            print("Medallion mesh validation failed:", file=sys.stderr)
+            for err in errors:
+                print(f"  - {err}", file=sys.stderr)
+            return 1
+        result = compile_medallion_mesh(
+            doc,
+            output_dir=args.output,
+            source_contract_path=Path(args.contract),
+        )
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "mesh_root": str(result.mesh_root),
+                        "pipeline_count": result.pipeline_count,
+                        "domains": list(result.domain_paths.keys()),
+                        "layer_paths": {k: str(v) for k, v in result.layer_paths.items()},
+                        "files_written": list(result.files_written),
+                    },
+                    indent=2,
+                )
+            )
+        else:
+            print(f"\n  Medallion mesh compiled: {result.mesh_root}\n")
+            print(f"  Pipelines generated: {result.pipeline_count}")
+            print(f"  Domains: {', '.join(result.domain_paths.keys())}")
+            for key, path in sorted(result.layer_paths.items()):
+                print(f"    {key} -> {path}")
+            print("\n  Edit only your YAML metadata; implement readers.py per layer.")
+            print("  Deploy mesh.orchestrator.asl.json + per-domain orchestrators.\n")
+        return 0
+
+    errors = validate_contract(doc)
+    if errors:
+        print("Contract validation failed:", file=sys.stderr)
+        for err in errors:
+            print(f"  - {err}", file=sys.stderr)
+        return 1
+
+    result = compile_pipeline(
+        doc,
+        output_dir=args.output,
+        write_canonical_contract=not args.no_write_contract,
+    )
+
+    if args.json:
+        print(
+            json.dumps(
+                {
+                    "output_root": str(result.output_root),
+                    "contract_path": str(result.contract_path),
+                    "files_written": list(result.files_written),
+                },
+                indent=2,
+            )
+        )
+    else:
+        print(f"\n  Pipeline compiled: {result.output_root}\n")
+        print(f"  Contract: {result.contract_path}")
+        print(f"  Files ({len(result.files_written)}):")
+        for name in result.files_written:
+            print(f"    - {name}")
+        print("\n  Next: implement readers.py, deploy terraform/, pytest tests/\n")
     return 0
 
 
@@ -118,6 +198,118 @@ def _cmd_reprocess_demo(args: argparse.Namespace) -> int:
     return 0 if result.get("outcome") == "repaired_and_committed" else 1
 
 
+def _cmd_new(args: argparse.Namespace) -> int:
+    from serverless_data_mesh.compile.wizard import list_templates, scaffold_new
+
+    if args.list_templates:
+        print("\n  Available templates:\n")
+        for name, desc in list_templates().items():
+            print(f"    {name:12} {desc}")
+        print()
+        return 0
+
+    result = scaffold_new(
+        args.template,
+        output_dir=args.output,
+        producer_account=args.producer,
+        steward_account=args.steward,
+        publisher_account=args.publisher,
+        domain=args.domain,
+        table=args.table,
+        contract_name=args.contract_name,
+    )
+    print(f"\n  Starter mesh created: {result.contract_path}\n")
+    print("  One command to generate all pipelines:")
+    print(f"    serverless-data-mesh apply --contract {result.contract_path}\n")
+    return 0
+
+
+def _cmd_validate(args: argparse.Namespace) -> int:
+    from serverless_data_mesh.compile.wizard import validate_contract_file
+
+    errors = validate_contract_file(args.contract)
+    if args.json:
+        print(json.dumps({"valid": not errors, "errors": errors}, indent=2))
+    elif errors:
+        print("Invalid contract:", file=sys.stderr)
+        for err in errors:
+            print(f"  - {err}", file=sys.stderr)
+        return 1
+    print(f"Valid: {args.contract}")
+    return 0
+
+
+def _cmd_doctor(args: argparse.Namespace) -> int:
+    from serverless_data_mesh.compile.wizard import doctor_generated
+
+    report = doctor_generated(args.path)
+    if args.json:
+        print(
+            json.dumps(
+                {
+                    "root": str(report.root),
+                    "pipeline_count": report.pipeline_count,
+                    "readers_total": report.readers_total,
+                    "readers_done": report.readers_done,
+                    "readers_pending": report.readers_pending,
+                    "ready_to_deploy": report.ready_to_deploy,
+                },
+                indent=2,
+            )
+        )
+    else:
+        print(f"\n  Mesh doctor: {report.root}\n")
+        print(f"  Pipelines:     {report.pipeline_count}")
+        print(f"  Readers done:  {report.readers_done}/{report.readers_total}")
+        if report.readers_pending:
+            print("  Pending readers.py:")
+            for p in report.readers_pending:
+                print(f"    - {p}")
+        print(f"  Orchestrator:  {report.has_orchestrator}")
+        print(f"  Deploy ready:  {report.ready_to_deploy}\n")
+    return 0 if report.ready_to_deploy or not report.readers_pending else 1
+
+
+def _cmd_apply(args: argparse.Namespace) -> int:
+    from serverless_data_mesh.compile.wizard import apply_mesh
+
+    try:
+        result = apply_mesh(args.contract, output_dir=args.output)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    if args.json:
+        print(
+            json.dumps(
+                {
+                    "contract": str(result.contract_path),
+                    "output_root": str(result.output_root),
+                    "pipeline_count": result.pipeline_count,
+                    "getting_started": str(result.getting_started_path),
+                    "readers_pending": result.doctor.readers_pending,
+                    "ready_to_deploy": result.doctor.ready_to_deploy,
+                },
+                indent=2,
+            )
+        )
+    else:
+        print("\n  Mesh apply complete\n")
+        print(f"  Contract:   {result.contract_path}")
+        print(f"  Generated:  {result.output_root}")
+        print(f"  Pipelines:  {result.pipeline_count}")
+        print(f"  Guide:      {result.getting_started_path}")
+        print(f"  Readers:    {result.doctor.readers_done}/{result.doctor.readers_total} done")
+        if result.doctor.readers_pending:
+            print("\n  Implement these readers.py files, then run doctor again:")
+            for p in result.doctor.readers_pending:
+                print(f"    {result.output_root / p}")
+        else:
+            print("\n  All readers implemented — ready for terraform + Step Functions deploy.")
+        print()
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="serverless-data-mesh",
@@ -129,12 +321,30 @@ def main(argv: list[str] | None = None) -> int:
     demo.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     demo.set_defaults(func=_cmd_demo)
 
-    init_p = sub.add_parser("init", help="Scaffold a new proof-gated domain writer")
+    init_p = sub.add_parser("init", help="Scaffold a metadata-driven PVDM pipeline")
     init_p.add_argument("--domain", required=True, help="Domain id (e.g. payments)")
     init_p.add_argument("--table", required=True, help="Target Iceberg table")
     init_p.add_argument("--account", required=True, help="Producer AWS account ID")
     init_p.add_argument("--output", default="domains", help="Output parent directory")
     init_p.set_defaults(func=_cmd_init)
+
+    compile_p = sub.add_parser(
+        "compile",
+        help="Generate pipeline(s) from YAML (DataProductPipeline or MedallionMesh)",
+    )
+    compile_p.add_argument(
+        "--contract",
+        required=True,
+        help="Path to mesh.pipeline.yaml or MedallionMesh YAML (bronze/silver/gold)",
+    )
+    compile_p.add_argument("--output", default="domains", help="Output parent directory")
+    compile_p.add_argument(
+        "--no-write-contract",
+        action="store_true",
+        help="Do not copy contract YAML into output (already present)",
+    )
+    compile_p.add_argument("--json", action="store_true")
+    compile_p.set_defaults(func=_cmd_compile)
 
     dash = sub.add_parser("dashboard", help="Generate mesh trust dashboard HTML")
     dash.add_argument("--proofs-dir", help="Steward proofs directory (local or mounted S3)")
@@ -156,6 +366,42 @@ def main(argv: list[str] | None = None) -> int:
     repro.add_argument("--drop", type=int, default=5)
     repro.add_argument("--json", action="store_true")
     repro.set_defaults(func=_cmd_reprocess_demo)
+
+    new_p = sub.add_parser("new", help="Create starter mesh YAML from template")
+    new_p.add_argument(
+        "--template",
+        default="medallion",
+        choices=["medallion", "single", "northstar", "starter", "pipeline"],
+        help="Template: medallion (default), single, or northstar retail",
+    )
+    new_p.add_argument("--output", default="my-mesh", help="Directory for mesh.yaml")
+    new_p.add_argument("--producer", default="123456789012")
+    new_p.add_argument("--steward", default="234567890123")
+    new_p.add_argument("--publisher", default="345678901234")
+    new_p.add_argument("--domain", default="orders")
+    new_p.add_argument("--table", default="curated_table")
+    new_p.add_argument("--contract-name", default="mesh.yaml")
+    new_p.add_argument("--list-templates", action="store_true")
+    new_p.set_defaults(func=_cmd_new)
+
+    val_p = sub.add_parser("validate", help="Validate mesh YAML without compiling")
+    val_p.add_argument("--contract", required=True)
+    val_p.add_argument("--json", action="store_true")
+    val_p.set_defaults(func=_cmd_validate)
+
+    doc_p = sub.add_parser("doctor", help="Check generated mesh readiness")
+    doc_p.add_argument("--path", required=True, help="Generated mesh directory")
+    doc_p.add_argument("--json", action="store_true")
+    doc_p.set_defaults(func=_cmd_doctor)
+
+    apply_p = sub.add_parser(
+        "apply",
+        help="Validate + compile + doctor + GETTING_STARTED (one-shot)",
+    )
+    apply_p.add_argument("--contract", required=True, help="mesh.yaml or northstar.mesh.yaml")
+    apply_p.add_argument("--output", default="generated", help="Output directory")
+    apply_p.add_argument("--json", action="store_true")
+    apply_p.set_defaults(func=_cmd_apply)
 
     args = parser.parse_args(argv)
     return int(args.func(args))

@@ -1,0 +1,46 @@
+apiVersion: sdm/v1
+kind: MedallionMesh
+metadata:
+  organization: my-company
+  description: Starter medallion mesh — edit accounts and domain, then run `serverless-data-mesh apply`
+spec:
+  name_prefix: my-mesh
+  aws_region: us-east-2
+  accounts:
+    producer: "{{PRODUCER_ACCOUNT}}"
+    steward: "{{STEWARD_ACCOUNT}}"
+    publisher: "{{PUBLISHER_ACCOUNT}}"
+  domains:
+    - domain_id: orders
+      owner_team: orders-platform
+      schedule_cron: "0 2 * * *"
+      layers:
+        bronze:
+          target_table: orders_bronze
+          source_namespace: bronze_orders
+          identity_fields: [order_id]
+          content_fields: [order_id, raw_payload]
+          runtime: { engine: pyarrow, lambda_memory_mb: 3008 }
+          transforms: [landing_copy]
+        silver:
+          target_table: orders_silver
+          source_namespace: silver_orders
+          upstream_layer: bronze
+          identity_fields: [order_id]
+          content_fields: [order_id, customer_id, order_total, status]
+          runtime: { engine: pyspark, package_extras: spark, lambda_memory_mb: 10240 }
+          transforms: [dedup, cleanse]
+          auto_repair: true
+        gold:
+          target_table: orders_gold
+          source_namespace: gold_orders
+          upstream_layer: silver
+          identity_fields: [order_id]
+          content_fields: [order_id, customer_id, order_total]
+          runtime: { engine: pyarrow, lambda_memory_mb: 3008 }
+          transforms: [daily_snapshot]
+          consumer_slas:
+            - consumer_id: analytics-team
+              target_table: orders_gold
+              max_freshness_minutes: 360
+              required_columns: [order_id, order_total]

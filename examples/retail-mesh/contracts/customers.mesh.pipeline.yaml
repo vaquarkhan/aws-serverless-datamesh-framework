@@ -1,0 +1,32 @@
+apiVersion: sdm/v1
+kind: DataProductPipeline
+metadata:
+  domain_id: customers
+  product_id: customers-dim-nightly
+  owner_team: customer-data-platform
+  description: CRM Salesforce export → dim_customers SCD Type 2 (~400K rows, Polars)
+spec:
+  accounts:
+    producer: "144444444444"
+    steward: "234567890123"
+    publisher: "345678901234"
+  boundary:
+    source_namespace: raw_customers
+    target_table: dim_customers
+    partition_key: dt
+  workload:
+    identity_fields: [customer_id]
+    content_fields: [customer_id, email_hash, segment, effective_from, effective_to]
+  runtime:
+    engine: polars
+    package_extras: ""
+    lambda_memory_mb: 3008
+  triggers:
+    - type: schedule
+      cron: "0 4 * * *"
+  consumer_slas:
+    - consumer_id: analytics-team
+      target_table: dim_customers
+      required_columns: [customer_id, segment]
+  aws_region: us-east-2
+  name_prefix: sdm-customers

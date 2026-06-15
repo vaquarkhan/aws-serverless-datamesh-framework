@@ -59,3 +59,8 @@ VRP_SIGNING_KEY*
 # Local scratch / agent artifacts
 tests/_scratch_*
 agent-transcripts/
+
+# Metadata-driven compile output
+examples/retail-mesh/generated/
+examples/medallion-e2e/generated/
+domains/

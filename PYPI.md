@@ -15,6 +15,8 @@ Introduces the **[Vaquar Pattern](https://github.com/vaquarkhan/aws-serverless-d
 ```bash
 pip install serverless-data-mesh
 serverless-data-mesh demo    # <60s local PVDM demo, no AWS
+serverless-data-mesh new --template medallion --output my-mesh
+serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generated
 pip install "serverless-data-mesh[rules]"   # + SparkRules on Lambda
 pip install "serverless-data-mesh[spark]"   # + PySpark + SparkRules
 pip install "serverless-data-mesh[all]"     # rules + spark

@@ -1,0 +1,63 @@
+# Northstar Retail — mesh pipeline registry
+# CI job: compile each entry with serverless-data-mesh compile
+
+apiVersion: sdm/v1
+kind: MeshRegistry
+metadata:
+  organization: northstar-retail
+  steward_account: "234567890123"
+  publisher_account: "345678901234"
+spec:
+  domain_pipelines:
+    - id: orders-curated-nightly
+      contract: contracts/orders.mesh.pipeline.yaml
+      engine: pyspark
+      lambda_memory_mb: 10240
+      description: OMS order lines → orders_curated (8M rows/night)
+
+    - id: payments-fact-nightly
+      contract: contracts/payments.mesh.pipeline.yaml
+      engine: pyarrow + sparkrules
+      lambda_memory_mb: 3008
+      description: Payment gateway settlements → fact_payments
+
+    - id: inventory-snapshot
+      contract: contracts/inventory.mesh.pipeline.yaml
+      engine: pyspark
+      lambda_memory_mb: 10240
+      description: WMS stock levels → inventory_snapshot
+
+    - id: customers-dim
+      contract: contracts/customers.mesh.pipeline.yaml
+      engine: polars
+      lambda_memory_mb: 3008
+      description: CRM → dim_customers SCD2
+
+    - id: shipments-fact
+      contract: contracts/shipping.mesh.pipeline.yaml
+      engine: pyarrow
+      lambda_memory_mb: 3008
+      description: TMS shipments (event-triggered after orders)
+
+  mesh_transactions:
+    - id: daily-close
+      contract: mesh-transactions/daily-close.yaml
+      domains: [orders, payments]
+      description: Atomic finance close — both domains must VRP PASS
+
+  consumer_slas:
+    - consumer_id: analytics-team
+      tables: [orders_curated, fact_payments, inventory_snapshot, dim_customers]
+    - consumer_id: finance-close
+      tables: [orders_curated, fact_payments]
+    - consumer_id: ops-dashboard
+      tables: [inventory_snapshot, fact_shipments]
+
+  compile:
+    output_dir: generated
+    commands:
+      - serverless-data-mesh compile --contract contracts/orders.mesh.pipeline.yaml --output generated
+      - serverless-data-mesh compile --contract contracts/payments.mesh.pipeline.yaml --output generated
+      - serverless-data-mesh compile --contract contracts/inventory.mesh.pipeline.yaml --output generated
+      - serverless-data-mesh compile --contract contracts/customers.mesh.pipeline.yaml --output generated
+      - serverless-data-mesh compile --contract contracts/shipping.mesh.pipeline.yaml --output generated

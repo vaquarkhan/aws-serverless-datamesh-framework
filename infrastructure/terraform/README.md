@@ -12,7 +12,9 @@ Production-grade AWS infrastructure for serverless-data-mesh.
 | **stepfunctions** | Backfill orchestrator | Resume loop after `rolled_back` |
 | **eventbridge** | Optional schedule | Cron → Step Functions |
 | **messaging** | SQS DLQ | Failed async invocations |
-| **monitoring** | CloudWatch alarms + rollback metric | Ops visibility |
+| **monitoring** | CloudWatch alarms + rollback metric + mesh trust dashboard | Ops visibility |
+| **governance** | Lake Formation consumer SLA grants (optional) | Federated read access |
+| **medallion-mesh** | Mesh + per-domain Step Functions from compiled YAML | Bronze/silver/gold orchestration |
 
 ## Architecture
 
@@ -154,6 +156,37 @@ cd infrastructure/terraform/environments/dev
 cp terraform.tfvars.example terraform.tfvars
 terraform init && terraform apply
 ```
+
+## Medallion mesh environment (1.0+)
+
+Deploy a full **bronze → silver → gold** mesh from compiled YAML:
+
+```bash
+# 1. Generate mesh artifacts (from repo root)
+serverless-data-mesh apply \
+  --contract examples/medallion-e2e/northstar.mesh.yaml \
+  --output examples/medallion-e2e/generated
+
+# 2. Build Lambda + configure Terraform
+./infrastructure/terraform/scripts/package_lambda.sh
+cd infrastructure/terraform/environments/medallion
+cp terraform.tfvars.example terraform.tfvars
+# Set bucket names and mesh_generated_path
+
+terraform init && terraform apply
+
+# 3. Run the mesh
+aws stepfunctions start-execution \
+  --state-machine-arn "$(terraform output -raw mesh_orchestrator_arn)" \
+  --input "$(terraform output -json example_mesh_execution_input)"
+```
+
+The `medallion-mesh` module substitutes Lambda ARNs into `mesh.orchestrator.asl.json` and per-domain orchestrators produced by `serverless-data-mesh apply`.
+
+Prod stack extras in 1.0.0:
+
+- `trust_dashboard_domains` — domains on the CloudWatch mesh trust dashboard
+- `enable_lake_formation_governance` — optional LF consumer SLA module
 
 ## Glue prerequisites (not created by this stack)
 

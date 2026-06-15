@@ -1,4 +1,4 @@
-.PHONY: install install-rules lint format test benchmark cost-estimate walkthrough demo gate-demo multi-domain dashboard init-domain version-check version-sync build clean pre-commit
+.PHONY: install install-rules lint format test benchmark cost-estimate walkthrough demo gate-demo multi-domain dashboard init-domain version-check version-sync build clean pre-commit mesh-new mesh-apply mesh-doctor mesh-validate
 
 install:
 	pip install -e ".[dev]"
@@ -39,6 +39,21 @@ multi-domain:
 
 dashboard:
 	serverless-data-mesh dashboard --open
+
+mesh-new:
+	serverless-data-mesh new --template medallion --output my-mesh
+
+mesh-apply:
+	serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generated
+
+mesh-doctor:
+	serverless-data-mesh doctor --path my-mesh/generated
+
+mesh-validate:
+	serverless-data-mesh validate --contract my-mesh/mesh.yaml
+
+mesh-northstar:
+	serverless-data-mesh apply --contract examples/medallion-e2e/northstar.mesh.yaml --output examples/medallion-e2e/generated
 
 version-check:
 	python scripts/sync_version.py --check

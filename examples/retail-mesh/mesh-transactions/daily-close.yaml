@@ -1,0 +1,26 @@
+apiVersion: sdm/v1
+kind: MeshTransaction
+metadata:
+  transaction_id: daily-close
+  owner_team: finance-platform
+  description: >
+    Finance requires orders_curated and fact_payments for the same dt
+    to publish atomically. If either domain VRP FAILs, consumers see neither.
+spec:
+  domains:
+    - domain_id: orders
+      product_id: orders-curated-nightly
+      defer_snapshot: true
+    - domain_id: payments
+      product_id: payments-fact-nightly
+      defer_snapshot: true
+  leader_commit: true
+  schedule:
+    cron: "0 5 * * *"
+    description: After individual domain pipelines complete
+  on_failure:
+    action: abort_and_alarm
+    retain_steward_proofs: true
+  step_functions:
+    pattern: parallel_then_leader_evaluate
+    reference: examples/multi-domain-orders-payments/

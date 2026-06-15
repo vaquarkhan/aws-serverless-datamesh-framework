@@ -1,0 +1,36 @@
+apiVersion: sdm/v1
+kind: DataProductPipeline
+metadata:
+  domain_id: payments
+  product_id: payments-fact-nightly
+  owner_team: payments-platform
+  description: Payment gateway settlements with SparkRules PCI validation before VRP
+spec:
+  accounts:
+    producer: "122222222222"
+    steward: "234567890123"
+    publisher: "345678901234"
+  boundary:
+    source_namespace: raw_payments
+    target_table: fact_payments
+    partition_key: dt
+  workload:
+    identity_fields: [payment_id]
+    content_fields: [payment_id, order_id, amount, currency, status]
+  runtime:
+    engine: pyarrow
+    package_extras: rules
+    lambda_memory_mb: 3008
+    spark_rules_enabled: true
+  governance:
+    auto_repair: true
+  triggers:
+    - type: schedule
+      cron: "0 2 * * *"
+  consumer_slas:
+    - consumer_id: finance-close
+      target_table: fact_payments
+      max_freshness_minutes: 480
+      required_columns: [payment_id, amount, currency]
+  aws_region: us-east-2
+  name_prefix: sdm-payments

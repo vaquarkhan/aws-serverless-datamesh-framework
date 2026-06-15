@@ -1,0 +1,21 @@
+# Copy to terraform.tfvars. Run `serverless-data-mesh apply` first to populate mesh_generated_path.
+
+aws_region   = "us-east-2"
+environment  = "medallion"
+name_prefix  = "sdm-medallion"
+
+checkpoint_bucket_name = "sdm-medallion-checkpoints-YOUR_ACCOUNT_ID"
+proof_bucket_name      = "sdm-medallion-proofs-YOUR_ACCOUNT_ID"
+lakehouse_bucket_name  = "sdm-medallion-lakehouse-YOUR_ACCOUNT_ID"
+
+# Path to compiled mesh (relative to this directory or absolute)
+mesh_generated_path = "../../../../examples/medallion-e2e/generated"
+domain_ids          = ["orders", "payments"]
+
+enable_durable_execution = true
+enable_monitoring_alarms = true
+lambda_timeout_seconds   = 900
+lambda_memory_mb         = 4096
+
+# consumer_principal_arn = "arn:aws:iam::123456789012:role/athena-consumer"
+# enable_lake_formation_governance = true

@@ -116,9 +116,24 @@ module "monitoring" {
   count  = var.enable_monitoring_alarms ? 1 : 0
   source = "../../modules/monitoring"
 
-  name_prefix          = var.name_prefix
-  lambda_function_name = module.lambda.function_name
-  lambda_log_group_name = module.lambda.log_group_name
-  alarm_actions        = var.alarm_sns_topic_arns
-  tags                 = local.tags
+  name_prefix               = var.name_prefix
+  lambda_function_name      = module.lambda.function_name
+  lambda_log_group_name     = module.lambda.log_group_name
+  alarm_actions             = var.alarm_sns_topic_arns
+  aws_region                = var.aws_region
+  trust_dashboard_domains   = var.trust_dashboard_domains
+  tags                      = local.tags
+}
+
+module "governance" {
+  count  = var.enable_lake_formation_governance ? 1 : 0
+  source = "../../modules/governance"
+
+  name_prefix               = var.name_prefix
+  steward_account_id        = local.account_id
+  consumer_principal_arn    = var.consumer_principal_arn
+  database_name             = var.glue_database_name
+  table_name                = var.glue_table_name
+  steward_lambda_role_name  = module.iam.domain_writer_role_name
+  tags                      = local.tags
 }

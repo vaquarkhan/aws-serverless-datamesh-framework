@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+## [1.0.0] - 2026-06-14
+
+Production release: metadata-driven medallion mesh, zero-friction CLI, and Terraform deploy path.
+
+### Added
+
+- **Metadata-driven pipeline compiler** (`serverless-data-mesh compile`)
+- `sdm/v1` `DataProductPipeline` and `MedallionMesh` YAML contract models
+- Generated artifacts: handler, readers stub, pipeline_config, Step Functions, EventBridge, tests
+- `serverless_data_mesh.compile.runtime.run_metadata_pipeline`
+- Example contract: `examples/contracts/payments.mesh.pipeline.yaml`
+- **Real-world retail ETL walkthrough**: `examples/retail-mesh/` (5 pipelines, PySpark on Lambda)
+- **Medallion E2E mesh**: `examples/medallion-e2e/` — one YAML → bronze/silver/gold for all domains
+- **Complete metadata guide**: `docs/metadata-driven-pipeline.md` — full schema, deploy, CI/CD
+- **Zero-friction CLI**: `new`, `apply`, `validate`, `doctor` — YAML to full mesh in 2 commands
+- **Terraform medallion-mesh module** and `environments/medallion/` stack
+- Prod stack: mesh trust dashboard domains, optional Lake Formation governance module
+- Dependency: `pyyaml>=6`
+
+### Changed
+
+- `serverless-data-mesh init` now uses the compile pipeline (outputs `mesh.pipeline.yaml`)
+- PyPI classifier: **Production/Stable**
+
 ## [0.2.0] - 2026-06-15
 
 ### Added

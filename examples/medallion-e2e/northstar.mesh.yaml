@@ -1,0 +1,135 @@
+# Northstar Retail — complete medallion data mesh
+# ONE file → 6 PVDM pipelines (2 domains × bronze/silver/gold) + orchestrators
+#
+# User workflow:
+#   serverless-data-mesh compile --contract northstar.mesh.yaml --output generated/
+#   # implement readers.py in each generated layer folder
+#   # deploy terraform + Step Functions
+
+apiVersion: sdm/v1
+kind: MedallionMesh
+metadata:
+  organization: northstar-retail
+  description: >
+    E-commerce medallion mesh. Users define metadata only; framework generates
+    Lambda pipelines, VRP gates, Step Functions bronze→silver→gold chains,
+    consumer SLAs on gold, and mesh-wide orchestration.
+
+spec:
+  name_prefix: northstar
+  aws_region: us-east-2
+  accounts:
+    producer: "111111111111"
+    steward: "234567890123"
+    publisher: "345678901234"
+
+  mesh_transactions:
+    - transaction_id: finance-daily-close
+      domains: [orders, payments]
+      description: Gold orders + gold payments must VRP PASS before finance consumers read
+
+  domains:
+    # ── ORDERS: OMS landing → curated → analytics mart ──
+    - domain_id: orders
+      owner_team: orders-platform
+      description: Order management medallion pipeline
+      schedule_cron: "0 1 * * *"
+      mesh_transaction_group: finance-daily-close
+      layers:
+        bronze:
+          target_table: orders_bronze
+          source_namespace: bronze_orders
+          description: Raw OMS CDC / S3 landing — append-only ingest
+          identity_fields: [order_id, line_id]
+          content_fields: [order_id, line_id, raw_json, ingested_at]
+          runtime:
+            engine: pyarrow
+            lambda_memory_mb: 3008
+          transforms: [landing_copy]
+          max_chunk_records: 10000
+
+        silver:
+          target_table: orders_silver
+          source_namespace: silver_orders
+          upstream_layer: bronze
+          description: Dedup, join lines, filter cancelled — curated orders
+          identity_fields: [order_id]
+          content_fields: [order_id, customer_id, order_total, line_count, status]
+          runtime:
+            engine: pyspark
+            package_extras: spark
+            lambda_memory_mb: 10240
+            spark_shuffle_partitions: 16
+          transforms: [dedup, join_lines, filter_cancelled, compute_totals]
+          auto_repair: true
+
+        gold:
+          target_table: orders_gold_daily
+          source_namespace: gold_orders
+          upstream_layer: silver
+          description: Consumer-facing daily order mart for analytics + finance
+          identity_fields: [order_id]
+          content_fields: [order_id, customer_id, order_total, region, order_date]
+          runtime:
+            engine: pyspark
+            package_extras: spark
+            lambda_memory_mb: 10240
+          transforms: [enrich_region, daily_snapshot]
+          consumer_slas:
+            - consumer_id: analytics-team
+              target_table: orders_gold_daily
+              max_freshness_minutes: 360
+              required_columns: [order_id, customer_id, order_total]
+            - consumer_id: finance-close
+              target_table: orders_gold_daily
+              max_freshness_minutes: 480
+              required_columns: [order_id, order_total, order_date]
+
+    # ── PAYMENTS: gateway → validated → finance mart ──
+    - domain_id: payments
+      owner_team: payments-platform
+      description: Payment gateway medallion pipeline
+      schedule_cron: "0 2 * * *"
+      mesh_transaction_group: finance-daily-close
+      layers:
+        bronze:
+          target_table: payments_bronze
+          source_namespace: bronze_payments
+          description: Raw settlement files from payment gateway
+          identity_fields: [payment_id]
+          content_fields: [payment_id, order_id, amount, currency, raw_status]
+          runtime:
+            engine: pyarrow
+            lambda_memory_mb: 3008
+          transforms: [parse_settlement_file]
+
+        silver:
+          target_table: payments_silver
+          source_namespace: silver_payments
+          upstream_layer: bronze
+          description: SparkRules PCI validation, currency normalization
+          identity_fields: [payment_id]
+          content_fields: [payment_id, order_id, amount, currency, status]
+          runtime:
+            engine: pyarrow
+            package_extras: rules
+            spark_rules_enabled: true
+            lambda_memory_mb: 3008
+          transforms: [validate_amount, normalize_currency, reject_duplicates]
+
+        gold:
+          target_table: payments_gold_daily
+          source_namespace: gold_payments
+          upstream_layer: silver
+          description: Finance consumer mart — mesh transaction with orders gold
+          identity_fields: [payment_id]
+          content_fields: [payment_id, order_id, amount, currency, settlement_date]
+          runtime:
+            engine: pyarrow
+            lambda_memory_mb: 3008
+          transforms: [daily_finance_snapshot]
+          consumer_slas:
+            - consumer_id: finance-close
+              target_table: payments_gold_daily
+              max_freshness_minutes: 480
+              required_columns: [payment_id, amount, currency, settlement_date]

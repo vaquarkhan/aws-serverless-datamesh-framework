@@ -5,6 +5,7 @@
 **Governed, exactly-once lakehouse writes on AWS Lambda - with cryptographic proof, not just green job logs.**
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
+[![PyPI](https://img.shields.io/pypi/v/serverless-data-mesh.svg)](https://pypi.org/project/serverless-data-mesh/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE)
 [![AWS Lambda](https://img.shields.io/badge/AWS-Lambda%20%2B%20Durable%20Execution-orange.svg)](https://docs.aws.amazon.com/lambda/)
 [![Iceberg](https://img.shields.io/badge/Apache-Iceberg-00A4EF.svg)](https://iceberg.apache.org/)
@@ -17,7 +18,7 @@ An open Python framework for **federated data mesh** lakehouse publication on AW
 **domain-oriented ownership**, **data as a product**, and **self-serve write infrastructure** for cross-domain teams.<br/>
 **Producer** domains publish governed **data products** · **Steward** notaries enforce **federated computational governance** · **Publisher** zones expose consumer-ready **Iceberg data products** to the mesh.
 
-[**Vaquar Pattern blog**](docs/blog-the-vaquar-pattern.md) · [**Vaquar Pattern spec**](docs/vaquar-pattern.md) · [**Why it exists**](docs/why-serverless-data-mesh.md) · [**Getting started**](docs/getting-started.md) · [**Deploy**](infrastructure/terraform/README.md)
+[**PyPI**](https://pypi.org/project/serverless-data-mesh/) · [**Vaquar Pattern blog**](docs/blog-the-vaquar-pattern.md) · [**Vaquar Pattern spec**](docs/vaquar-pattern.md) · [**Why it exists**](docs/why-serverless-data-mesh.md) · [**Getting started**](docs/getting-started.md) · [**Deploy**](infrastructure/terraform/README.md)
 
 </div>
 
@@ -215,12 +216,60 @@ Lambda :live  (15-min segments, up to 90+ min total)
 
 ### Try in 60 seconds (no AWS)
 
-Works on **Windows, Mac, and Linux** - pure-Python verifier fallback when Rust wheels unavailable.
+Works on **Windows, Mac, and Linux** — pure-Python verifier fallback when Rust wheels unavailable.
 
 ```bash
 pip install serverless-data-mesh
 serverless-data-mesh demo
 ```
+
+### Install from PyPI
+
+**Package:** [`serverless-data-mesh`](https://pypi.org/project/serverless-data-mesh/) · **Requires Python 3.12+** · **Latest:** [1.0.0](https://pypi.org/project/serverless-data-mesh/1.0.0/)
+
+| | Link |
+|---|------|
+| **PyPI project** | https://pypi.org/project/serverless-data-mesh/ |
+| **Download files (1.0.0)** | https://pypi.org/project/serverless-data-mesh/1.0.0/#files |
+
+**Recommended install (pip):**
+
+```bash
+# Latest release
+pip install serverless-data-mesh
+
+# Pin a version (recommended for production)
+pip install serverless-data-mesh==1.0.0
+
+# Upgrade
+pip install -U serverless-data-mesh
+```
+
+| Extra | Install command | What you get |
+|-------|-----------------|--------------|
+| *(core)* | `pip install serverless-data-mesh` | IceGuard, veridata-recon, Durable SDK, PyIceberg Glue REST, boto3 |
+| `[rules]` | `pip install "serverless-data-mesh[rules]"` | + [SparkRules](https://pypi.org/project/sparkrules/) DRL on Lambda |
+| `[spark]` | `pip install "serverless-data-mesh[spark]"` | + PySpark + SparkRules (large Lambda package) |
+| `[all]` | `pip install "serverless-data-mesh[all]"` | rules + spark |
+| `[dev]` | `pip install "serverless-data-mesh[dev]"` | pytest, ruff, pre-commit (contributors) |
+
+**Verify install:**
+
+```bash
+python -c "import serverless_data_mesh as sdm; print(sdm.__version__)"
+serverless-data-mesh demo          # local PVDM gate demo (<60s, no AWS)
+serverless-data-mesh init --help   # minimal contract → full pipeline
+serverless-data-mesh compile --contract mesh.pipeline.yaml --output domains/
+serverless-data-mesh dashboard     # mesh trust dashboard HTML
+```
+
+**Platform notes:**
+
+- **Linux (Lambda / CI):** full cryptographic VRP via `veridata-recon` wheels.
+- **Windows / Mac (local dev):** `demo`, `canary`, and `reprocess-demo` work via pure-Python fallback when Rust wheels are unavailable.
+- **AWS deploy:** build a Linux-compatible Lambda zip with `infrastructure/terraform/scripts/package_lambda.sh` (see [PyPI guide](docs/pypi.md)).
+
+→ Full install, extras, and publish docs: [docs/pypi.md](docs/pypi.md)
 
 ### Cost comparison (published estimates)
 
@@ -232,10 +281,36 @@ serverless-data-mesh demo
 
 Details: [benchmarks/README.md](benchmarks/README.md) · `make cost-estimate`
 
-### Scaffold a new domain (30 seconds)
+### Scaffold or compile a pipeline (30 seconds)
+
+**From YAML contract (recommended):**
+
+```bash
+serverless-data-mesh compile \
+  --contract examples/contracts/payments.mesh.pipeline.yaml \
+  --output domains/
+```
+
+**Quick init (minimal contract):**
 
 ```bash
 serverless-data-mesh init --domain payments --table fact_payments --account 123456789012
+```
+
+Generates handler, Step Functions ASL, EventBridge schedule, consumer SLA, Terraform stubs, and tests from `mesh.pipeline.yaml`. Domain teams only implement `readers.py`.
+
+**Full medallion mesh (bronze → silver → gold) — one YAML, all pipelines:**
+
+```bash
+serverless-data-mesh new --template northstar --output my-mesh
+serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generated
+# → 6 PVDM pipelines + domain + mesh orchestrators (orders + payments)
+```
+
+→ [Medallion E2E guide](examples/medallion-e2e/README.md)  
+→ [Metadata-driven pipeline guide](docs/metadata-driven-pipeline.md)
+
+```bash
 serverless-data-mesh dashboard              # HTML trust dashboard (proofs / CloudWatch / demo)
 serverless-data-mesh dashboard --cloudwatch # live VRP metrics from CloudWatch
 serverless-data-mesh canary                 # VRP canary before promotion
@@ -259,16 +334,6 @@ make cost-estimate    # populate benchmark cost JSON
 make walkthrough      # 12-step tutorial (no AWS)
 make benchmark        # consumer safety: corrupt data never commits
 ```
-
-### Install from PyPI
-
-```bash
-pip install serverless-data-mesh
-pip install "serverless-data-mesh[rules]"   # + SparkRules on Lambda
-pip install "serverless-data-mesh[spark]"   # + PySpark + SparkRules
-```
-
-→ [PyPI guide](docs/pypi.md)
 
 ### Minimal code example
 
@@ -326,6 +391,9 @@ terraform init && terraform apply
 
 | Document | What you will learn |
 |----------|---------------------|
+| **[Metadata-driven pipelines](docs/metadata-driven-pipeline.md)** | **Complete guide: YAML schema, bronze/silver/gold, compile, deploy** |
+| **[Medallion E2E example](examples/medallion-e2e/README.md)** | One YAML → 6 pipelines + orchestrators |
+| **[Retail flat ETL example](examples/retail-mesh/README.md)** | 5 domain pipelines, PySpark on Lambda |
 | **[Vaquar Pattern blog](docs/blog-the-vaquar-pattern.md)** | **Full article: images, E2E journey, adoption playbook** |
 | **[Vaquar Pattern spec](docs/vaquar-pattern.md)** | Formal spec - cite this in architecture docs |
 | **[Why Serverless Data Mesh](docs/why-serverless-data-mesh.md)** | Blog: industry problem, connectivity, portfolio stack |
@@ -345,6 +413,7 @@ terraform init && terraform apply
 ```
 serverless-data-mesh/
 ├── docs/
+│   ├── metadata-driven-pipeline.md # Complete YAML → pipeline guide (medallion)
 │   ├── blog-the-vaquar-pattern.md  # Full Vaquar Pattern blog (images, E2E)
 │   ├── vaquar-pattern.md           # Formal pattern spec (cite this)
 │   ├── why-serverless-data-mesh.md # Blog article with diagrams
@@ -352,6 +421,9 @@ serverless-data-mesh/
 │   ├── data-mesh-patterns.md       # Pattern catalog + coverage matrix
 │   └── images/                     # Architecture and product diagrams
 ├── examples/
+│   ├── medallion-e2e/              # One YAML → bronze/silver/gold mesh
+│   ├── retail-mesh/                # Flat pipelines real-world ETL
+│   ├── contracts/                  # Single DataProductPipeline samples
 │   ├── domain_writer/              # Reference Lambda handler
 │   └── tutorials/                  # Interactive walkthrough
 ├── infrastructure/
@@ -402,7 +474,7 @@ Apache-2.0. See [LICENSE](LICENSE).
 
 <div align="center">
 
-**Serverless Data Mesh** · [Vaquar Pattern blog](docs/blog-the-vaquar-pattern.md) · [GitHub](https://github.com/vaquarkhan/aws-serverless-datamesh-framework)
+**Serverless Data Mesh** · [PyPI](https://pypi.org/project/serverless-data-mesh/) · [Vaquar Pattern blog](docs/blog-the-vaquar-pattern.md) · [GitHub](https://github.com/vaquarkhan/aws-serverless-datamesh-framework)
 
 *Domain teams own the write path. The mesh proves correctness before consumers see a snapshot.*
 

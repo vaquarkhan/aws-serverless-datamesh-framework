@@ -16,6 +16,10 @@ enable_durable_execution    = true
 enable_step_functions       = true
 enable_eventbridge_schedule = false
 enable_monitoring_alarms    = true
+trust_dashboard_domains     = ["orders", "payments", "inventory"]
+
+# enable_lake_formation_governance = true
+# consumer_principal_arn = "arn:aws:iam::123456789012:role/athena-consumer"
 
 lambda_timeout_seconds              = 600   # 10 min segments in dev
 durable_execution_timeout_seconds   = 3600  # 1 hour total
