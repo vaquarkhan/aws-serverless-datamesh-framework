@@ -32,7 +32,7 @@ This document maps **data mesh concepts** to **named patterns** in the framework
 | Consumer discovery | Data Product Registry | `to_registry_entry()` | This doc §2 |
 | Multi-domain fan-out | Mesh Orchestrator | **Roadmap** | This doc §11 |
 | Schema evolution policy | Contract Versioning | `schema_version` field | This doc §2 |
-| Lineage graph | OpenLineage hook | **Roadmap** | This doc §11 |
+| Lineage graph | OpenLineage hook | `emit_openlineage_event` | `lineage/openlineage.py` |
 | Cost per domain | `domain_id` tagging | Terraform `Domain` tag | [terraform-guide.md](terraform-guide.md) |
 
 **Coverage today:** 19 of 23 concepts have working patterns; 4 are explicit roadmap items.
@@ -384,7 +384,7 @@ flowchart TB
 |---------|-------------|----------|
 | **Mesh Orchestrator** | Step Functions Map state fan-out across domains | High |
 | **Multi-account Terraform** | Steward / Publisher / Producer roots | `environments/multi-account/` (scaffold) | High |
-| **OpenLineage emitter** | Emit lineage events on `committed` | Medium |
+| **OpenLineage emitter** | Emit lineage events on `committed` | **Shipped** | `lineage/openlineage.py` |
 | **Schema drift gate** | Block commit if `schema_version` mismatch | Medium |
 | **Consumer subscription webhook** | Notify Publisher on new snapshot | Medium |
 | **Automatic registry sync** | Push `DataProductContract` to Backstage API | Low |

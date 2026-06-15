@@ -76,6 +76,9 @@ publish = [
     "twine>=5",
 ]
 
+[project.scripts]
+serverless-data-mesh = "serverless_data_mesh.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/vaquarkhan/aws-serverless-datamesh-framework"
 Documentation = "https://github.com/vaquarkhan/aws-serverless-datamesh-framework#readme"
@@ -96,6 +99,7 @@ include = [
     "/tests",
     "/examples",
     "/docs",
+    "/benchmarks",
     "/infrastructure",
     "/README.md",
     "/PYPI.md",

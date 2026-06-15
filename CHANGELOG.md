@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2026-06-15
+
+### Added
+
+- **Local demo**: `serverless-data-mesh demo` runs PVDM in <60s without AWS (`LocalPVDMRuntime`)
+- `examples/tutorials/verification_gate_demo.py`: corrupt data blocked before consumers
+- `examples/multi-domain-orders-payments/`: deferred mesh leader commit + `test_atomicity.py`
+- `benchmarks/`: cost comparison methodology, workloads (100k/1M/10M), results placeholder
+- `serverless_data_mesh.lineage`: OpenLineage `emit_openlineage_event` on commit
+- Tests: `test_local_runtime.py`, `test_openlineage.py`
+
 ## [0.1.1] - 2026-06-15
 
 ### Added

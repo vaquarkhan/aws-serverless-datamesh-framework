@@ -1,0 +1,7 @@
+{
+  "benchmark_version": "0.1.0",
+  "status": "placeholder",
+  "note": "Run benchmarks/run_benchmark.sh on AWS to populate measured costs",
+  "methodology_url": "benchmarks/README.md",
+  "runs": []
+}

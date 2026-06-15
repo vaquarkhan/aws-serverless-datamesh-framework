@@ -1,4 +1,4 @@
-.PHONY: install install-rules lint format test benchmark walkthrough version-check version-sync build clean pre-commit
+.PHONY: install install-rules lint format test benchmark walkthrough demo gate-demo multi-domain version-check version-sync build clean pre-commit
 
 install:
 	pip install -e ".[dev]"
@@ -24,6 +24,15 @@ benchmark:
 
 walkthrough:
 	python examples/tutorials/walkthrough.py
+
+demo:
+	serverless-data-mesh demo
+
+gate-demo:
+	python examples/tutorials/verification_gate_demo.py
+
+multi-domain:
+	python examples/multi-domain-orders-payments/test_atomicity.py
 
 version-check:
 	python scripts/sync_version.py --check

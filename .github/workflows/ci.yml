@@ -90,6 +90,12 @@ jobs:
 
         run: python examples/tutorials/walkthrough.py
 
+      - name: Local PVDM demo
+        run: python -m serverless_data_mesh.cli demo --json
+
+      - name: Verification gate demo
+        run: python examples/tutorials/verification_gate_demo.py --json
+
 
 
       - name: Build package

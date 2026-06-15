@@ -1,0 +1,24 @@
+# Multi-domain mesh transaction: orders + payments
+
+transaction_id: mesh-txn-2026-06-14-001
+leader_domain: orders-domain
+
+domains:
+  - domain_id: orders-domain
+    target_table: orders_curated
+    source_namespace: raw_orders
+    partition_spec:
+      dt: "2026-06-14"
+    handler: domains.orders.handler.run
+
+  - domain_id: payments-domain
+    target_table: payments_curated
+    source_namespace: raw_payments
+    partition_spec:
+      dt: "2026-06-14"
+    handler: domains.payments.handler.run
+
+policy:
+  # All domains must VRP PASS before any metadata commit is visible to consumers.
+  atomicity: all_or_nothing
+  on_verification_failed: rollback_all_domains

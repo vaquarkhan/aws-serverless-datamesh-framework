@@ -213,15 +213,36 @@ Lambda :live  (15-min segments, up to 90+ min total)
 
 **Requires Python 3.12+**
 
+### Try in 60 seconds (no AWS)
+
+```bash
+pip install serverless-data-mesh
+serverless-data-mesh demo
+```
+
+Runs the full **PVDM lifecycle** locally: 1000-row clean write → corrupt write blocked by VRP → consumer sees only clean data.
+
+```bash
+make gate-demo       # verification gate fire-alarm demo
+make multi-domain    # orders + payments atomicity demo
+```
+
+### Full development setup
+
 ```bash
 git clone https://github.com/vaquarkhan/aws-serverless-datamesh-framework.git
 cd aws-serverless-datamesh-framework
 
 make install
 make test
-make walkthrough    # 12-step local tutorial (no AWS)
-make benchmark      # consumer safety: corrupt data never commits
+make demo             # same as serverless-data-mesh demo
+make walkthrough      # 12-step tutorial (no AWS)
+make benchmark        # consumer safety: corrupt data never commits
 ```
+
+### Cost comparison (AWS)
+
+Published methodology and workload definitions: **[benchmarks/README.md](benchmarks/README.md)** (run on AWS to populate dollar amounts).
 
 ### Install from PyPI
 
