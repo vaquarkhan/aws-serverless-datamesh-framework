@@ -90,7 +90,9 @@ make build
 python -m twine upload dist/*
 ```
 
-### 4. CI publish (GitHub Actions)
+### Windows / veridata-recon
+
+`veridata-recon` includes Rust extensions. **Use Python 3.12+ on Linux (CI) or install the cp312 wheel.** Building from source on Windows often fails — use WSL, Docker, or rely on GitHub Actions for full test + benchmark runs.
 
 On git tag `v*`, the workflow `.github/workflows/publish.yml` builds and publishes using **PyPI trusted publishing** (configure on pypi.org → Your project → Publishing).
 

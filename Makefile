@@ -1,4 +1,4 @@
-.PHONY: install lint format test build clean
+.PHONY: install install-rules lint format test benchmark walkthrough version-check version-sync build clean pre-commit
 
 install:
 	pip install -e ".[dev]"
@@ -9,15 +9,32 @@ install-rules:
 	pip install veridata-recon
 
 lint:
-	ruff check src tests examples
-	ruff format --check src tests examples
+	ruff check src tests examples eval scripts
+	ruff format --check src tests examples eval scripts
 
 format:
-	ruff format src tests examples
-	ruff check --fix src tests examples
+	ruff format src tests examples eval scripts
+	ruff check --fix src tests examples eval scripts
 
 test:
 	pytest tests/ -v
+
+benchmark:
+	python eval/validate_then_commit_benchmark.py
+
+walkthrough:
+	python examples/tutorials/walkthrough.py
+
+version-check:
+	python scripts/sync_version.py --check
+
+version-sync:
+	python scripts/sync_version.py --write
+
+pre-commit:
+	pip install pre-commit
+	pre-commit install
+	pre-commit run --all-files
 
 build:
 	python -m build

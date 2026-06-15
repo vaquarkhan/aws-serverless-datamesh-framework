@@ -112,6 +112,32 @@ pip install "serverless-data-mesh[spark]"   # + PySpark + SparkRules
 
 See **[PyPI guide](docs/pypi.md)** for publishing and Lambda packaging.
 
+### Consumer safety benchmark
+
+Quantitative proof that **corrupt data never reaches consumers** (metadata commit blocked):
+
+```bash
+make benchmark
+```
+
+Runs drop, mutation, and duplicate attack scenarios — all must return VRP `FAIL`.
+
+### Governance
+
+| Artifact | Purpose |
+|----------|---------|
+| `VERSION` | Single source of truth (synced to PyPI package) |
+| `.pre-commit-config.yaml` | Ruff + version check hooks |
+| `.github/dependabot.yml` | Automated dependency PRs |
+| `SECURITY.md` | Vulnerability reporting |
+| `eval/validate_then_commit_benchmark.py` | Trust boundary metrics |
+
+```bash
+make walkthrough      # 12-step local tutorial (no AWS)
+make version-check
+make pre-commit
+```
+
 ```python
 from serverless_data_mesh import (
     IceGuardDurableCoordinator,
