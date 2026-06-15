@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "serverless-data-mesh"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Cross-domain transaction coordinator for exactly-once, audit-provable lakehouse writes on AWS Lambda."
 readme = "README.md"
 license = "Apache-2.0"
@@ -59,6 +59,7 @@ dev = [
     "ruff>=0.4",
     "build>=1.2",
     "twine>=5",
+    "pre-commit>=4",
 ]
 publish = [
     "build>=1.2",
@@ -66,11 +67,14 @@ publish = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/serverless-datamesh/serverless-data-mesh"
-Documentation = "https://github.com/serverless-datamesh/serverless-data-mesh#readme"
-Repository = "https://github.com/serverless-datamesh/serverless-data-mesh"
-Changelog = "https://github.com/serverless-datamesh/serverless-data-mesh/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/vaquarkhan/aws-serveless-datamesh-framwork"
+Documentation = "https://github.com/vaquarkhan/aws-serveless-datamesh-framwork#readme"
+Repository = "https://github.com/vaquarkhan/aws-serveless-datamesh-framwork"
+Changelog = "https://github.com/vaquarkhan/aws-serveless-datamesh-framwork/blob/main/CHANGELOG.md"
 "PyPI" = "https://pypi.org/project/serverless-data-mesh/"
+
+[tool.hatch.version]
+path = "VERSION"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/serverless_data_mesh"]
@@ -91,6 +95,9 @@ include = [
 testpaths = ["tests"]
 pythonpath = ["src", "."]
 addopts = "-ra -p no:logfire"
+markers = [
+    "eval: evaluation and benchmark tests (may require veridata-recon)",
+]
 
 [tool.ruff]
 target-version = "py312"

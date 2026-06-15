@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from serverless_data_mesh.config import MeshSettings
@@ -20,7 +21,11 @@ from serverless_data_mesh.types import (
     WriteOutcome,
 )
 
-__version__ = "0.1.0"
+def _read_version() -> str:
+    return (Path(__file__).resolve().parents[3] / "VERSION").read_text(encoding="utf-8").strip()
+
+
+__version__ = _read_version()
 
 __all__ = [
     "CatalogCommitError",

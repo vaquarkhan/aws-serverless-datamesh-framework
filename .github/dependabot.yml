@@ -1,0 +1,26 @@
+version: 2
+
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      aws-and-data:
+        patterns:
+          - boto3*
+          - pyiceberg*
+          - iceguard*
+          - veridata-recon*
+          - aws-durable*
+          - sparkrules*
+          - pyspark*
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5

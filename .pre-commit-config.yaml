@@ -1,0 +1,26 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=2048]
+      - id: check-merge-conflict
+
+  - repo: local
+    hooks:
+      - id: sync-version
+        name: sync VERSION with pyproject and __init__
+        entry: python scripts/sync_version.py --check
+        language: system
+        pass_filenames: false
+        files: ^(VERSION|pyproject\.toml|src/serverless_data_mesh/__init__\.py)$
