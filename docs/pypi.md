@@ -1,6 +1,10 @@
 ﻿# PyPI: Publishing & Installing Serverless Data Mesh
 
-The framework is published to **PyPI** as [`serverless-data-mesh`](https://pypi.org/project/serverless-data-mesh/) (create GitHub release `v0.1.1` to trigger [publish.yml](../.github/workflows/publish.yml)).
+The framework is published to **PyPI** as [`serverless-data-mesh`](https://pypi.org/project/serverless-data-mesh/).
+
+The PyPI project page long description is **[`PYPI.md`](../PYPI.md)** (configured in `pyproject.toml`). The GitHub **[`README.md`](../README.md)** is the full product landing page with diagrams.
+
+Create GitHub release `v0.1.1` to trigger [publish.yml](../.github/workflows/publish.yml).
 
 ---
 
@@ -103,9 +107,9 @@ git push origin v0.1.0
 
 ### Version bump checklist
 
-1. Update `version` in `pyproject.toml` and `src/serverless_data_mesh/__init__.py`
-2. Update `CHANGELOG.md`
-3. Tag and push
+1. Update `VERSION` and run `python scripts/sync_version.py --write`
+2. Update `CHANGELOG.md` and `PYPI.md` if needed
+3. Tag and push (`git tag v0.1.1 && git push origin v0.1.1`)
 4. Verify: `pip install serverless-data-mesh==<version>`
 
 ---

@@ -13,8 +13,9 @@
   <img src="docs/images/serverless-data-mesh-hero.png" alt="Serverless Data Mesh: governed exactly-once lakehouse writes on AWS Lambda" width="920" />
 </p>
 
-An open Python framework for **federated data meshes** on AWS.<br/>
-Domain teams **produce** data · Platform stewards **verify and govern** it · A publish zone **exposes** curated Iceberg tables.
+An open Python framework for **federated data mesh** lakehouse publication on AWS:<br/>
+**domain-oriented ownership**, **data as a product**, and **self-serve write infrastructure** for cross-domain teams.<br/>
+**Producer** domains publish governed **data products** · **Steward** notaries enforce **federated computational governance** · **Publisher** zones expose consumer-ready **Iceberg data products** to the mesh.
 
 [**Vaquar Pattern**](docs/vaquar-pattern.md) · [**Why it exists (blog)**](docs/why-serverless-data-mesh.md) · [**Getting started**](docs/getting-started.md) · [**Deploy**](infrastructure/terraform/README.md)
 

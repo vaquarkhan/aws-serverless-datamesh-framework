@@ -5,8 +5,8 @@ build-backend = "hatchling.build"
 [project]
 name = "serverless-data-mesh"
 dynamic = ["version"]
-description = "Cross-domain transaction coordinator for exactly-once, audit-provable lakehouse writes on AWS Lambda."
-readme = "README.md"
+description = "Federated data mesh framework for proof-gated, exactly-once Iceberg data product publication on AWS Lambda."
+readme = "PYPI.md"
 license = "Apache-2.0"
 requires-python = ">=3.12"
 authors = [{ name = "Serverless Data Mesh Contributors" }]
@@ -15,22 +15,32 @@ keywords = [
     "lambda",
     "iceberg",
     "data-mesh",
-    "durable-execution",
+    "data-as-a-product",
+    "federated-data-mesh",
+    "federated-governance",
+    "domain-oriented",
     "lakehouse",
+    "vaquar-pattern",
+    "durable-execution",
     "serverless",
+    "veridata-recon",
+    "iceguard",
+    "pyiceberg",
     "sparkrules",
     "rule-engine",
-    "pyiceberg",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Database",
+    "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: System :: Distributed Computing",
+    "Typing :: Typed",
 ]
 dependencies = [
     "iceguard>=1.0.0",
@@ -88,6 +98,8 @@ include = [
     "/docs",
     "/infrastructure",
     "/README.md",
+    "/PYPI.md",
+    "/VERSION",
     "/LICENSE",
     "/CHANGELOG.md",
 ]
