@@ -1,15 +1,17 @@
 locals {
-  package_hash = filebase64sha256(var.package_path)
+  package_hash   = filebase64sha256(var.package_path)
+  function_name  = "${var.name_prefix}-domain-writer"
+  log_group_name = "/aws/lambda/${local.function_name}"
 }
 
 resource "aws_cloudwatch_log_group" "domain_writer" {
-  name              = "/aws/lambda/${var.name_prefix}-domain-writer"
+  name              = local.log_group_name
   retention_in_days = var.log_retention_days
   tags              = var.tags
 }
 
 resource "aws_lambda_function" "domain_writer" {
-  function_name = "${var.name_prefix}-domain-writer"
+  function_name = local.function_name
   role          = var.role_arn
   handler       = var.handler
   runtime       = var.runtime
@@ -21,6 +23,10 @@ resource "aws_lambda_function" "domain_writer" {
 
   environment {
     variables = var.environment_variables
+  }
+
+  logging_config {
+    log_format = "JSON"
   }
 
   dynamic "durable_config" {

@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 - **Terraform storage**: lifecycle `for_each` uses static bucket keys (not computed `.id` map keys)
 - **Metrics**: `SDM_METRICS_ENABLED` / `SDM_DISABLE_METRICS` opt-out; PutMetricData failures are non-fatal
 - **Lambda packaging**: `SDM_PIPELINE_SRC` overlays compiled `handler.py` at zip root; `handler.lambda_handler` in manifest and Terraform
+- **Observability:** structured `pvdm_outcome` JSON logs; LocalPVDMRuntime S3 proofs when `VRP_PROOF_BUCKET` set
+- **Monitoring:** ops dashboard widgets (invocations, errors, duration, DLQ); DLQ alarm; JSON log metric filters
+- **Scripts:** `aws_observability_smoke.sh`, `aws_dlq_smoke_test.sh`; [observability-production.md](docs/observability-production.md)
 
 ## [1.1.0] - 2026-06-14
 

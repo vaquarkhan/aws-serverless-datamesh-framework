@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import time
 from dataclasses import asdict, dataclass
@@ -10,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from serverless_data_mesh.observability.structured import log_pvdm_outcome
 from serverless_data_mesh.types.workload import (
     DataWriteWorkload,
     DomainTransactionBoundary,
@@ -47,8 +49,14 @@ def _default_boundary() -> DomainTransactionBoundary:
     )
 
 
+def _proof_bucket_from_env() -> str | None:
+    bucket = os.environ.get("VRP_PROOF_BUCKET") or os.environ.get("PROOF_BUCKET")
+    return bucket.strip() if bucket else None
+
+
 def _default_workload(root: Path, *, workload_id: str, total_records: int) -> DataWriteWorkload:
     boundary = _default_boundary()
+    proof_bucket = _proof_bucket_from_env() or str(root / "proofs")
     return DataWriteWorkload(
         workload_id=workload_id,
         boundary=boundary,
@@ -56,7 +64,7 @@ def _default_workload(root: Path, *, workload_id: str, total_records: int) -> Da
         target_uri=f"file://{root}/lakehouse/orders_curated/",
         total_records=total_records,
         checkpoint_bucket=str(root / "checkpoints"),
-        proof_bucket=str(root / "proofs"),
+        proof_bucket=proof_bucket,
     )
 
 
@@ -100,12 +108,57 @@ class LocalPVDMRuntime:
         *,
         workload: DataWriteWorkload,
         chunk_index: int,
-    ) -> Path:
+    ) -> Path | str:
         rel = f"{workload.boundary.domain_id}/{workload.workload_id}"
+        key = f"{rel}/proofs/chunk-{chunk_index:06d}.vrp.json"
+        body = json.dumps(proof, indent=2, sort_keys=True).encode("utf-8")
+        verdict = proof["reconciliation"]["verdict"]
+        bucket = _proof_bucket_from_env()
+
+        if bucket and not bucket.startswith("/") and "://" not in bucket:
+            try:
+                import boto3
+
+                boto3.client("s3").put_object(
+                    Bucket=bucket,
+                    Key=key,
+                    Body=body,
+                    ContentType="application/json",
+                    Metadata={"proof-id": proof["proof_id"], "verdict": verdict},
+                )
+                uri = f"s3://{bucket}/{key}"
+                log_pvdm_outcome(
+                    outcome="proof_persisted",
+                    storage="s3",
+                    proof_uri=uri,
+                    verdict=verdict,
+                    proof_id=proof["proof_id"],
+                    domain_id=workload.boundary.domain_id,
+                    workload_id=workload.workload_id,
+                )
+                return uri
+            except Exception as exc:
+                log_pvdm_outcome(
+                    outcome="proof_persist_failed",
+                    storage="s3",
+                    error=str(exc),
+                    domain_id=workload.boundary.domain_id,
+                    workload_id=workload.workload_id,
+                )
+
         dest_dir = self.proofs / rel
         dest_dir.mkdir(parents=True, exist_ok=True)
         path = dest_dir / f"chunk-{chunk_index:06d}.vrp.json"
-        path.write_text(json.dumps(proof, indent=2, sort_keys=True), encoding="utf-8")
+        path.write_bytes(body)
+        log_pvdm_outcome(
+            outcome="proof_persisted",
+            storage="local",
+            proof_path=str(path),
+            verdict=verdict,
+            proof_id=proof["proof_id"],
+            domain_id=workload.boundary.domain_id,
+            workload_id=workload.workload_id,
+        )
         return path
 
     def _write_physical(self, records: list[dict[str, str]], *, part_name: str) -> Path:
@@ -146,6 +199,7 @@ class LocalPVDMRuntime:
         defer_snapshot: bool = False,
     ) -> LocalWriteResult:
         """Execute one PVDM write cycle on local disk."""
+        started = time.perf_counter()
         workload = _default_workload(self.root, workload_id=workload_id, total_records=record_count)
         if proof_generator is None:
             gen, self._last_backend = create_proof_generator()
@@ -176,6 +230,15 @@ class LocalPVDMRuntime:
         )
 
         if verification.outcome != "PASS":
+            log_pvdm_outcome(
+                outcome=WriteOutcome.VERIFICATION_FAILED.value,
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload_id,
+                rows=0,
+                duration_ms=round((time.perf_counter() - started) * 1000, 1),
+                proof_id=proof.get("proof_id"),
+                verdict=verdict,
+            )
             return LocalWriteResult(
                 outcome=WriteOutcome.VERIFICATION_FAILED.value,
                 workload_id=workload_id,
@@ -200,6 +263,16 @@ class LocalPVDMRuntime:
                 }
             )
             pending.write_text(json.dumps(pending_rows, indent=2), encoding="utf-8")
+            log_pvdm_outcome(
+                outcome=WriteOutcome.COMMITTED.value,
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload_id,
+                rows=record_count,
+                duration_ms=round((time.perf_counter() - started) * 1000, 1),
+                proof_id=proof["proof_id"],
+                verdict=verdict,
+                deferred_snapshot=True,
+            )
             return LocalWriteResult(
                 outcome=WriteOutcome.COMMITTED.value,
                 workload_id=workload_id,
@@ -215,6 +288,16 @@ class LocalPVDMRuntime:
             workload=workload,
             row_count=record_count,
             proof_id=proof["proof_id"],
+        )
+        log_pvdm_outcome(
+            outcome=WriteOutcome.COMMITTED.value,
+            domain_id=workload.boundary.domain_id,
+            workload_id=workload_id,
+            rows=record_count,
+            duration_ms=round((time.perf_counter() - started) * 1000, 1),
+            proof_id=proof["proof_id"],
+            snapshot_id=snapshot_id,
+            verdict=verdict,
         )
         return LocalWriteResult(
             outcome=WriteOutcome.COMMITTED.value,

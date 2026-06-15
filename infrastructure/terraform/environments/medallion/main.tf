@@ -101,6 +101,7 @@ module "monitoring" {
   name_prefix             = var.name_prefix
   lambda_function_name    = module.lambda_fleet.primary_function_name
   lambda_log_group_name   = module.lambda_fleet.primary_log_group_name
+  dlq_queue_name          = "${var.name_prefix}-domain-writer-dlq"
   alarm_actions           = var.alarm_sns_topic_arns
   aws_region              = var.aws_region
   trust_dashboard_domains = local.trust_domains

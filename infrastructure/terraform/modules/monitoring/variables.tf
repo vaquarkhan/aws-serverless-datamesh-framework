@@ -27,6 +27,12 @@ variable "aws_region" {
   default     = "us-east-2"
 }
 
+variable "dlq_queue_name" {
+  description = "SQS DLQ name for depth monitoring (empty to skip)."
+  type        = string
+  default     = ""
+}
+
 variable "trust_dashboard_domains" {
   description = "Domain IDs shown on the mesh trust CloudWatch dashboard."
   type        = list(string)

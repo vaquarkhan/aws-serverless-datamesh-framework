@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 from aws_durable_execution_sdk_python import DurableContext
@@ -23,6 +24,7 @@ from serverless_data_mesh.types.workload import (
     WriteOutcome,
 )
 from serverless_data_mesh.metrics.mesh_trust import publish_vrp_metric
+from serverless_data_mesh.observability.structured import log_pvdm_outcome
 from serverless_data_mesh.orchestration.reprocess import attempt_vrp_repair
 from serverless_data_mesh.verification.vrp import VRPProofGenerator, validate_then_commit
 
@@ -109,6 +111,7 @@ class IceGuardDurableCoordinator:
         enable_auto_repair: bool = False,
     ) -> dict[str, Any]:
         """Run a large write as durable, resumable chunks under IceGuard protection."""
+        started = time.perf_counter()
         state = resume_state or self._initial_state(workload)
         outcome = WriteOutcome.RESUMED if state.next_offset > 0 else WriteOutcome.COMMITTED
 
@@ -228,7 +231,8 @@ class IceGuardDurableCoordinator:
                     },
                 )
             )
-            return {
+            duration_ms = round((time.perf_counter() - started) * 1000, 1)
+            result = {
                 "outcome": outcome.value,
                 "workload_id": workload.workload_id,
                 "records_written": state.next_offset,
@@ -236,10 +240,29 @@ class IceGuardDurableCoordinator:
                 "snapshot_id": commit_result["snapshot_id"],
                 "proof_chain_tail": state.last_proof_hash,
             }
+            log_pvdm_outcome(
+                outcome=outcome.value,
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload.workload_id,
+                rows=state.next_offset,
+                chunks=state.committed_chunks,
+                duration_ms=duration_ms,
+                proof_id=state.last_proof_hash,
+                snapshot_id=commit_result["snapshot_id"],
+            )
+            return result
 
         except VerificationRejectedError as exc:
+            duration_ms = round((time.perf_counter() - started) * 1000, 1)
             logger.error("Data quality gate failed for %s: %s", workload.workload_id, exc)
             adapter.abort()
+            log_pvdm_outcome(
+                outcome=WriteOutcome.VERIFICATION_FAILED.value,
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload.workload_id,
+                duration_ms=duration_ms,
+                message=str(exc),
+            )
             return {
                 "outcome": WriteOutcome.VERIFICATION_FAILED.value,
                 "workload_id": workload.workload_id,
@@ -248,12 +271,20 @@ class IceGuardDurableCoordinator:
             }
 
         except IceGuardRollbackError as exc:
+            duration_ms = round((time.perf_counter() - started) * 1000, 1)
             logger.warning(
                 "IceGuard rollback for workload %s near timeout (remaining=%sms)",
                 workload.workload_id,
                 exc.remaining_time_ms,
             )
             adapter.abort()
+            log_pvdm_outcome(
+                outcome=WriteOutcome.ROLLED_BACK.value,
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload.workload_id,
+                duration_ms=duration_ms,
+                resume_offset=state.next_offset,
+            )
             return {
                 "outcome": WriteOutcome.ROLLED_BACK.value,
                 "workload_id": workload.workload_id,

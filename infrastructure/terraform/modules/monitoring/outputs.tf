@@ -6,6 +6,7 @@ output "alarm_names" {
       aws_cloudwatch_metric_alarm.lambda_duration_p99.alarm_name,
       aws_cloudwatch_metric_alarm.rollback_near_timeout.alarm_name,
     ],
+    [for a in aws_cloudwatch_metric_alarm.dlq_depth : a.alarm_name],
     [for a in aws_cloudwatch_metric_alarm.vrp_trust_breach : a.alarm_name],
   )
 }
