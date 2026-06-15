@@ -1,0 +1,4 @@
+aws_region            = "us-east-2"
+name_prefix           = "sdm-publisher"
+lakehouse_bucket_name = "sdm-publisher-lakehouse-YOUR_ACCOUNT_ID"
+producer_account_id   = "PRODUCER_ACCOUNT_ID"

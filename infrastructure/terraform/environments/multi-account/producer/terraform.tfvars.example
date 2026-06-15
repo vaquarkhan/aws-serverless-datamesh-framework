@@ -1,0 +1,17 @@
+aws_region   = "us-east-2"
+name_prefix  = "sdm-producer"
+
+# From steward apply outputs
+steward_account_id = "STEWARD_ACCOUNT_ID"
+checkpoint_bucket  = "sdm-steward-checkpoints-STEWARD_ACCOUNT_ID"
+proof_bucket       = "sdm-steward-proofs-STEWARD_ACCOUNT_ID"
+
+# From publisher apply outputs
+publisher_account_id = "PUBLISHER_ACCOUNT_ID"
+lakehouse_bucket     = "sdm-publisher-lakehouse-PUBLISHER_ACCOUNT_ID"
+
+lambda_timeout_seconds            = 900
+durable_execution_timeout_seconds = 5400
+
+# Optional SparkRules on Lambda — set after packaging with SDM_EXTRAS=rules
+# SPARKRULES_DRL_S3_URI in Lambda env (add to module block when rules enabled)

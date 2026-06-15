@@ -1,0 +1,5 @@
+aws_region             = "us-east-2"
+name_prefix            = "sdm-steward"
+checkpoint_bucket_name = "sdm-steward-checkpoints-YOUR_ACCOUNT_ID"
+proof_bucket_name      = "sdm-steward-proofs-YOUR_ACCOUNT_ID"
+producer_account_id    = "PRODUCER_ACCOUNT_ID"

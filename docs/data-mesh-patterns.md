@@ -362,7 +362,7 @@ flowchart TB
 | Pattern | Description | Priority |
 |---------|-------------|----------|
 | **Mesh Orchestrator** | Step Functions Map state fan-out across domains | High |
-| **Cross-account Lambda module** | Terraform submodule for Producer→Steward ARNs | High |
+| **Multi-account Terraform** | Steward / Publisher / Producer roots | `environments/multi-account/` (scaffold) | High |
 | **OpenLineage emitter** | Emit lineage events on `committed` | Medium |
 | **Schema drift gate** | Block commit if `schema_version` mismatch | Medium |
 | **Consumer subscription webhook** | Notify Publisher on new snapshot | Medium |
