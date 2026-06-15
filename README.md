@@ -32,6 +32,10 @@ Instead of routing every backfill through a central Glue fleet, each domain ship
 
 It combines four proven building blocks into one contract:
 
+<p align="center">
+  <img src="docs/images/portfolio-stack-veridata-sparkrules.png" alt="Portfolio stack: IceGuard, veridata-recon VRP, Durable Execution, PyIceberg Glue REST, optional SparkRules" width="920" />
+</p>
+
 | Building block | Role |
 |----------------|------|
 | [IceGuard](https://pypi.org/project/iceguard/) | Chunked Parquet writes, timeout rollback, S3 resume |
@@ -39,7 +43,7 @@ It combines four proven building blocks into one contract:
 | [AWS Durable Execution](https://docs.aws.amazon.com/durable-execution/) | Replay completed steps across 15-min Lambda segments |
 | [PyIceberg Glue REST](https://py.iceberg.apache.org/) | SigV4 metadata commit via `GlueCatalogConnector` |
 
-Optional: [SparkRules](https://pypi.org/project/sparkrules/) for DRL business rules on Lambda (`pip install serverless-data-mesh[rules]`).
+Optional: [SparkRules](https://pypi.org/project/sparkrules/) for DRL business rules on Lambda (`pip install serverless-data-mesh[rules]`). See [Verification & business rules](#verification--business-rules) below.
 
 ---
 
@@ -88,6 +92,70 @@ This framework introduces the **[Vaquar Pattern](docs/vaquar-pattern.md)**: a pu
 What makes this new vs Outbox, Saga, Medallion, and Glue bookmarks: **Iceberg publication is gated on cryptographic multiset proof**, not executor success.
 
 **Pattern spec:** [docs/vaquar-pattern.md](docs/vaquar-pattern.md) · **Full blog (images, E2E):** [docs/blog-the-vaquar-pattern.md](docs/blog-the-vaquar-pattern.md)
+
+---
+
+## Verification & business rules
+
+The Vaquar Pattern’s **Verify** phase is powered by [veridata-recon](https://pypi.org/project/veridata-recon/) on PyPI. Optional [SparkRules](https://pypi.org/project/sparkrules/) DRL runs **before** physical writes and VRP — on Lambda, not Glue ETL.
+
+### veridata-recon: VRP per chunk
+
+Every chunk gets a **Verifiable Reconciliation Proof**: multiset hashes over `identity_fields` and `content_fields` compare source rows to sink Parquet. `validate_then_commit` blocks Iceberg metadata unless `verdict = PASS`.
+
+<p align="center">
+  <img src="docs/images/veridata-vrp-chunk-proof.png" alt="veridata-recon VRP: source and sink multiset hash, signed proof JSON, validate_then_commit gate, Steward S3 proofs" width="920" />
+</p>
+
+| VRP outcome | What happens | Consumer impact |
+|-------------|--------------|-----------------|
+| **PASS** | Proof stored in Steward S3; metadata commit proceeds | New Iceberg snapshot visible |
+| **FAIL** | `verification_failed`; no snapshot commit | Previous snapshot unchanged |
+| **Offline audit** | `verify_proof()` on `chunk-NNNNNN.vrp.json` | Auditors verify without source access |
+
+```python
+from serverless_data_mesh import VRPProofGenerator, validate_then_commit
+
+proof = VRPProofGenerator().generate(source_rows, sink_rows, identity_fields=["payment_id"])
+validate_then_commit(proof)  # raises if verdict != PASS
+```
+
+**Attacks blocked:** drop, duplicate, mutation, schema drift — see the [consumer safety benchmark](eval/validate_then_commit_benchmark.py) (`make benchmark`).
+
+→ [Vaquar Pattern invariant (image)](docs/blog-the-vaquar-pattern.md#4-the-vaquar-invariant) · [Observability: VRP metrics & S3 proofs](docs/observability-production.md)
+
+### SparkRules: DRL on Lambda before VRP
+
+Domain teams declare rules in YAML (`spark_rules_enabled: true`) or load Steward-hosted DRL from S3. Rules enrich or gate chunks in pure Python (`apply_chunk`) or optional PySpark-on-Lambda (`apply_drl_spark`).
+
+<p align="center">
+  <img src="docs/images/sparkrules-pipeline-position.png" alt="SparkRules pipeline: source reader, DRL apply_chunk, IceGuard Parquet, veridata-recon VRP, Glue metadata commit" width="920" />
+</p>
+
+| Mode | Install | When to use |
+|------|---------|-------------|
+| **Pure Python** | `pip install "serverless-data-mesh[rules]"` | Default — sub-ms per fact, small Lambda zip |
+| **PySpark on Lambda** | `pip install "serverless-data-mesh[spark]"` | Large partitions, same DRL at scale |
+| **Steward governance** | `SPARKRULES_DRL_S3_URI=s3://steward-rules/...` | Central rule packs + `RuleFireSummary` audit lineage |
+
+```yaml
+# mesh.yaml excerpt — compiler emits SparkRules hook in readers.py
+runtime:
+  engine: pyarrow
+  package_extras: rules
+  spark_rules_enabled: true
+```
+
+```python
+from serverless_data_mesh import SparkRulesConnector
+
+connector = SparkRulesConnector.from_environment()  # or from_s3(...)
+enriched, audit = connector.apply_chunk(source_records)
+```
+
+**Order matters:** Rules → Physical write (IceGuard) → VRP (veridata-recon) → Metadata (Glue REST). Failed rules block the chunk before VRP runs.
+
+→ [SparkRules connector guide](docs/sparkrules-connector.md) · [Retail mesh PySpark example](examples/retail-mesh/README.md)
 
 ---
 
@@ -434,6 +502,7 @@ terraform init && terraform apply
 | Document | What you will learn |
 |----------|---------------------|
 | **[Metadata-driven pipelines](docs/metadata-driven-pipeline.md)** | **Complete guide: YAML schema, bronze/silver/gold, compile, deploy** |
+| **[Observability (production)](docs/observability-production.md)** | Structured logs, VRP S3 proofs, CloudWatch dashboard, DLQ smoke tests |
 | **[Medallion E2E example](examples/medallion-e2e/README.md)** | One YAML → 6 pipelines + orchestrators |
 | **[Retail flat ETL example](examples/retail-mesh/README.md)** | 5 domain pipelines, PySpark on Lambda |
 | **[Vaquar Pattern blog](docs/blog-the-vaquar-pattern.md)** | **Full article: images, E2E journey, adoption playbook** |
@@ -461,6 +530,7 @@ serverless-data-mesh/
 │   ├── why-serverless-data-mesh.md # Blog article with diagrams
 │   ├── data-mesh-end-to-end.md     # Three-account deploy guide
 │   ├── data-mesh-patterns.md       # Pattern catalog + coverage matrix
+│   ├── observability-production.md # VRP logs, metrics, S3 proofs, DLQ
 │   └── images/                     # Architecture and product diagrams
 ├── examples/
 │   ├── medallion-e2e/              # One YAML → bronze/silver/gold mesh
