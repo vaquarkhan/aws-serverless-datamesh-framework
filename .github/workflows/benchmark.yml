@@ -15,7 +15,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ".[dev]" && pip install veridata-recon
       - run: python benchmarks/run_local_benchmark.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: benchmark-local
           path: benchmarks/results/*-local.json
@@ -40,7 +40,7 @@ jobs:
           SDM_BENCHMARK_LAMBDA_ARN: ${{ vars.SDM_BENCHMARK_LAMBDA_ARN }}
         run: python benchmarks/run_aws_benchmark.py
         continue-on-error: true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: benchmark-aws
