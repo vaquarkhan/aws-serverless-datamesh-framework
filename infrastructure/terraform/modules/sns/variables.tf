@@ -1,4 +1,4 @@
-"""SNS topic for CloudWatch alarm and application notifications."""
+# SNS topic for CloudWatch alarm and application notifications.
 
 variable "name_prefix" {
   type = string
