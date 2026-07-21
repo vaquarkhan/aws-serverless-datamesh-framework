@@ -78,6 +78,19 @@ jobs:
 
         run: pytest tests/ -v --tb=short
 
+      - name: Coverage gate (attestation / KMS / rules gate / UI data = 100%)
+        run: |
+          pytest tests/unit/test_attestation_kms.py \
+            tests/unit/test_coverage_new_modules.py \
+            tests/unit/test_ui_server.py \
+            --cov=serverless_data_mesh.attestation \
+            --cov=serverless_data_mesh.verification.kms_sign \
+            --cov=serverless_data_mesh.rules.gate \
+            --cov=serverless_data_mesh.ui.data \
+            --cov-branch \
+            --cov-report=term-missing \
+            --cov-fail-under=100 -q
+
 
 
       - name: Consumer safety benchmark

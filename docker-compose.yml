@@ -1,0 +1,9 @@
+# docker-compose for local control center
+services:
+  mesh-ui:
+    image: ghcr.io/vaquarkhan/serverless-data-mesh:1.2.0
+    build: .
+    ports:
+      - "8765:8765"
+    environment:
+      - SDM_ATTESTATION_ENABLED=1

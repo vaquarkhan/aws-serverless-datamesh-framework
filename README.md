@@ -182,6 +182,21 @@ serverless-data-mesh dashboard --open
 - **Control center:** `serverless-data-mesh ui --path examples/medallion-e2e/generated --open`
 - **Durable Lambda clocks:** [examples/durable-compute/](examples/durable-compute/)
 
+### Docker (control center image)
+
+```bash
+# Pull (after publish)
+docker pull ghcr.io/vaquarkhan/serverless-data-mesh:1.2.0
+docker run --rm -p 8765:8765 ghcr.io/vaquarkhan/serverless-data-mesh:1.2.0
+# → http://127.0.0.1:8765/
+
+# Or build locally
+docker build -t serverless-data-mesh:local .
+docker run --rm -p 8765:8765 serverless-data-mesh:local
+```
+
+**PyPI:** `pip install serverless-data-mesh==1.2.0`
+
 ---
 
 ## What is this project?

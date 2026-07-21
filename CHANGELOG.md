@@ -4,13 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-21
+
 ### Added
 
-- **Mesh control center UI**: KPI overview, pipelines, trust board, PVDM, durable clocks, GIF tutorial, one-click demo/attest actions
-- **Visual tutorial GIFs**: `docs/images/tutorial/` + [visual-tutorial.md](docs/visual-tutorial.md)
-- **PVDM-A Decision Attestation**: create/persist/verify sealed decision records linked to VRP proofs; wired into coordinator + local runtime; CLI `serverless-data-mesh attest`
-- **Optional KMS VRP envelopes**: `VRP_KMS_KEY_ID` attaches `kms_signature` (Sign or encrypt-digest fallback)
-- **Pre-physical rules gate**: `apply_rules_gate` / `SDM_RULES_GATE` (+ SparkRules env) in coordinator before chunk write
+- **PVDM-A Decision Attestation** + CLI `attest` + coordinator/local wiring
+- **Optional KMS VRP envelopes** (`VRP_KMS_KEY_ID`)
+- **Pre-physical rules gate** (`SDM_RULES_GATE` / SparkRules)
+- **Mesh control center UI** with dashboards, `/walkthrough` GIF demo, one-click demos
+- **README GIF walkthrough** + durable-compute example + Docker image (`ghcr.io`)
+- **100% coverage gate** for attestation / kms_sign / rules.gate / ui.data (`scripts/coverage_gate.py`)
 
 ### Fixed
 
