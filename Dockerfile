@@ -8,9 +8,11 @@ LABEL org.opencontainers.image.title="serverless-data-mesh" \
 
 WORKDIR /app
 
-# System deps for scientific wheels when needed
+# build-essential: linker for veridata-recon (Rust/maturin) when no prebuilt wheel
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates \
+      build-essential \
+      curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml README.md PYPI.md LICENSE VERSION ./
@@ -20,18 +22,18 @@ COPY examples ./examples
 COPY schemas ./schemas
 
 RUN pip install --no-cache-dir -U pip \
-    && pip install --no-cache-dir .
+    && pip install --no-cache-dir . \
+    && apt-get purge -y build-essential \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
-# Pre-generate northstar mesh for the default UI
 RUN serverless-data-mesh apply \
       --contract examples/medallion-e2e/northstar.mesh.yaml \
-      --output /data/generated \
-    && mkdir -p /data
+      --output /data/generated
 
 ENV SDM_UI_PATH=/data/generated \
     PYTHONUNBUFFERED=1
 
 EXPOSE 8765
 
-# Default: mesh control center (override CMD for CLI demos)
 CMD ["serverless-data-mesh", "ui", "--path", "/data/generated", "--host", "0.0.0.0", "--port", "8765"]
