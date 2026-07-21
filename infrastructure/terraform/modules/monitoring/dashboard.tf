@@ -51,6 +51,7 @@ resource "aws_cloudwatch_metric_alarm" "dlq_depth" {
   treat_missing_data  = "notBreaching"
   alarm_description   = "Failed async Lambda invocations landed in DLQ."
   alarm_actions       = var.alarm_actions
+  ok_actions          = var.ok_actions
 
   dimensions = {
     QueueName = var.dlq_queue_name
@@ -252,6 +253,7 @@ resource "aws_cloudwatch_metric_alarm" "vrp_trust_breach" {
   treat_missing_data  = "breaching"
   alarm_description   = "VRP trust score dropped below PASS for ${var.trust_dashboard_domains[count.index]}."
   alarm_actions       = var.alarm_actions
+  ok_actions          = var.ok_actions
 
   dimensions = {
     Domain = var.trust_dashboard_domains[count.index]

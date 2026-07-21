@@ -12,10 +12,13 @@ Production-grade AWS infrastructure for serverless-data-mesh.
 | **stepfunctions** | Backfill orchestrator | Resume loop after `rolled_back` |
 | **eventbridge** | Optional schedule | Cron → Step Functions |
 | **messaging** | SQS DLQ | Failed async invocations |
-| **monitoring** | CloudWatch alarms + rollback metric + mesh trust dashboard | Ops visibility |
+| **sns** | Ops SNS topic + email/HTTPS subscriptions | Alarm + app VRP/rollback paging |
+| **monitoring** | CloudWatch alarms (Lambda, DLQ, VRP, **SFN**) + trust dashboard | Ops visibility |
 | **governance** | Lake Formation consumer SLA grants (optional) | Federated read access |
 | **medallion-mesh** | Mesh + per-domain Step Functions from compiled YAML | Bronze/silver/gold orchestration |
 | **lambda-fleet** | Per-layer Lambda writers (memory/engine from manifest) | Sized medallion layers |
+
+**Production deploy (SNS confirm, smoke, runbook):** [docs/aws-production-deploy.md](../../docs/aws-production-deploy.md)
 
 ## Architecture
 

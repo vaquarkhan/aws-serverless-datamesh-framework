@@ -16,6 +16,10 @@ enable_durable_execution    = true
 enable_step_functions       = true
 enable_eventbridge_schedule = false
 enable_monitoring_alarms    = true
+create_ops_sns_topic        = true
+# Confirm subscription emails after apply (AWS sends a Confirm subscription link):
+ops_alert_emails            = ["ops@example.com"]
+# ops_alert_https_endpoints = ["https://hooks.slack.com/services/XXX/YYY/ZZZ"]
 trust_dashboard_domains     = ["orders", "payments", "inventory"]
 
 # enable_lake_formation_governance = true
@@ -35,4 +39,5 @@ resume_wait_seconds                 = 30
 # lambda_memory_mb                  = 4096
 # max_resume_attempts               = 10
 
+# Optional: also page an existing platform topic
 # alarm_sns_topic_arns = ["arn:aws:sns:us-east-2:123456789012:platform-alerts"]

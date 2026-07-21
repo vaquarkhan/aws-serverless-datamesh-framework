@@ -7,6 +7,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from serverless_data_mesh.pvdm_copyright import ATTRIBUTION, NOTICE_SHORT
+
 
 def _read_json(path: Path) -> dict[str, Any] | list[Any] | None:
     if not path.is_file():
@@ -218,7 +220,8 @@ def build_dashboard(generated_path: Path) -> dict[str, Any]:
                 },
             ],
             "invariant": "commit_metadata ⟹ VRP = PASS",
-            "method": "Vaquar Pattern (proprietary) — Vaquar Khan",
+            "method": ATTRIBUTION,
+            "copyright": NOTICE_SHORT,
         },
         "durable": {
             "lambda_timeout_seconds": 900,

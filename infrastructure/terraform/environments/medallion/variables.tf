@@ -82,8 +82,27 @@ variable "durable_retention_days" {
 }
 
 variable "alarm_sns_topic_arns" {
-  type    = list(string)
-  default = []
+  description = "Extra existing SNS topic ARNs for alarms (merged with created ops topic)."
+  type        = list(string)
+  default     = []
+}
+
+variable "create_ops_sns_topic" {
+  description = "Create {name_prefix}-ops-alerts SNS topic for alarms + Lambda alerts."
+  type        = bool
+  default     = true
+}
+
+variable "ops_alert_emails" {
+  description = "Email addresses subscribed to ops SNS (confirm AWS subscription email)."
+  type        = list(string)
+  default     = []
+}
+
+variable "ops_alert_https_endpoints" {
+  description = "HTTPS webhook endpoints subscribed to ops SNS."
+  type        = list(string)
+  default     = []
 }
 
 variable "enable_lake_formation_governance" {

@@ -1,4 +1,7 @@
-"""Run the Vaquar Pattern (PVDM) lifecycle on local disk without AWS."""
+"""Run the Vaquar Pattern (PVDM) lifecycle on local disk without AWS.
+
+PVDM © 2024–2026 Vaquar Khan — proprietary method (Physical · Verify · Durable · Metadata).
+"""
 
 from __future__ import annotations
 
@@ -13,6 +16,7 @@ from typing import Any
 
 from serverless_data_mesh.attestation.pvdma import maybe_attest_outcome
 from serverless_data_mesh.metrics.mesh_trust import publish_vrp_metric
+from serverless_data_mesh.observability.sns_notify import notify_vrp_failure
 from serverless_data_mesh.observability.structured import log_pvdm_outcome
 from serverless_data_mesh.orchestration.reprocess import attempt_vrp_repair
 from serverless_data_mesh.types.workload import (
@@ -242,6 +246,13 @@ class LocalPVDMRuntime:
                 vrp_proof_id=proof.get("proof_id"),
                 chunk_index=0,
                 local_dir=str(self.root),
+            )
+            notify_vrp_failure(
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload_id,
+                verdict=verdict,
+                reason=verification.reason,
+                proof_id=proof.get("proof_id"),
             )
             log_pvdm_outcome(
                 outcome=WriteOutcome.VERIFICATION_FAILED.value,

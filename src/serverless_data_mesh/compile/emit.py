@@ -178,7 +178,10 @@ CONTRACT: dict = {payload}
 
 def _emit_handler(contract: MeshPipelineContract) -> str:
     table = contract.boundary.target_table
-    return f'''"""GENERATED PVDM handler for {contract.domain_id} -> {table}."""
+    return f'''"""GENERATED PVDM handler for {contract.domain_id} -> {table}.
+
+PVDM (Vaquar Pattern) © 2024-2026 Vaquar Khan — proprietary method.
+"""
 
 from __future__ import annotations
 

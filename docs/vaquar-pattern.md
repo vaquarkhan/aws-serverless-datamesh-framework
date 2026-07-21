@@ -10,6 +10,7 @@
 | **Also known as** | PVDM (Physical · Verify · Durable · Metadata) |
 | **Version** | 1.0 |
 | **Inventor** | Vaquar Khan |
+| **Copyright** | © 2024–2026 Vaquar Khan — proprietary method (name + invariants) |
 | **Method status** | **Proprietary architectural method** (name + invariants). Reference implementation in this repo is **Apache-2.0**. |
 | **Canonical URL** | [vaquar-pattern.md](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md) |
 | **Origin** | [Serverless Data Mesh](https://github.com/vaquarkhan/aws-serverless-datamesh-framework) |
@@ -19,7 +20,11 @@
 
 ## Proprietary method note
 
-The **Vaquar Pattern (PVDM)** is a proprietary method created by **Vaquar Khan** for proof-gated serverless lakehouse publication. When citing architecture reviews, RFPs, or papers, attribute the pattern name and invariant to the inventor. The open-source `serverless-data-mesh` package implements the pattern under **Apache-2.0** so organizations can adopt the method without licensing ambiguity on the code.
+The **Vaquar Pattern (PVDM)** is a proprietary method created by **Vaquar Khan** for proof-gated serverless lakehouse publication.
+
+> **© 2024–2026 Vaquar Khan.** PVDM (Physical · Verify · Durable · Metadata) and the Vaquar Pattern are proprietary. All rights reserved in the method name, acronym, and publication invariant. The open-source `serverless-data-mesh` package is **Apache-2.0**; using the code does not transfer ownership of the method.
+
+When citing architecture reviews, RFPs, or papers, attribute the pattern name and invariant to the inventor.
 
 **Do not rename PVDM to five phases.** Optional SparkRules / integrity checks may run *before* Physical; they are not a fifth letter in the pattern acronym.
 

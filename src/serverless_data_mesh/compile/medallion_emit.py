@@ -260,10 +260,12 @@ def _emit_mesh_readme(contract: MedallionMeshContract, pipeline_count: int) -> s
 3. Implement `readers.py` in each layer (only hand-written code)
 4. Deploy terraform/ per layer + mesh orchestrator
 
-## Vaquar Pattern
+## Vaquar Pattern (PVDM)
 
+© 2024–2026 Vaquar Khan. PVDM is a proprietary method (Physical → Verify → Durable → Metadata).
 Each layer run: Physical → VRP → Durable → Metadata.
 Gold layer consumer_slas gate Lake Formation reads.
+Reference implementation: Apache-2.0 (see NOTICE).
 """
 
 

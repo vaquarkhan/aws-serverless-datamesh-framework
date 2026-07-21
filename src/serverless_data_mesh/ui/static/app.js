@@ -110,6 +110,8 @@
 
     $("#pvdm-method").textContent = data.pvdm.method;
     $("#pvdm-invariant").textContent = data.pvdm.invariant;
+    const copyEl = $("#pvdm-copyright");
+    if (copyEl) copyEl.textContent = data.pvdm.copyright || data.pvdm.method;
     $("#phase-grid").innerHTML = (data.pvdm.phases || [])
       .map(
         (p) => `<div class="phase"><div class="id">${esc(p.id)}</div><strong>${esc(p.name)}</strong><p class="muted">${esc(p.detail)}</p><span class="badge pass">${esc(p.status)}</span></div>`

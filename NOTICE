@@ -1,0 +1,14 @@
+Vaquar Pattern (PVDM)
+Copyright © 2024–2026 Vaquar Khan. All rights reserved.
+
+PVDM (Physical · Verify · Durable · Metadata) and the Vaquar Pattern are
+proprietary architectural methods of Vaquar Khan. The method name, operational
+acronym, and publication invariant (commit_metadata ⟹ VRP = PASS) may not be
+rebranded or claimed as an independent invention without attribution to the
+inventor.
+
+This repository's reference implementation (serverless-data-mesh) is licensed
+under the Apache License 2.0. Use of the open-source code does not transfer
+ownership of the proprietary method.
+
+See docs/vaquar-pattern.md for the canonical method specification.

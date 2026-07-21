@@ -205,6 +205,9 @@ def test_ui_build_dashboard_and_demo(tmp_path: Path) -> None:
     assert dash["trust"]["mode"] == "live-proofs"
     assert dash["organization"] == "demo"
     assert dash["tutorial"]
+    assert "copyright" in dash["pvdm"]
+    assert "Vaquar Khan" in dash["pvdm"]["copyright"]
+    assert "proprietary" in dash["pvdm"]["method"].lower()
 
     result = ui_data.run_local_demo(tmp_path)
     assert result["ok"] is True

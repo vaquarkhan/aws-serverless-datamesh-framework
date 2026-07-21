@@ -27,6 +27,20 @@ output "dlq_url" {
   value = module.messaging.dlq_url
 }
 
+output "ops_sns_topic_arn" {
+  description = "SNS topic for CloudWatch alarms and Lambda VRP/rollback alerts."
+  value       = module.sns.topic_arn
+}
+
+output "alarm_sns_topic_arns" {
+  description = "Effective alarm notification targets."
+  value       = local.alarm_sns_arns
+}
+
+output "mesh_trust_dashboard_name" {
+  value = var.enable_monitoring_alarms ? module.monitoring[0].mesh_trust_dashboard_name : null
+}
+
 output "example_stepfunctions_input" {
   description = "Paste into Step Functions → Start execution."
   value = jsonencode({

@@ -38,3 +38,21 @@ variable "trust_dashboard_domains" {
   type        = list(string)
   default     = ["orders", "payments", "inventory"]
 }
+
+variable "state_machine_name" {
+  description = "Step Functions state machine name for ExecutionsFailed/TimedOut alarms (empty to skip)."
+  type        = string
+  default     = ""
+}
+
+variable "state_machine_arn" {
+  description = "Full Step Functions ARN (preferred over state_machine_name when known)."
+  type        = string
+  default     = ""
+}
+
+variable "ok_actions" {
+  description = "SNS ARNs notified when alarms return to OK."
+  type        = list(string)
+  default     = []
+}

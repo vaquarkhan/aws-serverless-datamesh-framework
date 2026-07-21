@@ -14,6 +14,7 @@ from serverless_data_mesh.attestation.pvdma import maybe_attest_outcome
 from serverless_data_mesh.catalog.glue_rest import GlueRestCatalogAdapter
 from serverless_data_mesh.exceptions import RuleEvaluationError, VerificationRejectedError
 from serverless_data_mesh.metrics.mesh_trust import publish_vrp_metric
+from serverless_data_mesh.observability.sns_notify import notify_rollback, notify_vrp_failure
 from serverless_data_mesh.observability.structured import log_pvdm_outcome
 from serverless_data_mesh.orchestration.durable_steps import (
     durable_commit_metadata,
@@ -209,6 +210,13 @@ class IceGuardDurableCoordinator:
                             chunk_index=chunk_index,
                             proof_bucket=workload.proof_bucket,
                         )
+                        notify_vrp_failure(
+                            domain_id=workload.boundary.domain_id,
+                            workload_id=workload.workload_id,
+                            verdict=proof["reconciliation"]["verdict"],
+                            reason=verification.reason,
+                            proof_id=proof.get("proof_id"),
+                        )
                         raise VerificationRejectedError(
                             f"VRP blocked chunk [{start}, {end}): {verification.reason}"
                         )
@@ -322,6 +330,12 @@ class IceGuardDurableCoordinator:
                 duration_ms=duration_ms,
                 message=str(exc),
             )
+            notify_vrp_failure(
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload.workload_id,
+                verdict="FAIL",
+                reason=str(exc),
+            )
             return {
                 "outcome": WriteOutcome.VERIFICATION_FAILED.value,
                 "workload_id": workload.workload_id,
@@ -343,6 +357,11 @@ class IceGuardDurableCoordinator:
                 workload_id=workload.workload_id,
                 duration_ms=duration_ms,
                 resume_offset=state.next_offset,
+            )
+            notify_rollback(
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload.workload_id,
+                detail=f"remaining_time_ms={exc.remaining_time_ms}",
             )
             return {
                 "outcome": WriteOutcome.ROLLED_BACK.value,

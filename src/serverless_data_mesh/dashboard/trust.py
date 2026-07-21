@@ -146,7 +146,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
   <h1>Mesh Trust Dashboard</h1>
-  <p class="meta">Vaquar Pattern (PVDM) · mode: {mode} · generated {generated_at}</p>
+  <p class="meta">
+    Vaquar Pattern (PVDM) · © Vaquar Khan proprietary method ·
+    mode: {mode} · generated {generated_at}
+  </p>
   <div class="summary">
     <div class="card"><strong>{total}</strong> domains</div>
     <div class="card"><strong>{pass_count}</strong> PASS</div>
@@ -158,7 +161,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     {rows}
     </tbody>
   </table>
-  <p class="meta">Invariant: commit_metadata implies VRP = PASS</p>
+  <p class="meta">Invariant: commit_metadata implies VRP = PASS · © 2024–2026 Vaquar Khan (PVDM)</p>
 </body>
 </html>
 """

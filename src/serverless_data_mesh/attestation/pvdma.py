@@ -1,5 +1,7 @@
 """PVDM-A: Decision Attestation — cryptographic provenance for governed writes.
 
+PVDM (Vaquar Pattern) © 2024–2026 Vaquar Khan — proprietary method.
+
 Binds a decision (human or agent) to a VRP proof URI so mesh stewards can
 audit *who* allowed a commit and *which* proof it depended on.
 """

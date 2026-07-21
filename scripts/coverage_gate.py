@@ -1,4 +1,4 @@
-# Coverage gate for new high-value modules (must be 100%).
+# Coverage gate for high-value modules (must be 100%).
 # Usage: PYTHONPATH=src python scripts/coverage_gate.py
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ TARGETS = [
     "serverless_data_mesh/verification/kms_sign.py",
     "serverless_data_mesh/rules/gate.py",
     "serverless_data_mesh/ui/data.py",
+    "serverless_data_mesh/observability/sns_notify.py",
 ]
 
 
@@ -25,10 +26,12 @@ def main() -> int:
         "tests/unit/test_coverage_new_modules.py",
         "tests/unit/test_ui_server.py",
         "tests/unit/test_observability.py",
+        "tests/unit/test_sns_notify.py",
         "--cov=serverless_data_mesh.attestation",
         "--cov=serverless_data_mesh.verification.kms_sign",
         "--cov=serverless_data_mesh.rules.gate",
         "--cov=serverless_data_mesh.ui.data",
+        "--cov=serverless_data_mesh.observability.sns_notify",
         "--cov-branch",
         "--cov-report=term-missing",
         "--cov-fail-under=100",

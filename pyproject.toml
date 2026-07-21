@@ -113,6 +113,7 @@ include = [
     "/PYPI.md",
     "/VERSION",
     "/LICENSE",
+    "/NOTICE",
     "/CHANGELOG.md",
     "/schemas",
     "/integrations",
