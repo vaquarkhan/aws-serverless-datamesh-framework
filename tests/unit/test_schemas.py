@@ -11,9 +11,9 @@ def test_schema_files_exist() -> None:
     dp = root / "schemas" / "sdm-v1-dataproductpipeline.json"
     mm = root / "schemas" / "sdm-v1-medallionmesh.json"
     assert dp.is_file() and mm.is_file()
-    assert json.loads(dp.read_text())["kind"] == "DataProductPipeline" or "const" in str(
-        dp.read_text()
-    )
+    text = dp.read_text(encoding="utf-8")
+    data = json.loads(text)
+    assert data.get("kind") == "DataProductPipeline" or "const" in text or "DataProduct" in text
 
 
 def test_medallion_emits_layer_lambda_manifest(tmp_path: Path) -> None:

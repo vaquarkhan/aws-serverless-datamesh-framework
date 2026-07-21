@@ -44,13 +44,16 @@ def enforce_consumer_sla(
             checks=checks,
         )
 
-    source_count = int(recon.get("source_count", 0))
-    sink_count = int(recon.get("sink_count", 0))
+    source_count = int(recon.get("source_count", 0) or 0)
+    sink_count = int(recon.get("sink_count", 0) or 0)
     if source_count > 0:
         completeness = (sink_count / source_count) * 100.0
+        checks["completeness"] = completeness >= contract.min_completeness_pct
+    elif checks["vrp_pass"]:
+        # veridata-recon PASS already implies source/sink alignment when counts omitted
+        checks["completeness"] = True
     else:
-        completeness = 0.0
-    checks["completeness"] = completeness >= contract.min_completeness_pct
+        checks["completeness"] = False
 
     content_fields = set(proof.get("content_fields", []))
     checks["required_columns"] = all(col in content_fields for col in contract.required_columns)

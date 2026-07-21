@@ -27,15 +27,19 @@ def test_apply_medallion_starter(tmp_path: Path) -> None:
     assert applied.pipeline_count == 3
     assert (applied.output_root / "GETTING_STARTED.md").exists()
     assert applied.doctor.readers_total == 3
-    assert len(applied.doctor.readers_pending) == 3
+    # Starter emits reference readers (no NotImplementedError stubs).
+    assert applied.doctor.readers_done == 3
+    assert applied.doctor.readers_pending == []
+    assert applied.doctor.ready_to_deploy is True
 
 
-def test_doctor_detects_pending_readers(tmp_path: Path) -> None:
+def test_doctor_detects_reference_readers_ready(tmp_path: Path) -> None:
     result = scaffold_new("medallion", output_dir=tmp_path / "m")
     applied = apply_mesh(result.contract_path, output_dir=tmp_path / "gen")
     report = doctor_generated(applied.output_root)
-    assert report.ready_to_deploy is False
+    assert report.ready_to_deploy is True
     assert report.pipeline_count == 3
+    assert report.readers_pending == []
 
 
 def test_validate_northstar() -> None:

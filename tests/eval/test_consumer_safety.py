@@ -24,4 +24,5 @@ def test_consumer_safety_benchmark_exits_zero() -> None:
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert "corrupt_data_never_passes" in proc.stdout
-    assert '"all_scenarios_passed": true' in proc.stdout.replace(" ", "")
+    compact = proc.stdout.replace(" ", "")
+    assert '"all_scenarios_passed":true' in compact
