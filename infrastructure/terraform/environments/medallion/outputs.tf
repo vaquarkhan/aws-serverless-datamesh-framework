@@ -6,8 +6,8 @@ output "domain_medallion_orchestrator_arns" {
   value = module.medallion_mesh.domain_state_machine_arns
 }
 
-output "domain_writer_qualified_arn" {
-  value = module.lambda.qualified_invoke_arn
+output "domain_writer_qualified_arns" {
+  value = module.lambda_fleet.layer_qualified_arns
 }
 
 output "example_mesh_execution_input" {
