@@ -27,6 +27,12 @@ variable "enable_lakeformation" {
   default = true
 }
 
+variable "vrp_kms_key_arn" {
+  description = "Optional CMK ARN for VRP KMS Sign/Encrypt envelopes (VRP_KMS_KEY_ID)"
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   type    = map(string)
   default = {}

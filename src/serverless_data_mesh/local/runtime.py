@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from serverless_data_mesh.attestation.pvdma import maybe_attest_outcome
 from serverless_data_mesh.observability.structured import log_pvdm_outcome
 from serverless_data_mesh.types.workload import (
     DataWriteWorkload,
@@ -230,6 +231,16 @@ class LocalPVDMRuntime:
         )
 
         if verification.outcome != "PASS":
+            maybe_attest_outcome(
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload_id,
+                decision="deny",
+                vrp_verdict=verdict,
+                vrp_proof_uri=str(proof_path),
+                vrp_proof_id=proof.get("proof_id"),
+                chunk_index=0,
+                local_dir=str(self.root),
+            )
             log_pvdm_outcome(
                 outcome=WriteOutcome.VERIFICATION_FAILED.value,
                 domain_id=workload.boundary.domain_id,
@@ -249,6 +260,17 @@ class LocalPVDMRuntime:
                 consumer_row_count=self.consumer_row_count,
                 message=verification.reason,
             )
+
+        maybe_attest_outcome(
+            domain_id=workload.boundary.domain_id,
+            workload_id=workload_id,
+            decision="allow_commit",
+            vrp_verdict=verdict,
+            vrp_proof_uri=str(proof_path),
+            vrp_proof_id=proof.get("proof_id"),
+            chunk_index=0,
+            local_dir=str(self.root),
+        )
 
         if defer_snapshot:
             pending = self.catalog / "pending.json"

@@ -18,9 +18,169 @@ An open Python framework for **federated data mesh** lakehouse publication on AW
 **domain-oriented ownership**, **data as a product**, and **self-serve write infrastructure** for cross-domain teams.<br/>
 **Producer** domains publish governed **data products** · **Steward** notaries enforce **federated computational governance** · **Publisher** zones expose consumer-ready **Iceberg data products** to the mesh.
 
-[**PyPI**](https://pypi.org/project/serverless-data-mesh/) · [**Create pipelines**](docs/metadata-driven-pipeline.md) · [**Vaquar Pattern blog**](docs/blog-the-vaquar-pattern.md) · [**Vaquar Pattern spec**](docs/vaquar-pattern.md) · [**Why it exists**](docs/why-serverless-data-mesh.md) · [**Getting started**](docs/getting-started.md) · [**Deploy**](infrastructure/terraform/README.md)
+[**PyPI**](https://pypi.org/project/serverless-data-mesh/) · [**Walkthrough (in README)**](#how-to-start--walkthrough-gifs--benefits) · [**GIF gallery**](docs/visual-tutorial.md) · [**Durable compute**](examples/durable-compute/) · [**Vaquar Pattern**](docs/vaquar-pattern.md) · [**Deploy**](infrastructure/terraform/README.md)
 
 </div>
+
+---
+
+## How to start — walkthrough (GIFs + benefits)
+
+Read this section in the README — no extra docs required.  
+**Interactive auto-play demo:** after `ui --open`, open [http://127.0.0.1:8765/walkthrough](http://127.0.0.1:8765/walkthrough) · or open [docs/demo-walkthrough.html](docs/demo-walkthrough.html)
+
+**Also useful:**
+
+| Resource | Link / command |
+|----------|----------------|
+| **Full GIF gallery** | [docs/visual-tutorial.md](docs/visual-tutorial.md) |
+| **Control center** | `serverless-data-mesh ui --path examples/medallion-e2e/generated --open` → http://127.0.0.1:8765/ |
+| **Durable Lambda clocks** | [examples/durable-compute/](examples/durable-compute/) (tfvars + dual-clock guide) |
+
+### Copy / paste to start
+
+**Requires Python 3.12+.** From the repo root:
+
+```bash
+pip install serverless-data-mesh
+
+# Optional: 60s proof (no AWS) — clean commit, corrupt blocked
+serverless-data-mesh demo
+
+# Generate sample mesh + open control center
+serverless-data-mesh apply \
+  --contract examples/medallion-e2e/northstar.mesh.yaml \
+  --output examples/medallion-e2e/generated
+
+serverless-data-mesh ui --path examples/medallion-e2e/generated --open
+# → http://127.0.0.1:8765/
+# → http://127.0.0.1:8765/walkthrough   (auto-play GIF demo)
+```
+
+| In the UI | What to use it for |
+|-----------|--------------------|
+| Overview | KPIs + trust bars |
+| Pipelines | Bronze / silver / gold outputs |
+| Trust | VRP PASS/FAIL board |
+| Tutorial | Same GIF guide as below |
+| **Demo walkthrough** (header) | Auto-play Do / Benefit video |
+| **Run PVDM demo** (header) | Local gate demo → updates Trust |
+
+<p align="center">
+  <img src="docs/images/tutorial/tutorial-overview.gif" alt="Step-by-step demo overview GIF" width="720" />
+</p>
+
+### Step 1 — Install & prove the gate
+
+<p align="center">
+  <img src="docs/images/tutorial/step-01-install-demo.gif" alt="Step 1: install and demo" width="720" />
+</p>
+
+```bash
+pip install serverless-data-mesh
+serverless-data-mesh demo
+```
+
+| | |
+|--|--|
+| **You do** | Install, then run `demo` once |
+| **You get** | Clean write **commits**; corrupt write is **blocked** — in &lt;60s, **no AWS** |
+| **Benefit** | Proof that “pipeline succeeded” ≠ trustworthy data |
+
+### Step 2 — Create mesh YAML
+
+<p align="center">
+  <img src="docs/images/tutorial/step-02-new-mesh.gif" alt="Step 2: create mesh YAML" width="720" />
+</p>
+
+```bash
+serverless-data-mesh new --template medallion --output my-mesh
+# or use the retail sample: examples/medallion-e2e/northstar.mesh.yaml
+```
+
+| | |
+|--|--|
+| **You do** | Scaffold (or edit) a medallion / northstar contract |
+| **You get** | A domain-owned `mesh.yaml` |
+| **Benefit** | Domain teams own the contract — not a central Glue ticket queue |
+
+### Step 3 — Apply (compile pipelines)
+
+<p align="center">
+  <img src="docs/images/tutorial/step-03-apply.gif" alt="Step 3: apply and compile" width="720" />
+</p>
+
+```bash
+serverless-data-mesh apply \
+  --contract my-mesh/mesh.yaml \
+  --output my-mesh/generated
+```
+
+| | |
+|--|--|
+| **You do** | Run `apply` on your contract |
+| **You get** | Handlers, Step Functions ASL, VRP config, layer Lambda manifest |
+| **Benefit** | One YAML → many proof-gated pipelines (bronze / silver / gold) |
+
+### Step 4 — Start the control center UI
+
+<p align="center">
+  <img src="docs/images/tutorial/step-04-ui.gif" alt="Step 4: open control UI" width="720" />
+</p>
+
+```bash
+serverless-data-mesh ui --path my-mesh/generated --open
+# Control center:  http://127.0.0.1:8765/
+# GIF walkthrough: http://127.0.0.1:8765/walkthrough
+```
+
+| | |
+|--|--|
+| **You do** | Point `ui` at the generated folder and open the browser |
+| **You get** | KPIs, pipelines, trust, PVDM, durable clocks, Tutorial tab |
+| **Benefit** | Review readiness **before** you spend AWS money |
+
+### Step 5 — Deploy Durable Lambda (AWS)
+
+<p align="center">
+  <img src="docs/images/tutorial/step-05-deploy.gif" alt="Step 5: package and deploy" width="720" />
+</p>
+
+```bash
+./infrastructure/terraform/scripts/package_lambda.sh
+cd infrastructure/terraform/environments/prod
+# dual clocks — see examples/durable-compute/terraform.tfvars.example
+terraform apply
+```
+
+| | |
+|--|--|
+| **You do** | Package the Lambda zip + `terraform apply` ([durable-compute example](examples/durable-compute/)) |
+| **You get** | Durable Lambda on Firecracker, on-demand scale-to-zero, dual clocks (e.g. 900s × 5400s) |
+| **Benefit** | 90+ minute backfills without idle EMR/Glue clusters |
+
+### Step 6 — Observe & attest
+
+<p align="center">
+  <img src="docs/images/tutorial/step-06-observe.gif" alt="Step 6: observe and attest" width="720" />
+</p>
+
+```bash
+serverless-data-mesh attest demo --json
+serverless-data-mesh dashboard --open
+```
+
+| | |
+|--|--|
+| **You do** | Run attestation demo and/or trust dashboard |
+| **You get** | VRP proofs + PVDM-A decision records + CloudWatch trust metrics |
+| **Benefit** | Auditable publication — consumers only see snapshots after **VRP PASS** |
+
+### Quick links (same as the walkthrough footer)
+
+- **Full GIF gallery:** [docs/visual-tutorial.md](docs/visual-tutorial.md)
+- **Control center:** `serverless-data-mesh ui --path examples/medallion-e2e/generated --open`
+- **Durable Lambda clocks:** [examples/durable-compute/](examples/durable-compute/)
 
 ---
 
@@ -72,26 +232,79 @@ Most data mesh programs reorganize teams but leave the **write path** centralize
 
 ## The solution: Vaquar Pattern
 
-This framework introduces the **[Vaquar Pattern](docs/vaquar-pattern.md)**: a publishable architectural pattern for the data engineering world.
+This framework is the **reference implementation** of the **[Vaquar Pattern](docs/vaquar-pattern.md)** — a proprietary architectural method invented by **Vaquar Khan** for proof-gated serverless lakehouse publication.
+
+<p align="center">
+  <img src="docs/images/vaquar-pattern-proprietary-pvdm.png" alt="The Vaquar Pattern PVDM: proprietary method by Vaquar Khan — Physical Verify Durable Metadata" width="920" />
+</p>
 
 > **Proof-Gated Serverless Lakehouse Publication (PVDM)**  
 > Physical → Verify → Durable → Metadata  
 > Invariant: `commit_metadata ⟹ VRP = PASS`
 
+| | |
+|--|--|
+| **Method name** | Vaquar Pattern |
+| **Operational acronym** | **PVDM** (Physical · Verify · Durable · Metadata) |
+| **Inventor** | Vaquar Khan |
+| **Status** | Proprietary method · open reference implementation (Apache-2.0) |
+| **Cite** | [docs/vaquar-pattern.md](docs/vaquar-pattern.md) |
+
 <p align="center">
   <img src="docs/images/why-sdm-four-phase-connectivity.png" alt="Vaquar Pattern four phases: Physical, Verify, Durable, Metadata with cross-account flows" width="920" />
 </p>
 
-| Phase | Component | Outcome |
-|-------|-----------|---------|
-| **Physical** | IceGuard SafeWriter | Parquet in Publisher S3; checkpoints in Steward S3 |
-| **Verify** | veridata-recon | VRP proof stored; `validate_then_commit` gate |
-| **Durable** | AWS Durable SDK + Step Functions | 15-min segments chain into 90+ min workloads |
-| **Metadata** | GlueCatalogConnector | Iceberg snapshot commit **only after proof PASS** |
+| Phase | Component | Outcome | Implemented? |
+|-------|-----------|---------|--------------|
+| **Physical** | IceGuard SafeWriter | Parquet in Publisher S3; checkpoints in Steward S3 | **Yes** — `IceGuardDurableCoordinator` + IceGuard watchdog |
+| **Verify** | veridata-recon | VRP proof stored; `validate_then_commit` gate | **Yes** — PASS blocks FAIL before metadata |
+| **Durable** | AWS Durable SDK + Step Functions | 15-min segments → 90+ min workloads | **Yes** — `@durable_execution` + SFN resume |
+| **Metadata** | GlueCatalogConnector | Iceberg snapshot **only after** VRP PASS | **Yes** — proof-gated commit |
+
+Optional (not a fifth PVDM phase): SparkRules DRL / rules gate before Physical; PVDM-A decision attestation after Verify.
 
 What makes this new vs Outbox, Saga, Medallion, and Glue bookmarks: **Iceberg publication is gated on cryptographic multiset proof**, not executor success.
 
-**Pattern spec:** [docs/vaquar-pattern.md](docs/vaquar-pattern.md) · **Full blog (images, E2E):** [docs/blog-the-vaquar-pattern.md](docs/blog-the-vaquar-pattern.md)
+**Pattern spec:** [docs/vaquar-pattern.md](docs/vaquar-pattern.md) · **Full blog:** [docs/blog-the-vaquar-pattern.md](docs/blog-the-vaquar-pattern.md) · **Compute model:** [examples/durable-compute/](examples/durable-compute/)
+
+---
+
+## Durable Lambda compute model
+
+**No idle EMR/Glue clusters. No EC2 on-demand fleet.** Domain writers run on **AWS Lambda** with **Durable Execution**, Firecracker isolation, and **fully configurable dual clocks**.
+
+<p align="center">
+  <img src="docs/images/durable-lambda-compute-model.png" alt="Durable Lambda compute: Firecracker microVM, on-demand Lambda, dual clocks for per-invoke and durable budget" width="920" />
+</p>
+
+| Capability | What we use | What we do **not** run |
+|------------|-------------|-------------------------|
+| **Durable Lambda** | `@durable_execution` + Terraform `durable_config` | Glue ETL as the write path |
+| **MicroVM isolation** | AWS Lambda on **Firecracker** microVMs (AWS-managed) | Custom Firecracker / self-managed microVMs |
+| **On-demand compute** | **On-demand Lambda** scaling (scale to zero) | EC2 on-demand / ASG fleets; provisioned concurrency (optional later) |
+| **Configurable time** | Per-invoke timeout **and** durable total budget | Fixed 15-min wall clock for the whole backfill |
+
+### Dual clocks (Terraform-tunable)
+
+| Knob | tfvars / variable | Meaning | Limits |
+|------|-------------------|---------|--------|
+| **Container clock** | `lambda_timeout_seconds` | One Lambda invocation | 1–**900** s (AWS hard max) |
+| **Workload clock** | `durable_execution_timeout_seconds` | Total durable budget across replays | Default **5400** s (90 min), up to ~1 year |
+| **IceGuard lead time** | `iceguard_rollback_threshold_ms` | Rollback before hard kill | Auto or explicit ms |
+| **SFN resume** | `max_resume_attempts`, `resume_wait_seconds` | Re-invoke after `rolled_back` | Tunable |
+
+```hcl
+# infrastructure/terraform/environments/prod/terraform.tfvars (example)
+enable_durable_execution           = true
+lambda_timeout_seconds             = 900    # 15 min per segment
+durable_execution_timeout_seconds  = 5400   # 90 min total durable budget
+lambda_memory_mb                   = 4096
+iceguard_rollback_threshold_ms     = 30000  # yield 30s before timeout
+```
+
+Long backfills = **many durable segments** (each ≤ `lambda_timeout_seconds`), not one forever-running process. IceGuard rolls back incomplete chunks; Durable SDK replays completed steps; Step Functions resumes on `rolled_back`.
+
+→ [Durable compute example](examples/durable-compute/README.md) · [Architecture](docs/architecture.md#durable-lambda-compute-model)
 
 ---
 
@@ -399,6 +612,30 @@ serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generat
 serverless-data-mesh ui --path my-mesh/generated --open   # mesh control panel
 ```
 
+### Local mesh control UI
+
+After `apply`, open the **control center** (KPIs, pipelines, trust board, PVDM, durable clocks, visual tutorial):
+
+```bash
+serverless-data-mesh new --template medallion --output my-mesh
+serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generated
+serverless-data-mesh ui --path my-mesh/generated --host 127.0.0.1 --port 8765 --open
+# → http://127.0.0.1:8765/
+```
+
+Or against the northstar sample:
+
+```bash
+serverless-data-mesh apply \
+  --contract examples/medallion-e2e/northstar.mesh.yaml \
+  --output examples/medallion-e2e/generated
+serverless-data-mesh ui --path examples/medallion-e2e/generated --open
+```
+
+**UI features:** Overview KPIs · pipeline explorer · VRP trust bars · PVDM-A attestations · dual-clock durable panel · in-app GIF tutorial · one-click local PVDM / attest demos.
+
+**Visual tutorial (GIFs):** [docs/visual-tutorial.md](docs/visual-tutorial.md)
+
 **Platform notes:**
 
 - **Linux (Lambda / CI):** full cryptographic VRP via `veridata-recon` wheels.
@@ -502,6 +739,9 @@ terraform init && terraform apply
 | Document | What you will learn |
 |----------|---------------------|
 | **[Metadata-driven pipelines](docs/metadata-driven-pipeline.md)** | **Complete guide: YAML schema, bronze/silver/gold, compile, deploy** |
+| **[Visual tutorial (GIFs)](docs/visual-tutorial.md)** | Step-by-step animated walkthrough + control UI Tutorial tab |
+| **[Vaquar Pattern (proprietary method)](docs/vaquar-pattern.md)** | Formal PVDM spec — cite this; inventor attribution |
+| **[Durable compute example](examples/durable-compute/README.md)** | Lambda dual clocks, Firecracker, on-demand, tfvars |
 | **[Observability (production)](docs/observability-production.md)** | Structured logs, VRP S3 proofs, CloudWatch dashboard, DLQ smoke tests |
 | **[Medallion E2E example](examples/medallion-e2e/README.md)** | One YAML → 6 pipelines + orchestrators |
 | **[Retail flat ETL example](examples/retail-mesh/README.md)** | 5 domain pipelines, PySpark on Lambda |
@@ -512,6 +752,8 @@ terraform init && terraform apply
 | **[End-to-end guide](docs/data-mesh-end-to-end.md)** | Three-account journey, IAM, deploy order |
 | [Getting started](docs/getting-started.md) | Hands-on tutorial for domain engineers |
 | [Architecture](docs/architecture.md) | Components, failure modes, 90-min execution |
+| **[Due diligence: claims vs repo](docs/due-diligence-architecture-claims.md)** | What is shipped vs overstated vs roadmap (PVDM-A / MCP) |
+| [PVDM-A / Agentic roadmap](docs/roadmap-pvdm-a-agentic.md) | Decision attestation + MCP plan (not shipped yet) |
 | [Glue connector](docs/glue-connector.md) | Lambda + Spark vs Glue ETL |
 | [SparkRules connector](docs/sparkrules-connector.md) | DRL business rules on Lambda |
 | [Domain contracts](docs/domain-contracts.md) | Event schema and boundary contracts |
@@ -535,6 +777,7 @@ serverless-data-mesh/
 ├── examples/
 │   ├── medallion-e2e/              # One YAML → bronze/silver/gold mesh
 │   ├── retail-mesh/                # Flat pipelines real-world ETL
+│   ├── durable-compute/            # Dual-clock Lambda timeout / durable tfvars
 │   ├── contracts/                  # Single DataProductPipeline samples
 │   ├── domain_writer/              # Reference Lambda handler
 │   └── tutorials/                  # Interactive walkthrough
@@ -589,5 +832,7 @@ Apache-2.0. See [LICENSE](LICENSE).
 **Serverless Data Mesh** · [PyPI](https://pypi.org/project/serverless-data-mesh/) · [Vaquar Pattern blog](docs/blog-the-vaquar-pattern.md) · [GitHub](https://github.com/vaquarkhan/aws-serverless-datamesh-framework)
 
 *Domain teams own the write path. The mesh proves correctness before consumers see a snapshot.*
+
+*Vaquar Pattern (PVDM) — proprietary method by Vaquar Khan · reference implementation Apache-2.0*
 
 </div>

@@ -1,0 +1,84 @@
+# Serverless Data Mesh — Cursor rules
+
+You are an expert AWS Data Architect for the **aws-serverless-datamesh-framework**
+(`serverless-data-mesh` on PyPI). Prefer serverless-first, domain-owned writes,
+and proof-gated publication.
+
+## Core invariant (never violate)
+
+```
+commit_metadata ⟹ VRP = PASS
+```
+
+- Never commit Glue / Iceberg metadata because Lambda exited 0 or Glue job "SUCCEEDED".
+- Never generate a write path that skips `validate_then_commit` / VRPProofGenerator.
+- Prefer `IceGuardDurableCoordinator` (or LocalPVDMRuntime for demos) over ad-hoc S3 puts.
+
+## PVDM phases (canonical — four, not five)
+
+1. **Physical** — IceGuard SafeWriter: chunked Parquet, checkpoints, timeout rollback
+2. **Verify** — veridata-recon VRP (SHA-256 multiset proofs; keypair-signed)
+3. **Durable** — AWS Durable Execution SDK + Step Functions resume on `rolled_back`
+4. **Metadata** — GlueCatalogConnector / PyIceberg only after VRP PASS
+
+**Optional (not a fifth PVDM phase):** SparkRules DRL may run **before** Physical
+(`SparkRulesConnector`, `[rules]` extra). Do not invent a mandatory "Phase 0 Integrity Gate"
+as part of the Vaquar Pattern name.
+
+## Accuracy — features now implemented vs still roadmap
+
+**Implemented on this branch:**
+- PVDM-A Decision Attestation (`serverless_data_mesh.attestation`, CLI `attest`)
+- Optional KMS proof envelopes (`VRP_KMS_KEY_ID` → `kms_signature` on VRP JSON)
+- Pre-physical rules gate (`SDM_RULES_GATE` / SparkRules env in coordinator)
+
+**Still not shipped (do not invent):**
+- MCP / AgentCore Gateway / JWT interceptors
+- Microsoft Presidio / PromptGuard / Bedrock Guardrails
+- Merkle-tree VRP
+- Step Functions "continuation tokens" (use Durable checkpoints + `rolled_back` re-invoke)
+- Glue Data Quality Terraform workarounds
+- Spring AI / Java AgentCore observability modules
+
+If the user asks for MCP/gateway features, say they are not present yet — do not stub fake MCP servers unless explicitly requested.
+
+## Lambda / IceGuard standards
+
+- Data-processing Lambdas: wrap with IceGuard / framework coordinator — not bare handlers.
+- Monitor `context.get_remaining_time_in_millis()`; yield/rollback before hard timeout.
+- Initialize boto3 clients at **module** scope (warm reuse).
+- Avoid wildcard imports; keep Lambda package small.
+- Prefer `SDM_PIPELINE_SRC` + compiled `handler.py` packaging pattern for domain zips.
+
+## Mesh topology
+
+- Respect **Producer · Steward · Publisher** separation when designing IAM / buckets.
+- Proofs and checkpoints → Steward; lakehouse Parquet / Iceberg data → Publisher;
+  domain compute → Producer.
+- Prefer metadata-driven YAML (`serverless-data-mesh apply`) over hand-rolled pipelines
+  when adding domains.
+
+## Observability
+
+- Emit structured `pvdm_outcome` JSON logs when touching outcomes.
+- Use `publish_vrp_metric` for CloudWatch trust metrics; failures must be non-fatal.
+- When `VRP_PROOF_BUCKET` is set, proofs go to S3 — not only `/tmp`.
+
+## Terraform / IaC
+
+- No UTF-8 BOM in `.tf` files.
+- Storage lifecycle `for_each` uses static keys, not computed map keys.
+- Do not invent Glue DQ resources unless the user explicitly adopts Glue DQ.
+
+## Code style
+
+- Match existing Python 3.12+ patterns, ruff, and package layout under `src/serverless_data_mesh/`.
+- Prefer small, focused diffs; update docs when changing public invariants.
+- Tests for verification gates belong under `tests/` / `eval/`.
+
+## Docs of record
+
+- Pattern: `docs/vaquar-pattern.md`
+- Due diligence vs marketing claims: `docs/due-diligence-architecture-claims.md`
+- Agentic roadmap: `docs/roadmap-pvdm-a-agentic.md`
+- Observability: `docs/observability-production.md`

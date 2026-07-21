@@ -1,0 +1,11 @@
+# Sample tfvars — durable Lambda dual clocks
+# Copy values into environments/prod or medallion terraform.tfvars
+
+enable_durable_execution          = true
+lambda_timeout_seconds            = 900
+durable_execution_timeout_seconds = 5400
+durable_retention_days            = 14
+lambda_memory_mb                  = 4096
+iceguard_rollback_threshold_ms    = 30000
+max_resume_attempts               = 10
+resume_wait_seconds               = 60

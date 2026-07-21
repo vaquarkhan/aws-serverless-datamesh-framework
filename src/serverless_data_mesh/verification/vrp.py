@@ -133,7 +133,9 @@ class VRPProofGenerator:
         document["proof_id"] = vr.hash_bytes(
             json.dumps(document, separators=(",", ":"), sort_keys=True).encode("utf-8")
         )
-        return document
+        from serverless_data_mesh.verification.kms_sign import attach_kms_signature
+
+        return attach_kms_signature(document)
 
     def persist_proof(
         self,

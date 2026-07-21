@@ -32,6 +32,8 @@ Step Functions ──resume loop──► Lambda :live (Durable)
    committed | verification_failed | rolled_back → retry
 ```
 
+**Compute model:** Durable Lambda on Firecracker microVMs · on-demand scale-to-zero · dual clocks (`lambda_timeout_seconds` ≤ 900 + `durable_execution_timeout_seconds` default 5400). See [examples/durable-compute](../../examples/durable-compute/).
+
 ## Prerequisites
 
 - Terraform >= 1.5

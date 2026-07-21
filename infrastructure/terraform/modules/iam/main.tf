@@ -107,6 +107,29 @@ resource "aws_iam_role_policy" "domain_writer_metrics" {
   })
 }
 
+resource "aws_iam_role_policy" "domain_writer_vrp_kms" {
+  count = var.vrp_kms_key_arn != "" ? 1 : 0
+  name  = "${var.name_prefix}-vrp-kms"
+  role  = aws_iam_role.domain_writer.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = "VRPKmsSignAndEncrypt"
+      Effect = "Allow"
+      Action = [
+        "kms:Sign",
+        "kms:Verify",
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:GetPublicKey",
+      ]
+      Resource = [var.vrp_kms_key_arn]
+    }]
+  })
+}
+
 resource "aws_iam_role" "stepfunctions" {
   name = "${var.name_prefix}-backfill-orchestrator"
 

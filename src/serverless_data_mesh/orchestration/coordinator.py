@@ -10,8 +10,9 @@ from aws_durable_execution_sdk_python import DurableContext
 from iceguard import protect
 from iceguard.exceptions import IceGuardRollbackError
 
+from serverless_data_mesh.attestation.pvdma import maybe_attest_outcome
 from serverless_data_mesh.catalog.glue_rest import GlueRestCatalogAdapter
-from serverless_data_mesh.exceptions import VerificationRejectedError
+from serverless_data_mesh.exceptions import RuleEvaluationError, VerificationRejectedError
 from serverless_data_mesh.orchestration.durable_steps import (
     durable_commit_metadata,
     durable_write_chunk,
@@ -26,6 +27,7 @@ from serverless_data_mesh.types.workload import (
 from serverless_data_mesh.metrics.mesh_trust import publish_vrp_metric
 from serverless_data_mesh.observability.structured import log_pvdm_outcome
 from serverless_data_mesh.orchestration.reprocess import attempt_vrp_repair
+from serverless_data_mesh.rules.gate import RulesGateFn, apply_rules_gate
 from serverless_data_mesh.verification.vrp import VRPProofGenerator, validate_then_commit
 
 logger = logging.getLogger(__name__)
@@ -60,6 +62,8 @@ class IceGuardDurableCoordinator:
         catalog_adapter: GlueRestCatalogAdapter | None = None,
         checkpoint_interval: int = 5000,
         rollback_threshold_ms: int = 30_000,
+        rules_gate: RulesGateFn | None = None,
+        enable_rules_gate: bool | None = None,
     ) -> None:
         self._durable = durable_context
         self._lambda = lambda_context
@@ -67,6 +71,8 @@ class IceGuardDurableCoordinator:
         self._catalog = catalog_adapter
         self._checkpoint_interval = checkpoint_interval
         self._rollback_threshold_ms = rollback_threshold_ms
+        self._rules_gate = rules_gate
+        self._enable_rules_gate = enable_rules_gate
 
     def _initial_state(self, workload: DataWriteWorkload) -> OrchestrationState:
         return OrchestrationState(workload_id=workload.workload_id)
@@ -142,10 +148,22 @@ class IceGuardDurableCoordinator:
                 def guarded_batch_writer(start: int, end: int) -> None:
                     nonlocal chunk_index, state
 
+                    source_records = source_reader(start, end)
+                    if self._rules_gate is not None:
+                        source_records = self._rules_gate(source_records)
+                    else:
+                        from serverless_data_mesh.rules.gate import rules_gate_enabled
+
+                        should_gate = (
+                            self._enable_rules_gate is True
+                            or (self._enable_rules_gate is None and rules_gate_enabled())
+                        )
+                        if should_gate:
+                            source_records, _audit = apply_rules_gate(source_records)
+
                     paths = batch_writer(start, end)
                     chunk_paths_by_batch[(start, end)] = paths
 
-                    source_records = source_reader(start, end)
                     sink_records = sink_reader(start, end) if sink_reader else source_records
                     proof = self._proofs.build_proof(
                         source_records=source_records,
@@ -185,6 +203,15 @@ class IceGuardDurableCoordinator:
                         workload_id=workload.workload_id,
                     )
                     if verification.outcome != "PASS":
+                        maybe_attest_outcome(
+                            domain_id=workload.boundary.domain_id,
+                            workload_id=workload.workload_id,
+                            decision="deny",
+                            vrp_verdict=proof["reconciliation"]["verdict"],
+                            vrp_proof_id=proof.get("proof_id"),
+                            chunk_index=chunk_index,
+                            proof_bucket=workload.proof_bucket,
+                        )
                         raise VerificationRejectedError(
                             f"VRP blocked chunk [{start}, {end}): {verification.reason}"
                         )
@@ -194,6 +221,16 @@ class IceGuardDurableCoordinator:
                         bucket=workload.proof_bucket,
                         key_prefix=f"{workload.boundary.domain_id}/{workload.workload_id}",
                         chunk_index=chunk_index,
+                    )
+                    maybe_attest_outcome(
+                        domain_id=workload.boundary.domain_id,
+                        workload_id=workload.workload_id,
+                        decision="allow_commit",
+                        vrp_verdict="PASS",
+                        vrp_proof_uri=proof_uri,
+                        vrp_proof_id=proof.get("proof_id"),
+                        chunk_index=chunk_index,
+                        proof_bucket=workload.proof_bucket,
                     )
                     state.last_proof_hash = proof["proof_id"]
 
@@ -251,6 +288,31 @@ class IceGuardDurableCoordinator:
                 snapshot_id=commit_result["snapshot_id"],
             )
             return result
+
+        except RuleEvaluationError as exc:
+            duration_ms = round((time.perf_counter() - started) * 1000, 1)
+            logger.error("Rules gate failed for %s: %s", workload.workload_id, exc)
+            adapter.abort()
+            maybe_attest_outcome(
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload.workload_id,
+                decision="deny",
+                vrp_verdict="RULES_FAIL",
+                proof_bucket=workload.proof_bucket,
+            )
+            log_pvdm_outcome(
+                outcome="rules_failed",
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload.workload_id,
+                duration_ms=duration_ms,
+                message=str(exc),
+            )
+            return {
+                "outcome": "rules_failed",
+                "workload_id": workload.workload_id,
+                "resume_offset": state.next_offset,
+                "message": str(exc),
+            }
 
         except VerificationRejectedError as exc:
             duration_ms = round((time.perf_counter() - started) * 1000, 1)

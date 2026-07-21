@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Serverless Data Mesh — Control Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark">PVDM</div>
+      <div>
+        <h1>Serverless Data Mesh</h1>
+        <p class="tag">Vaquar Pattern · proof-gated lakehouse control center</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <a class="btn ghost" href="/walkthrough" style="text-decoration:none">Demo walkthrough</a>
+      <button id="btn-refresh" class="btn ghost">Refresh</button>
+      <button id="btn-demo" class="btn primary">Run PVDM demo</button>
+      <button id="btn-attest" class="btn">Attest demo</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="pipelines">Pipelines</button>
+    <button class="tab" data-tab="trust">Trust</button>
+    <button class="tab" data-tab="pvdm">PVDM</button>
+    <button class="tab" data-tab="durable">Durable</button>
+    <button class="tab" data-tab="tutorial">Tutorial</button>
+  </nav>
+
+  <main>
+    <section id="panel-overview" class="panel active">
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div class="split">
+        <article class="card">
+          <h2>Mesh health</h2>
+          <div id="mesh-health"></div>
+        </article>
+        <article class="card">
+          <h2>Activity feed</h2>
+          <div id="activity" class="feed"></div>
+        </article>
+      </div>
+      <article class="card">
+        <h2>Trust snapshot</h2>
+        <div id="trust-bars" class="bars"></div>
+      </article>
+    </section>
+
+    <section id="panel-pipelines" class="panel">
+      <article class="card">
+        <div class="card-head">
+          <h2>Generated pipelines</h2>
+          <span class="muted" id="pipe-count"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Domain</th><th>Layer</th><th>Product</th><th>Engine</th>
+                <th>Handler</th><th>Readers</th><th>Path</th>
+              </tr>
+            </thead>
+            <tbody id="pipe-body"></tbody>
+          </table>
+        </div>
+      </article>
+      <article class="card">
+        <h2>Layer Lambda fleet</h2>
+        <pre id="layer-manifest" class="codeblock">—</pre>
+      </article>
+    </section>
+
+    <section id="panel-trust" class="panel">
+      <div class="split">
+        <article class="card">
+          <h2>VRP trust board</h2>
+          <p class="muted" id="trust-mode"></p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Domain</th><th>Status</th><th>Rows</th><th>Proof</th></tr></thead>
+              <tbody id="trust-body"></tbody>
+            </table>
+          </div>
+        </article>
+        <article class="card">
+          <h2>PVDM-A attestations</h2>
+          <div id="attest-list" class="feed"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="panel-pvdm" class="panel">
+      <article class="card hero-pvdm">
+        <p class="eyebrow" id="pvdm-method"></p>
+        <h2>Four-phase invariant</h2>
+        <p class="invariant" id="pvdm-invariant"></p>
+        <div class="phase-grid" id="phase-grid"></div>
+      </article>
+    </section>
+
+    <section id="panel-durable" class="panel">
+      <div class="split">
+        <article class="card">
+          <h2>Dual clocks</h2>
+          <div class="clocks" id="clocks"></div>
+        </article>
+        <article class="card">
+          <h2>Compute model</h2>
+          <div id="compute-facts"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="panel-tutorial" class="panel">
+      <article class="card">
+        <div class="card-head">
+          <h2>Visual tutorial</h2>
+          <div class="stepper-nav">
+            <button class="btn ghost" id="tut-prev">← Prev</button>
+            <span id="tut-pos" class="muted"></span>
+            <button class="btn ghost" id="tut-next">Next →</button>
+          </div>
+        </div>
+        <div class="tutorial" id="tutorial-view"></div>
+      </article>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

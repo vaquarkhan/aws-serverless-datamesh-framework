@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **Mesh control center UI**: KPI overview, pipelines, trust board, PVDM, durable clocks, GIF tutorial, one-click demo/attest actions
+- **Visual tutorial GIFs**: `docs/images/tutorial/` + [visual-tutorial.md](docs/visual-tutorial.md)
+- **PVDM-A Decision Attestation**: create/persist/verify sealed decision records linked to VRP proofs; wired into coordinator + local runtime; CLI `serverless-data-mesh attest`
+- **Optional KMS VRP envelopes**: `VRP_KMS_KEY_ID` attaches `kms_signature` (Sign or encrypt-digest fallback)
+- **Pre-physical rules gate**: `apply_rules_gate` / `SDM_RULES_GATE` (+ SparkRules env) in coordinator before chunk write
+
 ### Fixed
 
 - **Lambda VERSION path**: `__init__.py` tries `serverless_data_mesh/VERSION`, repo root, and metadata; wheel bundles `VERSION` in package

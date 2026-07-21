@@ -106,6 +106,17 @@ Full guide: **[glue-connector.md](glue-connector.md)**.
 - **Lambda timeout**: IceGuard rolls back uncommitted Parquet; durable steps resume
 - **Catalog error**: `CatalogCommitError`; abort without publishing snapshot
 
+## Durable Lambda compute model
+
+| Capability | This framework | Notes |
+|------------|----------------|-------|
+| **Durable Lambda** | Yes | `durable_config` + `@durable_execution` + Durable SDK steps |
+| **MicroVM** | Yes (AWS-managed) | Lambda runs on **Firecracker** microVMs; we do not operate Firecracker |
+| **On-demand instances** | On-demand **Lambda** | Scale to zero; **not** EC2 on-demand fleets |
+| **Configurable run time** | Yes (dual clocks) | Per-invoke ≤ 900s; durable budget default 5400s |
+
+Sales diagram: [docs/images/durable-lambda-compute-model.png](images/durable-lambda-compute-model.png) · Hands-on: [examples/durable-compute/](../examples/durable-compute/)
+
 ## Long-running execution (90+ minutes)
 
 Lambda containers still have a **15-minute hard cap** per invocation (`timeout = 900`).

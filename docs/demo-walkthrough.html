@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Demo walkthrough — Serverless Data Mesh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #08110e; --panel: #12201b; --line: rgba(120,170,140,.25);
+      --text: #e8f0ea; --muted: #8fa899; --accent: #3dcf8e; --gold: #e8c47a;
+      --display: Fraunces, Georgia, serif; --sans: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text); font-family: var(--sans);
+      background: radial-gradient(900px 500px at 0% 0%, #163528, transparent 55%), var(--bg);
+      padding: 1.5rem;
+    }
+    .wrap { max-width: 1080px; margin: 0 auto; }
+    h1 { font-family: var(--display); font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0 0 .35rem; }
+    .lead { color: var(--muted); margin: 0 0 1.25rem; max-width: 42rem; line-height: 1.5; }
+    .start-box {
+      background: linear-gradient(135deg, rgba(61,207,142,.12), rgba(232,196,122,.08));
+      border: 1px solid var(--line); border-radius: 18px; padding: 1.1rem 1.25rem; margin-bottom: 1.25rem;
+    }
+    .start-box h2 { margin: 0 0 .6rem; font-size: 1rem; color: var(--gold); text-transform: uppercase; letter-spacing: .06em; }
+    .start-box pre {
+      margin: 0; font-family: var(--mono); font-size: .86rem; white-space: pre-wrap;
+      background: #06100c; padding: .85rem 1rem; border-radius: 12px; border: 1px solid var(--line);
+    }
+    .player {
+      display: grid; grid-template-columns: 1.15fr .85fr; gap: 1.25rem;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 20px;
+      padding: 1.1rem; box-shadow: 0 20px 50px rgba(0,0,0,.35);
+    }
+    @media (max-width: 860px) { .player { grid-template-columns: 1fr; } }
+    .stage { position: relative; }
+    .stage img {
+      width: 100%; aspect-ratio: 16/10; object-fit: cover; border-radius: 14px;
+      border: 1px solid var(--line); background: #000; display: block;
+    }
+    .progress {
+      position: absolute; left: 12px; right: 12px; bottom: 12px; height: 6px;
+      background: rgba(0,0,0,.45); border-radius: 999px; overflow: hidden;
+    }
+    .progress > i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, #2f9e6a, #e8c47a); }
+    .meta h3 { font-family: var(--display); font-size: 1.45rem; margin: 0 0 .5rem; }
+    .pill {
+      display: inline-block; font-size: .72rem; font-weight: 600; letter-spacing: .05em;
+      text-transform: uppercase; color: #0a1210; background: var(--accent);
+      padding: .2rem .55rem; border-radius: 999px; margin-bottom: .65rem;
+    }
+    .do, .get {
+      margin: .75rem 0 0; padding: .75rem .85rem; border-radius: 12px; border: 1px solid var(--line);
+    }
+    .do { background: rgba(61,207,142,.08); }
+    .get { background: rgba(232,196,122,.08); }
+    .do strong, .get strong { display: block; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .35rem; }
+    .do strong { color: var(--accent); }
+    .get strong { color: var(--gold); }
+    .cmd {
+      font-family: var(--mono); font-size: .82rem; margin-top: .5rem;
+      background: #06100c; padding: .65rem .75rem; border-radius: 10px; border: 1px solid var(--line);
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .controls {
+      display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-top: 1rem;
+    }
+    button {
+      border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--text);
+      border-radius: 999px; padding: .55rem 1rem; font: 500 .9rem var(--sans); cursor: pointer;
+    }
+    button.primary { background: linear-gradient(135deg, #2f9e6a, #1f7a52); border-color: transparent; }
+    button:hover { border-color: var(--accent); }
+    .dots { display: flex; gap: .35rem; margin-left: auto; }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,.2); border: 0; padding: 0;
+    }
+    .dot.on { background: var(--accent); }
+    .steps-list { margin-top: 1.5rem; display: grid; gap: .65rem; }
+    .step-card {
+      display: grid; grid-template-columns: 56px 1fr; gap: .85rem; align-items: start;
+      padding: .85rem 1rem; border-radius: 14px; border: 1px solid var(--line); background: rgba(0,0,0,.2);
+      cursor: pointer;
+    }
+    .step-card.active { border-color: var(--accent); background: rgba(61,207,142,.08); }
+    .num {
+      width: 56px; height: 56px; border-radius: 14px; display: grid; place-items: center;
+      font-family: var(--display); font-size: 1.3rem; background: #1a3a2c; color: var(--accent);
+    }
+    .step-card h4 { margin: 0 0 .25rem; font-size: 1rem; }
+    .step-card p { margin: 0; color: var(--muted); font-size: .88rem; line-height: 1.4; }
+    a { color: var(--accent); }
+    .footer { margin-top: 1.5rem; color: var(--muted); font-size: .88rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>How to start — demo walkthrough</h1>
+    <p class="lead">
+      Watch each step like a short demo video. For every screen you see:
+      <strong>what to type</strong>, <strong>what you get</strong>, and <strong>why it matters</strong>.
+      No AWS needed until Step 5.
+    </p>
+
+    <div class="start-box">
+      <h2>Start in 3 commands (copy/paste)</h2>
+      <pre id="start-cmds">pip install "serverless-data-mesh"
+serverless-data-mesh apply --contract examples/medallion-e2e/northstar.mesh.yaml --output examples/medallion-e2e/generated
+serverless-data-mesh ui --path examples/medallion-e2e/generated --open
+# Browser opens → http://127.0.0.1:8765/
+# Then click Tutorial, or open this page from the UI.</pre>
+    </div>
+
+    <div class="player">
+      <div class="stage">
+        <img id="frame" alt="Tutorial step" src="images/tutorial/step-01-install-demo.gif" />
+        <div class="progress"><i id="bar"></i></div>
+      </div>
+      <div class="meta">
+        <div class="pill" id="pill">Step 1 of 6</div>
+        <h3 id="title">Install &amp; prove the gate</h3>
+        <p id="blurb" style="color:var(--muted);margin:0;line-height:1.45"></p>
+        <div class="do">
+          <strong>What you do</strong>
+          <div id="do-text"></div>
+          <div class="cmd" id="cmd"></div>
+        </div>
+        <div class="get">
+          <strong>Benefit you get</strong>
+          <div id="get-text"></div>
+        </div>
+        <div class="controls">
+          <button id="prev">← Back</button>
+          <button id="play" class="primary">Pause</button>
+          <button id="next">Next →</button>
+          <div class="dots" id="dots"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps-list" id="list"></div>
+
+    <p class="footer">
+      Full GIF gallery: <a href="visual-tutorial.md">visual-tutorial.md</a> ·
+      Control center: run <code>serverless-data-mesh ui --open</code> ·
+      Durable Lambda clocks: <a href="../examples/durable-compute/README.md">durable-compute example</a>
+    </p>
+  </div>
+
+  <script>
+    const BASE = location.pathname.includes("demo-walkthrough") && !location.origin.startsWith("http")
+      ? ""
+      : (location.pathname.startsWith("/") ? "" : "");
+    // When served from mesh UI at /walkthrough, GIFs are under /tutorial/
+    const GIF_PREFIX = location.pathname.indexOf("walkthrough") >= 0 && location.port === "8765"
+      ? "/tutorial/"
+      : "images/tutorial/";
+
+    const STEPS = [
+      {
+        title: "Install & prove the gate",
+        gif: "step-01-install-demo.gif",
+        png: "step-01-install-demo.png",
+        do: "Install the package, then run the local demo once.",
+        cmd: "pip install serverless-data-mesh\nserverless-data-mesh demo",
+        get: "In under 60 seconds you see clean data commit and corrupt data blocked — without AWS. Proof that “job succeeded” is not enough.",
+        blurb: "Fastest way to feel the Vaquar Pattern (PVDM) invariant."
+      },
+      {
+        title: "Create your mesh YAML",
+        gif: "step-02-new-mesh.gif",
+        png: "step-02-new-mesh.png",
+        do: "Scaffold a medallion starter (or use the northstar retail sample).",
+        cmd: "serverless-data-mesh new --template medallion --output my-mesh",
+        get: "You get a domain-owned contract file instead of a ticket to a central Glue team. Edit accounts/domains once.",
+        blurb: "Metadata-first: one YAML becomes your mesh blueprint."
+      },
+      {
+        title: "Apply = generate the pipeline",
+        gif: "step-03-apply.gif",
+        png: "step-03-apply.png",
+        do: "Compile the contract into handlers, Step Functions, VRP config, and manifests.",
+        cmd: "serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generated",
+        get: "Bronze/silver/gold pipelines appear ready to wire — no hand-written orchestration for every table.",
+        blurb: "Compiler does the busywork; you keep ownership of readers.py."
+      },
+      {
+        title: "Open the control center UI",
+        gif: "step-04-ui.gif",
+        png: "step-04-ui.png",
+        do: "Point the UI at your generated folder and open the browser.",
+        cmd: "serverless-data-mesh ui --path my-mesh/generated --open\n# → http://127.0.0.1:8765/",
+        get: "KPIs, pipeline list, trust board, PVDM fidelity, durable clocks, and this tutorial — one place to review before deploy.",
+        blurb: "This is the “start here” surface for humans and demos."
+      },
+      {
+        title: "Package & deploy Durable Lambda",
+        gif: "step-05-deploy.gif",
+        png: "step-05-deploy.png",
+        do: "Build the Lambda zip and terraform apply with dual-clock timeouts.",
+        cmd: "./infrastructure/terraform/scripts/package_lambda.sh\ncd infrastructure/terraform/environments/prod\nterraform apply\n# tune: lambda_timeout_seconds=900, durable_execution_timeout_seconds=5400",
+        get: "On-demand Firecracker Lambda (scale to zero) with 15-min segments and 90+ min durable budgets — no idle EMR/Glue fleet.",
+        blurb: "Production compute: Durable Lambda, not always-on clusters."
+      },
+      {
+        title: "Observe, trust, attest",
+        gif: "step-06-observe.gif",
+        png: "step-06-observe.png",
+        do: "Run attestation demo and open trust dashboards / CloudWatch.",
+        cmd: "serverless-data-mesh attest demo --json\nserverless-data-mesh dashboard --open",
+        get: "Auditors get VRP proofs + PVDM-A decision records. Consumers only see snapshots after VRP PASS.",
+        blurb: "From green job logs to cryptographic publication evidence."
+      }
+    ];
+
+    let i = 0, playing = true, timer = null, started = 0;
+    const DURATION = 6500;
+    const $ = (id) => document.getElementById(id);
+    const asset = (name) => GIF_PREFIX + name;
+
+    function render() {
+      const s = STEPS[i];
+      $("pill").textContent = `Step ${i + 1} of ${STEPS.length}`;
+      $("title").textContent = s.title;
+      $("blurb").textContent = s.blurb;
+      $("do-text").textContent = s.do;
+      $("cmd").textContent = s.cmd;
+      $("get-text").textContent = s.get;
+      const img = $("frame");
+      img.onerror = () => { img.onerror = null; img.src = asset(s.png); };
+      img.src = asset(s.gif) + "?t=" + Date.now();
+      [...document.querySelectorAll(".dot")].forEach((d, idx) => d.classList.toggle("on", idx === i));
+      [...document.querySelectorAll(".step-card")].forEach((c, idx) => c.classList.toggle("active", idx === i));
+      restartBar();
+    }
+
+    function restartBar() {
+      const bar = $("bar");
+      bar.style.transition = "none";
+      bar.style.width = "0%";
+      void bar.offsetWidth;
+      if (playing) {
+        bar.style.transition = `width ${DURATION}ms linear`;
+        bar.style.width = "100%";
+        clearTimeout(timer);
+        started = Date.now();
+        timer = setTimeout(() => { i = (i + 1) % STEPS.length; render(); }, DURATION);
+      }
+    }
+
+    function buildChrome() {
+      $("dots").innerHTML = STEPS.map((_, idx) => `<button class="dot" data-i="${idx}" aria-label="Go to step ${idx+1}"></button>`).join("");
+      $("list").innerHTML = STEPS.map((s, idx) => `
+        <div class="step-card" data-i="${idx}">
+          <div class="num">${idx + 1}</div>
+          <div>
+            <h4>${s.title}</h4>
+            <p><strong style="color:var(--accent)">Do:</strong> ${s.do}<br>
+               <strong style="color:var(--gold)">Get:</strong> ${s.get}</p>
+          </div>
+        </div>`).join("");
+      document.querySelectorAll("[data-i]").forEach((el) => {
+        el.addEventListener("click", () => { i = Number(el.dataset.i); render(); });
+      });
+    }
+
+    $("prev").onclick = () => { i = (i - 1 + STEPS.length) % STEPS.length; render(); };
+    $("next").onclick = () => { i = (i + 1) % STEPS.length; render(); };
+    $("play").onclick = () => {
+      playing = !playing;
+      $("play").textContent = playing ? "Pause" : "Play";
+      if (playing) restartBar(); else { clearTimeout(timer); $("bar").style.width = $("bar").style.width; }
+    };
+
+    buildChrome();
+    render();
+  </script>
+</body>
+</html>
