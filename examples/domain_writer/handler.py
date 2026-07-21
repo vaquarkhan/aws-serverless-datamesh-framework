@@ -1,4 +1,4 @@
-﻿"""AWS Lambda handler: domain team entry point for governed lakehouse writes."""
+"""AWS Lambda handler: domain team entry point for governed lakehouse writes."""
 
 from __future__ import annotations
 
@@ -9,13 +9,14 @@ from typing import Any
 
 from aws_durable_execution_sdk_python import DurableContext, durable_execution
 
-from .io import records_from_source, write_parquet_chunk
-from .rules_io import enrich_records_with_rules
-from .workload import build_workload
 from serverless_data_mesh.catalog import GlueRestCatalogAdapter
 from serverless_data_mesh.config import MeshSettings
 from serverless_data_mesh.orchestration import IceGuardDurableCoordinator
 from serverless_data_mesh.verification import VRPProofGenerator
+
+from .io import records_from_source, write_parquet_chunk
+from .rules_io import enrich_records_with_rules
+from .workload import build_workload
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

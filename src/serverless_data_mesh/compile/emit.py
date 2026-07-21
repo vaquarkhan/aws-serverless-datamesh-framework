@@ -177,7 +177,8 @@ CONTRACT: dict = {payload}
 
 
 def _emit_handler(contract: MeshPipelineContract) -> str:
-    return f'''"""GENERATED PVDM handler for {contract.domain_id} -> {contract.boundary.target_table}."""
+    table = contract.boundary.target_table
+    return f'''"""GENERATED PVDM handler for {contract.domain_id} -> {table}."""
 
 from __future__ import annotations
 
@@ -214,9 +215,10 @@ lambda_handler = handler
 
 
 def _emit_step_function(contract: MeshPipelineContract) -> str:
+    table = contract.boundary.target_table
     return json.dumps(
         {
-            "Comment": f"PVDM durable write for {contract.domain_id} -> {contract.boundary.target_table}",
+            "Comment": f"PVDM durable write for {contract.domain_id} -> {table}",
             "StartAt": "WriteChunk",
             "States": {
                 "WriteChunk": {
@@ -293,7 +295,7 @@ variable "domain_id" {{
 }}
 
 variable "name_prefix" {{
-  default = "{contract.name_prefix or f'sdm-{contract.domain_id}'}"
+  default = "{contract.name_prefix or f"sdm-{contract.domain_id}"}"
 }}
 
 variable "aws_region" {{

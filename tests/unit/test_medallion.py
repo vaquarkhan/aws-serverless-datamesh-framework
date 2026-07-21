@@ -15,10 +15,7 @@ from serverless_data_mesh.compile.medallion_validate import validate_medallion_c
 @pytest.fixture
 def northstar_path() -> Path:
     return (
-        Path(__file__).resolve().parents[2]
-        / "examples"
-        / "medallion-e2e"
-        / "northstar.mesh.yaml"
+        Path(__file__).resolve().parents[2] / "examples" / "medallion-e2e" / "northstar.mesh.yaml"
     )
 
 
@@ -30,9 +27,7 @@ def test_load_northstar_medallion_mesh(northstar_path: Path) -> None:
     assert not validate_medallion_contract(doc)
 
 
-def test_compile_northstar_generates_six_pipelines(
-    northstar_path: Path, tmp_path: Path
-) -> None:
+def test_compile_northstar_generates_six_pipelines(northstar_path: Path, tmp_path: Path) -> None:
     doc = load_contract_document(northstar_path)
     assert isinstance(doc, MedallionMeshContract)
     result = compile_medallion_mesh(doc, output_dir=tmp_path, source_contract_path=northstar_path)

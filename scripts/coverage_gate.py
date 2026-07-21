@@ -35,7 +35,10 @@ def main() -> int:
         "-q",
     ]
     print("Running:", " ".join(cmd))
-    env = {**dict(**{k: v for k, v in __import__("os").environ.items()}), "PYTHONPATH": str(ROOT / "src")}
+    env = {
+        **dict(**{k: v for k, v in __import__("os").environ.items()}),
+        "PYTHONPATH": str(ROOT / "src"),
+    }
     return subprocess.call(cmd, cwd=ROOT, env=env)
 
 

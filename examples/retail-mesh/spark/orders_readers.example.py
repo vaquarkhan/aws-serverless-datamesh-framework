@@ -14,7 +14,6 @@ def _spark() -> Any:
     global _SPARK
     if _SPARK is None:
         from pyspark.sql import SparkSession
-        from pyspark.sql import functions as F
 
         _SPARK = (
             SparkSession.builder.appName("orders-curated-nightly")
@@ -27,6 +26,8 @@ def _spark() -> Any:
 
 def source_reader(start: int, end: int) -> list[dict[str, Any]]:
     """Read OMS export: join headers + lines, dedup, aggregate."""
+    from pyspark.sql import functions as F
+
     spark = _spark()
     dt = "EVENT_PARTITION"  # injected from Step Functions payload partition_spec.dt
     headers = spark.read.parquet(f"s3://producer-orders/raw/headers/dt={dt}/")

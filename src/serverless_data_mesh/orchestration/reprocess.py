@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from serverless_data_mesh.types.workload import DataWriteWorkload
 from serverless_data_mesh.verification.backend import create_proof_generator
@@ -61,9 +62,7 @@ def attempt_vrp_repair(
     else:
         gen = proof_generator
     sink = list(sink_records)
-    missing_before = len(
-        _find_missing_records(source_records, sink, workload.identity_fields)
-    )
+    missing_before = len(_find_missing_records(source_records, sink, workload.identity_fields))
 
     if missing_before == 0:
         proof = gen.build_proof(
@@ -109,9 +108,7 @@ def attempt_vrp_repair(
             chunk_end=chunk_end,
         )
         verdict = validate_then_commit(proof).outcome
-        missing_after = len(
-            _find_missing_records(source_records, sink, workload.identity_fields)
-        )
+        missing_after = len(_find_missing_records(source_records, sink, workload.identity_fields))
 
         logger.info(
             "VRP repair attempt %s: verdict=%s missing_before=%s missing_after=%s",

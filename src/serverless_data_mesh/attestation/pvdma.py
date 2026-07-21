@@ -12,7 +12,7 @@ import logging
 import os
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -50,7 +50,7 @@ class DecisionAttestation:
     tool_args_hash: str | None = None
     chunk_index: int | None = None
     created_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        default_factory=lambda: datetime.now(UTC).replace(microsecond=0).isoformat()
     )
     attestation_version: str = ATTESTATION_VERSION
     content_hash: str | None = None
@@ -144,9 +144,7 @@ def persist_attestation(
         attestation.seal()
 
     body = json.dumps(attestation.to_dict(), indent=2, sort_keys=True).encode("utf-8")
-    prefix = key_prefix or (
-        f"attestations/{attestation.domain_id}/{attestation.workload_id}"
-    )
+    prefix = key_prefix or (f"attestations/{attestation.domain_id}/{attestation.workload_id}")
     filename = f"{attestation.attestation_id}.pvdma.json"
 
     if local_dir:

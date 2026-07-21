@@ -130,6 +130,12 @@ markers = [
 target-version = "py312"
 line-length = 100
 src = ["src", "tests", "examples"]
+extend-exclude = [
+    "**/generated/**",
+    "examples/medallion-e2e/generated",
+    "examples/retail-mesh/generated",
+    "infrastructure/terraform/fixtures/generated-mesh",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

@@ -7,7 +7,6 @@ import re
 from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
-from typing import Any
 
 from serverless_data_mesh.compile.emit import compile_pipeline
 from serverless_data_mesh.compile.loader import load_contract_document
@@ -206,7 +205,8 @@ Pipelines: **{pipeline_count}**
 - [x] Pipelines compiled
 {pending_lines}
 - [ ] Package Lambda: `SDM_EXTRAS=spark ./infrastructure/terraform/scripts/package_lambda.sh`
-- [ ] Deploy: `serverless-data-mesh deploy --contract {contract_path} --output {output_root} --dry-run`
+- [ ] Deploy: `serverless-data-mesh deploy --contract {contract_path} \\
+      --output {output_root} --dry-run`
 - [ ] Export Backstage: `serverless-data-mesh catalog export --contract {contract_path}`
 - [ ] UI: `serverless-data-mesh ui --path {output_root}`
 - [ ] Run `serverless-data-mesh demo` locally to verify VRP gate

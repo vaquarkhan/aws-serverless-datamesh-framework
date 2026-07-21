@@ -40,10 +40,7 @@ def test_doctor_detects_pending_readers(tmp_path: Path) -> None:
 
 def test_validate_northstar() -> None:
     path = (
-        Path(__file__).resolve().parents[2]
-        / "examples"
-        / "medallion-e2e"
-        / "northstar.mesh.yaml"
+        Path(__file__).resolve().parents[2] / "examples" / "medallion-e2e" / "northstar.mesh.yaml"
     )
     if not path.is_file():
         pytest.skip("northstar example not present")

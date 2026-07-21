@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ def fetch_cloudwatch_trust_rows(
         return []
 
     client = cloudwatch_client or boto3.client("cloudwatch", region_name=region)
-    end = datetime.now(timezone.utc)
+    end = datetime.now(UTC)
     start = end - timedelta(hours=hours)
 
     response = client.list_metrics(Namespace=NAMESPACE, MetricName="VRPTrustScore")
@@ -68,9 +68,7 @@ def fetch_cloudwatch_trust_rows(
             {
                 "domain": domain,
                 "last_vrp": (
-                    latest_trust["Timestamp"].strftime("%I:%M %p")
-                    if latest_trust
-                    else "no data"
+                    latest_trust["Timestamp"].strftime("%I:%M %p") if latest_trust else "no data"
                 ),
                 "status": "PASS" if score >= 1.0 else "FAIL",
                 "rows": str(int(latest_count["Maximum"])) if latest_count else "?",

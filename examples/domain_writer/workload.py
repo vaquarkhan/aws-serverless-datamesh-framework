@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
 from serverless_data_mesh.config import MeshSettings
@@ -10,7 +9,9 @@ from serverless_data_mesh.exceptions import WorkloadConfigurationError
 from serverless_data_mesh.types import DataWriteWorkload, DomainTransactionBoundary
 
 
-def build_workload(event: dict[str, Any], settings: MeshSettings | None = None) -> DataWriteWorkload:
+def build_workload(
+    event: dict[str, Any], settings: MeshSettings | None = None
+) -> DataWriteWorkload:
     """Map the Lambda event into a typed workload with domain contract metadata."""
     if "workload_id" not in event or "total_records" not in event:
         raise WorkloadConfigurationError("event must include workload_id and total_records")

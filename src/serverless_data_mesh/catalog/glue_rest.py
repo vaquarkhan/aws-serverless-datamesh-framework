@@ -120,7 +120,9 @@ class GlueRestCatalogAdapter:
     def abort(self) -> None:
         """Abort the in-flight metadata transaction without catalog side effects."""
         self._prepared_files.clear()
-        logger.info("Aborted pending REST catalog commit for %s.%s", self.namespace, self.table_name)
+        logger.info(
+            "Aborted pending REST catalog commit for %s.%s", self.namespace, self.table_name
+        )
 
     def rollback_to_snapshot(self, snapshot_id: int) -> None:
         """Rollback table metadata to a prior snapshot (IceGuard timeout recovery)."""

@@ -15,7 +15,6 @@ def test_glue_catalog_connector_is_adapter_alias() -> None:
 
     assert GlueCatalogConnector is GlueRestCatalogAdapter
 
-
     adapter = GlueRestCatalogAdapter(
         catalog_name="glue_rest",
         namespace="raw_orders",

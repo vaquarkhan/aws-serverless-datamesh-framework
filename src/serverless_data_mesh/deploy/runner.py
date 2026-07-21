@@ -21,7 +21,9 @@ class DeployResult:
     partition_dt: str
 
 
-def _run(cmd: list[str], *, cwd: Path | None = None, dry_run: bool = False) -> subprocess.CompletedProcess[str]:
+def _run(
+    cmd: list[str], *, cwd: Path | None = None, dry_run: bool = False
+) -> subprocess.CompletedProcess[str]:
     if dry_run:
         print(f"[dry-run] {' '.join(cmd)}", file=sys.stderr)
         return subprocess.CompletedProcess(cmd, 0, "", "")

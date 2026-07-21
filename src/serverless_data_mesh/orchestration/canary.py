@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from serverless_data_mesh.verification.backend import create_proof_generator
 from serverless_data_mesh.verification.vrp import validate_then_commit

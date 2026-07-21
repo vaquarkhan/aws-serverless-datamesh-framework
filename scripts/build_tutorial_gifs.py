@@ -6,9 +6,14 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 
-
 ROOT = Path(__file__).resolve().parents[1]
-ASSETS = Path.home() / ".cursor" / "projects" / "c-Users-Administrator-Downloads-serverless-datamesh-framework-sdf" / "assets"
+ASSETS = (
+    Path.home()
+    / ".cursor"
+    / "projects"
+    / "c-Users-Administrator-Downloads-serverless-datamesh-framework-sdf"
+    / "assets"
+)
 OUT = ROOT / "docs" / "images" / "tutorial"
 
 STEPS = [
@@ -42,9 +47,13 @@ def _pulse_frames(img: Image.Image, *, label: str, n: int = 6) -> list[Image.Ima
         # progress bar
         bar_w = int((i + 1) / n * (bw - 80))
         draw.rounded_rectangle((40, bh - 48, bw - 40, bh - 28), radius=8, fill=(20, 40, 32, 200))
-        draw.rounded_rectangle((40, bh - 48, 40 + bar_w, bh - 28), radius=8, fill=(61, 207, 142, 230))
+        draw.rounded_rectangle(
+            (40, bh - 48, 40 + bar_w, bh - 28), radius=8, fill=(61, 207, 142, 230)
+        )
         # caption chip
-        draw.rounded_rectangle((40, 28, 40 + 8 * len(label) + 36, 68), radius=12, fill=(10, 24, 18, 210))
+        draw.rounded_rectangle(
+            (40, 28, 40 + 8 * len(label) + 36, 68), radius=12, fill=(10, 24, 18, 210)
+        )
         draw.text((56, 38), label, fill=(232, 240, 234, 255), font=_font(18))
         # subtle brightness pulse
         blended = Image.alpha_composite(frame, overlay)

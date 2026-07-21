@@ -8,7 +8,7 @@ import os
 import urllib.error
 import urllib.request
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ def emit_openlineage_event(
     Without an endpoint, returns the event dict for logging or local persistence.
     """
     run_id = run_id or str(uuid.uuid4())
-    now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    now = datetime.now(UTC).replace(microsecond=0).isoformat()
 
     event: dict[str, Any] = {
         "eventType": event_type,

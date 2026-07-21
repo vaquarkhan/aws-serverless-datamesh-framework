@@ -1,4 +1,4 @@
-﻿"""Evaluation and benchmark tests (require veridata-recon)."""
+"""Evaluation and benchmark tests (require veridata-recon)."""
 
 from __future__ import annotations
 

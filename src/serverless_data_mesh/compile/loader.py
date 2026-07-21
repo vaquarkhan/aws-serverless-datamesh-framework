@@ -18,10 +18,7 @@ def _parse_text(path: Path, text: str) -> dict[str, Any]:
         try:
             import yaml
         except ImportError as exc:
-            msg = (
-                "PyYAML is required to load YAML contracts. "
-                "Install with: pip install pyyaml"
-            )
+            msg = "PyYAML is required to load YAML contracts. Install with: pip install pyyaml"
             raise ImportError(msg) from exc
         data = yaml.safe_load(text)
     elif suffix == ".json":

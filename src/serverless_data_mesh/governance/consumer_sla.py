@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from serverless_data_mesh.types.workload import ConsumerSLAContract
@@ -60,7 +60,7 @@ def enforce_consumer_sla(
         committed_at = datetime.fromisoformat(proof["created_at"].replace("Z", "+00:00"))
     freshness_ok = True
     if committed_at is not None:
-        age_min = (datetime.now(timezone.utc) - committed_at).total_seconds() / 60.0
+        age_min = (datetime.now(UTC) - committed_at).total_seconds() / 60.0
         freshness_ok = age_min <= contract.max_freshness_minutes
     checks["freshness"] = freshness_ok
 

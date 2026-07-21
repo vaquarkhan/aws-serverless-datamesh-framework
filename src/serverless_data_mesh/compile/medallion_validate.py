@@ -32,13 +32,9 @@ def validate_medallion_contract(contract: MedallionMeshContract) -> list[str]:
 
         for layer in domain.layers:
             if layer.layer == "silver" and layer.upstream_layer != "bronze":
-                errors.append(
-                    f"domain {domain.domain_id}: silver must set upstream_layer: bronze"
-                )
+                errors.append(f"domain {domain.domain_id}: silver must set upstream_layer: bronze")
             if layer.layer == "gold" and layer.upstream_layer != "silver":
-                errors.append(
-                    f"domain {domain.domain_id}: gold must set upstream_layer: silver"
-                )
+                errors.append(f"domain {domain.domain_id}: gold must set upstream_layer: silver")
             if layer.layer not in MEDALLION_LAYERS:
                 errors.append(f"unknown layer {layer.layer!r}; use bronze|silver|gold")
 
@@ -47,8 +43,6 @@ def validate_medallion_contract(contract: MedallionMeshContract) -> list[str]:
                 layer.consumer_slas for layer in domain.layers if layer.layer == "gold"
             )
             if not has_gold_sla:
-                errors.append(
-                    f"domain {domain.domain_id}: gold layer should define consumer_slas"
-                )
+                errors.append(f"domain {domain.domain_id}: gold layer should define consumer_slas")
 
     return errors

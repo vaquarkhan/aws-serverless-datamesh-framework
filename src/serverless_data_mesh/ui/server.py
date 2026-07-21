@@ -57,9 +57,7 @@ def serve_ui(
                 return
 
             if path in ("/walkthrough", "/walkthrough.html", "/demo"):
-                walk = (
-                    Path(__file__).resolve().parents[3] / "docs" / "demo-walkthrough.html"
-                )
+                walk = Path(__file__).resolve().parents[3] / "docs" / "demo-walkthrough.html"
                 if not walk.is_file():
                     walk = Path.cwd() / "docs" / "demo-walkthrough.html"
                 self._send(200, walk.read_bytes(), "text/html; charset=utf-8")
@@ -101,7 +99,10 @@ def serve_ui(
                 tutorial_root = _tutorial_dir()
                 rel = path[len("/tutorial/") :]
                 file_path = (tutorial_root / rel).resolve()
-                if not str(file_path).startswith(str(tutorial_root.resolve())) or not file_path.is_file():
+                if (
+                    not str(file_path).startswith(str(tutorial_root.resolve()))
+                    or not file_path.is_file()
+                ):
                     self.send_error(404)
                     return
                 ctype = mimetypes.guess_type(str(file_path))[0] or "application/octet-stream"

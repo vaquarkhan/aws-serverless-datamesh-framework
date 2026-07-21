@@ -16,7 +16,9 @@ def _landing_prefix() -> str:
         bucket = os.environ.get("BRONZE_LANDING_BUCKET", os.environ.get("ICEBERG_TABLE_BUCKET", ""))
         key = os.environ.get("BRONZE_LANDING_KEY", "landing/")
         if not bucket:
-            raise ValueError("Set BRONZE_LANDING_PREFIX or BRONZE_LANDING_BUCKET + BRONZE_LANDING_KEY")
+            raise ValueError(
+                "Set BRONZE_LANDING_PREFIX or BRONZE_LANDING_BUCKET + BRONZE_LANDING_KEY"
+            )
         prefix = f"s3://{bucket}/{key.lstrip('/')}"
     return prefix.rstrip("/") + "/"
 
@@ -73,15 +75,17 @@ def _read_object_records(bucket: str, key: str, start: int, end: int) -> list[di
             return payload[start:end]
         return [payload]
     if key.endswith(".parquet"):
-        import pyarrow.parquet as pq
         from io import BytesIO
+
+        import pyarrow.parquet as pq
 
         table = pq.read_table(BytesIO(body))
         rows = table.slice(start, end - start).to_pylist()
         return rows
     if key.endswith(".csv"):
-        import pyarrow.csv as pacsv
         from io import BytesIO
+
+        import pyarrow.csv as pacsv
 
         table = pacsv.read_csv(BytesIO(body))
         return table.slice(start, end - start).to_pylist()
@@ -116,9 +120,9 @@ def source_reader_s3_landing(start: int, end: int) -> list[dict[str, Any]]:
 
 def batch_writer_s3_parquet(start: int, end: int) -> list[str]:
     """Write one Parquet chunk to lakehouse staging prefix."""
+    import boto3
     import pyarrow as pa
     import pyarrow.parquet as pq
-    import boto3
 
     rows = source_reader_s3_landing(start, end)
     if not rows:
@@ -137,9 +141,10 @@ def batch_writer_s3_parquet(start: int, end: int) -> list[str]:
 
 def sink_reader_s3_parquet(start: int, end: int) -> list[dict[str, Any]]:
     """Re-read written Parquet for VRP sink reconciliation."""
+    from io import BytesIO
+
     import boto3
     import pyarrow.parquet as pq
-    from io import BytesIO
 
     staging = _staging_prefix()
     bucket, key_prefix = _parse_s3(staging)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +21,6 @@ def _pipeline_rows(generated: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for domain_dir in sorted(p for p in generated.iterdir() if p.is_dir()):
         for layer_dir in sorted(p for p in domain_dir.iterdir() if p.is_dir()):
-            contract = _read_json(layer_dir / "mesh.pipeline.yaml")  # may be yaml
             readers = layer_dir / "readers.py"
             handler = layer_dir / "handler.py"
             readers_ok = readers.is_file() and "NotImplementedError" not in readers.read_text(
@@ -129,8 +128,22 @@ def build_dashboard(generated_path: Path) -> dict[str, Any]:
     trust_mode = "live-proofs" if trust else "demo"
     if not trust:
         trust = [
-            {"domain": "orders", "status": "PASS", "rows": 5200, "proof_id": "demo", "created_at": "", "path": ""},
-            {"domain": "payments", "status": "PASS", "rows": 1100, "proof_id": "demo", "created_at": "", "path": ""},
+            {
+                "domain": "orders",
+                "status": "PASS",
+                "rows": 5200,
+                "proof_id": "demo",
+                "created_at": "",
+                "path": "",
+            },
+            {
+                "domain": "payments",
+                "status": "PASS",
+                "rows": 1100,
+                "proof_id": "demo",
+                "created_at": "",
+                "path": "",
+            },
             {
                 "domain": "inventory",
                 "status": "FAIL",
@@ -148,7 +161,7 @@ def build_dashboard(generated_path: Path) -> dict[str, Any]:
         layers = []
 
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "root": str(root),
         "organization": manifest.get("organization") if isinstance(manifest, dict) else None,
         "domains": manifest.get("domains", []) if isinstance(manifest, dict) else [],
@@ -179,10 +192,30 @@ def build_dashboard(generated_path: Path) -> dict[str, Any]:
         "attestations": attests[:50],
         "pvdm": {
             "phases": [
-                {"id": "P", "name": "Physical", "status": "ready", "detail": "IceGuard SafeWriter + checkpoints"},
-                {"id": "V", "name": "Verify", "status": "ready", "detail": "VRP validate_then_commit"},
-                {"id": "D", "name": "Durable", "status": "ready", "detail": "Durable Lambda + SFN resume"},
-                {"id": "M", "name": "Metadata", "status": "ready", "detail": "Proof-gated Iceberg commit"},
+                {
+                    "id": "P",
+                    "name": "Physical",
+                    "status": "ready",
+                    "detail": "IceGuard SafeWriter + checkpoints",
+                },
+                {
+                    "id": "V",
+                    "name": "Verify",
+                    "status": "ready",
+                    "detail": "VRP validate_then_commit",
+                },
+                {
+                    "id": "D",
+                    "name": "Durable",
+                    "status": "ready",
+                    "detail": "Durable Lambda + SFN resume",
+                },
+                {
+                    "id": "M",
+                    "name": "Metadata",
+                    "status": "ready",
+                    "detail": "Proof-gated Iceberg commit",
+                },
             ],
             "invariant": "commit_metadata ⟹ VRP = PASS",
             "method": "Vaquar Pattern (proprietary) — Vaquar Khan",
@@ -223,7 +256,9 @@ def _tutorial_steps() -> list[dict[str, str]]:
         {
             "id": "3",
             "title": "Apply (compile)",
-            "command": "serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generated",
+            "command": (
+                "serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generated"
+            ),
             "image": "/tutorial/step-03-apply.png",
             "gif": "/tutorial/step-03-apply.gif",
             "do": "Generate handlers, Step Functions, VRP config, manifests.",

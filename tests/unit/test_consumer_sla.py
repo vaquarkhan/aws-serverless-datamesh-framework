@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from serverless_data_mesh.governance.consumer_sla import enforce_consumer_sla, grant_read_if_sla_met
-from serverless_data_mesh.types.workload import ConsumerSLAContract
+from serverless_data_mesh.types.workload import (
+    ConsumerSLAContract,
+    DataWriteWorkload,
+    DomainTransactionBoundary,
+)
 from serverless_data_mesh.verification.backend import create_proof_generator
-from serverless_data_mesh.types.workload import DataWriteWorkload, DomainTransactionBoundary
 
 
 def _passing_proof() -> dict:
@@ -49,7 +52,7 @@ def test_consumer_sla_grants_on_passing_proof() -> None:
     decision = enforce_consumer_sla(
         contract,
         proof=proof,
-        snapshot_committed_at=datetime.now(timezone.utc),
+        snapshot_committed_at=datetime.now(UTC),
     )
     assert decision.granted is True
     assert decision.checks["vrp_pass"] is True
@@ -63,7 +66,7 @@ def test_consumer_sla_denies_stale_snapshot() -> None:
         max_freshness_minutes=30,
     )
     proof = _passing_proof()
-    stale = datetime.now(timezone.utc) - timedelta(hours=2)
+    stale = datetime.now(UTC) - timedelta(hours=2)
     decision = enforce_consumer_sla(contract, proof=proof, snapshot_committed_at=stale)
     assert decision.granted is False
     assert decision.checks["freshness"] is False
@@ -74,7 +77,7 @@ def test_lf_grant_payload() -> None:
     payload = grant_read_if_sla_met(
         contract,
         proof=_passing_proof(),
-        snapshot_committed_at=datetime.now(timezone.utc),
+        snapshot_committed_at=datetime.now(UTC),
     )
     assert payload["grant_read"] is True
     assert payload["lf_action"] == "GrantPermissions"

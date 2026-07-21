@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Callable
+from enum import StrEnum
+from typing import Any
 
 
-class WriteOutcome(str, Enum):
+class WriteOutcome(StrEnum):
     """Terminal state of a domain write transaction."""
 
     COMMITTED = "committed"

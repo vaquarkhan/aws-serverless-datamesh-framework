@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from serverless_data_mesh.exceptions import RuleEvaluationError
 
@@ -48,9 +49,8 @@ def apply_rules_gate(
             require_any_rule_fired=require_any_rule_fired,
         )
         if not passed:
-            raise RuleEvaluationError(
-                f"SparkRules quality gate rejected chunk (policy={getattr(connector, 'policy_id', '?')})"
-            )
+            policy = getattr(connector, "policy_id", "?")
+            raise RuleEvaluationError(f"SparkRules quality gate rejected chunk (policy={policy})")
     logger.info(
         "Rules gate applied policy=%s records=%s audit=%s",
         getattr(connector, "policy_id", None),

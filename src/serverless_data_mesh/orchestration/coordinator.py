@@ -13,21 +13,21 @@ from iceguard.exceptions import IceGuardRollbackError
 from serverless_data_mesh.attestation.pvdma import maybe_attest_outcome
 from serverless_data_mesh.catalog.glue_rest import GlueRestCatalogAdapter
 from serverless_data_mesh.exceptions import RuleEvaluationError, VerificationRejectedError
+from serverless_data_mesh.metrics.mesh_trust import publish_vrp_metric
+from serverless_data_mesh.observability.structured import log_pvdm_outcome
 from serverless_data_mesh.orchestration.durable_steps import (
     durable_commit_metadata,
     durable_write_chunk,
 )
+from serverless_data_mesh.orchestration.reprocess import attempt_vrp_repair
 from serverless_data_mesh.orchestration.state import OrchestrationState
+from serverless_data_mesh.rules.gate import RulesGateFn, apply_rules_gate
 from serverless_data_mesh.types.workload import (
     BatchWriterFn,
     DataWriteWorkload,
     SourceReaderFn,
     WriteOutcome,
 )
-from serverless_data_mesh.metrics.mesh_trust import publish_vrp_metric
-from serverless_data_mesh.observability.structured import log_pvdm_outcome
-from serverless_data_mesh.orchestration.reprocess import attempt_vrp_repair
-from serverless_data_mesh.rules.gate import RulesGateFn, apply_rules_gate
 from serverless_data_mesh.verification.vrp import VRPProofGenerator, validate_then_commit
 
 logger = logging.getLogger(__name__)
@@ -40,9 +40,7 @@ def _missing_from_repair(
 ) -> list[dict[str, Any]]:
     sink_ids = {"|".join(str(r.get(f, "")) for f in identity_fields) for r in sink}
     return [
-        r
-        for r in source
-        if "|".join(str(r.get(f, "")) for f in identity_fields) not in sink_ids
+        r for r in source if "|".join(str(r.get(f, "")) for f in identity_fields) not in sink_ids
     ]
 
 
@@ -154,9 +152,8 @@ class IceGuardDurableCoordinator:
                     else:
                         from serverless_data_mesh.rules.gate import rules_gate_enabled
 
-                        should_gate = (
-                            self._enable_rules_gate is True
-                            or (self._enable_rules_gate is None and rules_gate_enabled())
+                        should_gate = self._enable_rules_gate is True or (
+                            self._enable_rules_gate is None and rules_gate_enabled()
                         )
                         if should_gate:
                             source_records, _audit = apply_rules_gate(source_records)

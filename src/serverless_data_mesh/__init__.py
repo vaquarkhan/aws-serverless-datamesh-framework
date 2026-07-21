@@ -1,4 +1,4 @@
-﻿"""Serverless Data Mesh: cross-domain lakehouse write coordination on AWS Lambda."""
+"""Serverless Data Mesh: cross-domain lakehouse write coordination on AWS Lambda."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from serverless_data_mesh.types import (
     DomainTransactionBoundary,
     WriteOutcome,
 )
+
 
 def _read_version() -> str:
     try:
