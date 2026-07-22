@@ -7,7 +7,10 @@ import pytest
 veridata_recon = pytest.importorskip("veridata_recon")
 import veridata_recon as vr  # noqa: E402
 
-from serverless_data_mesh.verification.vrp import VRPProofGenerator, validate_then_commit
+from serverless_data_mesh.verification.vrp import (  # noqa: E402
+    VRPProofGenerator,
+    validate_then_commit,
+)
 
 
 @pytest.fixture

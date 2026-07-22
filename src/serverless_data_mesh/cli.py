@@ -369,6 +369,62 @@ def _cmd_ui(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_attest(args: argparse.Namespace) -> int:
+    from serverless_data_mesh.attestation import (
+        create_attestation,
+        persist_attestation,
+        verify_attestation,
+    )
+
+    if args.attest_cmd == "create":
+        att = create_attestation(
+            domain_id=args.domain,
+            workload_id=args.workload,
+            decision=args.decision,
+            vrp_verdict=args.verdict,
+            agent_id=args.agent,
+            vrp_proof_uri=args.proof_uri,
+            vrp_proof_id=args.proof_id,
+            prompt=args.prompt,
+        )
+        uri = persist_attestation(
+            att,
+            bucket=args.bucket,
+            local_dir=args.local_dir,
+        )
+        payload = {**att.to_dict(), "uri": uri}
+        print(json.dumps(payload, indent=2) if args.json else f"Attestation written: {uri}")
+        return 0
+
+    if args.attest_cmd == "verify":
+        path = Path(args.path)
+        data = json.loads(path.read_text(encoding="utf-8"))
+        ok = verify_attestation(data)
+        if args.json:
+            print(json.dumps({"path": str(path), "valid": ok}, indent=2))
+        else:
+            print(f"Attestation {'VALID' if ok else 'INVALID'}: {path}")
+        return 0 if ok else 1
+
+    if args.attest_cmd == "demo":
+        from serverless_data_mesh.local.runtime import LocalPVDMRuntime
+
+        runtime = LocalPVDMRuntime()
+        clean = runtime.run_write(workload_id="attest-demo", record_count=50)
+        attest_root = runtime.root / "attestations"
+        files = list(attest_root.rglob("*.pvdma.json")) if attest_root.exists() else []
+        result = {
+            "outcome": clean.outcome,
+            "proof_verdict": clean.proof_verdict,
+            "attestations": [str(p) for p in files],
+            "root": str(runtime.root),
+        }
+        print(json.dumps(result, indent=2) if args.json else result)
+        return 0 if files and clean.outcome == "committed" else 1
+
+    return 2
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="serverless-data-mesh",
@@ -492,6 +548,29 @@ def main(argv: list[str] | None = None) -> int:
     ui_p.add_argument("--port", type=int, default=8765)
     ui_p.add_argument("--open", dest="open_browser", action="store_true")
     ui_p.set_defaults(func=_cmd_ui)
+
+    attest_p = sub.add_parser("attest", help="PVDM-A decision attestation (create/verify/demo)")
+    attest_sub = attest_p.add_subparsers(dest="attest_cmd", required=True)
+    ac = attest_sub.add_parser("create", help="Create and persist a decision attestation")
+    ac.add_argument("--domain", required=True)
+    ac.add_argument("--workload", required=True)
+    ac.add_argument("--decision", choices=["allow_commit", "deny", "quarantine"], required=True)
+    ac.add_argument("--verdict", default="PASS")
+    ac.add_argument("--agent", help="Agent or operator id")
+    ac.add_argument("--proof-uri")
+    ac.add_argument("--proof-id")
+    ac.add_argument("--prompt")
+    ac.add_argument("--bucket", help="Steward proofs/attestations S3 bucket")
+    ac.add_argument("--local-dir", help="Local directory instead of S3")
+    ac.add_argument("--json", action="store_true")
+    ac.set_defaults(func=_cmd_attest)
+    av = attest_sub.add_parser("verify", help="Verify attestation content_hash")
+    av.add_argument("--path", required=True, help="Path to .pvdma.json")
+    av.add_argument("--json", action="store_true")
+    av.set_defaults(func=_cmd_attest)
+    ad = attest_sub.add_parser("demo", help="Local write that emits a PVDM-A attestation")
+    ad.add_argument("--json", action="store_true")
+    ad.set_defaults(func=_cmd_attest)
 
     args = parser.parse_args(argv)
     return int(args.func(args))

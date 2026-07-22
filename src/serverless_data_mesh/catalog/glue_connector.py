@@ -1,4 +1,4 @@
-﻿"""Glue Catalog Connector: metadata-only integration for Lambda domain writers.
+"""Glue Catalog Connector: metadata-only integration for Lambda domain writers.
 
 AWS Glue **ETL jobs** (managed Spark runners) do not run inside Lambda containers.
 Domain writers execute **physical** transforms on Lambda (PySpark-on-Lambda, Polars,

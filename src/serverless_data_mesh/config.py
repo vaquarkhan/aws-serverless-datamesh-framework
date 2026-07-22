@@ -34,9 +34,9 @@ class MeshSettings:
             proof_bucket=os.environ.get("VRP_PROOF_BUCKET", checkpoint),
             iceberg_table_bucket=table_bucket,
             aws_region=region,
-    checkpoint_interval=int(os.environ.get("ICEGUARD_CHECKPOINT_INTERVAL", "5000")),
-    rollback_threshold_ms=int(os.environ.get("ICEGUARD_ROLLBACK_THRESHOLD_MS", "30000")),
-    lambda_timeout_seconds=int(os.environ.get("LAMBDA_TIMEOUT_SECONDS", "900")),
+            checkpoint_interval=int(os.environ.get("ICEGUARD_CHECKPOINT_INTERVAL", "5000")),
+            rollback_threshold_ms=int(os.environ.get("ICEGUARD_ROLLBACK_THRESHOLD_MS", "30000")),
+            lambda_timeout_seconds=int(os.environ.get("LAMBDA_TIMEOUT_SECONDS", "900")),
             iceberg_warehouse=os.environ.get("ICEBERG_WAREHOUSE"),
             aws_account_id=os.environ.get("AWS_ACCOUNT_ID"),
         )

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-
 from examples.domain_writer.workload import build_workload
+
 from serverless_data_mesh.config import MeshSettings
 from serverless_data_mesh.exceptions import WorkloadConfigurationError
 

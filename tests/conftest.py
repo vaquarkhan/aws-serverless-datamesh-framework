@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from serverless_data_mesh.types.workload import DataWriteWorkload, DomainTransactionBoundary
+
+# Avoid botocore NoRegionError when optional AWS clients are constructed in demos.
+os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
+os.environ.setdefault("AWS_REGION", "us-east-1")
 
 
 @pytest.fixture

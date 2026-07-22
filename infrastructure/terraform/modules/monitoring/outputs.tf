@@ -8,6 +8,8 @@ output "alarm_names" {
     ],
     [for a in aws_cloudwatch_metric_alarm.dlq_depth : a.alarm_name],
     [for a in aws_cloudwatch_metric_alarm.vrp_trust_breach : a.alarm_name],
+    [for a in aws_cloudwatch_metric_alarm.sfn_executions_failed : a.alarm_name],
+    [for a in aws_cloudwatch_metric_alarm.sfn_executions_timed_out : a.alarm_name],
   )
 }
 

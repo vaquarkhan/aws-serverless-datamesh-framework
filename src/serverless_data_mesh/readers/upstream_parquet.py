@@ -52,9 +52,10 @@ def _list_parquet(prefix: str) -> list[str]:
 
 
 def _read_parquet_slice(bucket: str, key: str, start: int, end: int) -> list[dict[str, Any]]:
+    from io import BytesIO
+
     import boto3
     import pyarrow.parquet as pq
-    from io import BytesIO
 
     body = boto3.client("s3").get_object(Bucket=bucket, Key=key)["Body"].read()
     table = pq.read_table(BytesIO(body))
@@ -105,9 +106,10 @@ def batch_writer_upstream(start: int, end: int) -> list[str]:
 
 def sink_reader_upstream(start: int, end: int) -> list[dict[str, Any]]:
     """Re-read this layer's Parquet for VRP reconciliation."""
+    from io import BytesIO
+
     import boto3
     import pyarrow.parquet as pq
-    from io import BytesIO
 
     prefix = _table_prefix(os.environ.get("TARGET_TABLE", "curated"))
     bucket, key_prefix = _parse_s3(prefix)

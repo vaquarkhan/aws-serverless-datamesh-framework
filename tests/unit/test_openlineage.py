@@ -19,12 +19,15 @@ def test_emit_openlineage_event_shape() -> None:
 
 
 def test_emit_from_commit_skips_non_committed() -> None:
-    assert emit_from_commit_result(
-        domain_id="orders",
-        target_table="orders_curated",
-        source_namespace="raw_orders",
-        commit_result={"outcome": "verification_failed"},
-    ) == {}
+    assert (
+        emit_from_commit_result(
+            domain_id="orders",
+            target_table="orders_curated",
+            source_namespace="raw_orders",
+            commit_result={"outcome": "verification_failed"},
+        )
+        == {}
+    )
 
 
 def test_emit_from_commit_on_success() -> None:

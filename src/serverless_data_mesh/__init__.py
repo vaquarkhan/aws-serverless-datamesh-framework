@@ -1,4 +1,4 @@
-﻿"""Serverless Data Mesh: cross-domain lakehouse write coordination on AWS Lambda."""
+"""Serverless Data Mesh: cross-domain lakehouse write coordination on AWS Lambda."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from serverless_data_mesh.types import (
     DomainTransactionBoundary,
     WriteOutcome,
 )
+
 
 def _read_version() -> str:
     try:
@@ -47,6 +48,7 @@ __all__ = [
     "ChunkWriteResult",
     "DataProductContract",
     "DataWriteWorkload",
+    "DecisionAttestation",
     "DomainTransactionBoundary",
     "GlueCatalogConnector",
     "GlueRestCatalogAdapter",
@@ -61,7 +63,11 @@ __all__ = [
     "VerificationRejectedError",
     "WorkloadConfigurationError",
     "WriteOutcome",
+    "attach_kms_signature",
+    "create_attestation",
     "validate_then_commit",
+    "verify_attestation",
+    "verify_kms_signature",
     "__version__",
 ]
 
@@ -98,5 +104,27 @@ def __getattr__(name: str) -> Any:
         return {
             "VRPProofGenerator": VRPProofGenerator,
             "validate_then_commit": validate_then_commit,
+        }[name]
+    if name in ("attach_kms_signature", "verify_kms_signature"):
+        from serverless_data_mesh.verification.kms_sign import (
+            attach_kms_signature,
+            verify_kms_signature,
+        )
+
+        return {
+            "attach_kms_signature": attach_kms_signature,
+            "verify_kms_signature": verify_kms_signature,
+        }[name]
+    if name in ("DecisionAttestation", "create_attestation", "verify_attestation"):
+        from serverless_data_mesh.attestation import (
+            DecisionAttestation,
+            create_attestation,
+            verify_attestation,
+        )
+
+        return {
+            "DecisionAttestation": DecisionAttestation,
+            "create_attestation": create_attestation,
+            "verify_attestation": verify_attestation,
         }[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

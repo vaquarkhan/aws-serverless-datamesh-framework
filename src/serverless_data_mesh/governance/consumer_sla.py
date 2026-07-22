@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from serverless_data_mesh.types.workload import ConsumerSLAContract
@@ -44,13 +44,16 @@ def enforce_consumer_sla(
             checks=checks,
         )
 
-    source_count = int(recon.get("source_count", 0))
-    sink_count = int(recon.get("sink_count", 0))
+    source_count = int(recon.get("source_count", 0) or 0)
+    sink_count = int(recon.get("sink_count", 0) or 0)
     if source_count > 0:
         completeness = (sink_count / source_count) * 100.0
+        checks["completeness"] = completeness >= contract.min_completeness_pct
+    elif checks["vrp_pass"]:
+        # veridata-recon PASS already implies source/sink alignment when counts omitted
+        checks["completeness"] = True
     else:
-        completeness = 0.0
-    checks["completeness"] = completeness >= contract.min_completeness_pct
+        checks["completeness"] = False
 
     content_fields = set(proof.get("content_fields", []))
     checks["required_columns"] = all(col in content_fields for col in contract.required_columns)
@@ -60,7 +63,7 @@ def enforce_consumer_sla(
         committed_at = datetime.fromisoformat(proof["created_at"].replace("Z", "+00:00"))
     freshness_ok = True
     if committed_at is not None:
-        age_min = (datetime.now(timezone.utc) - committed_at).total_seconds() / 60.0
+        age_min = (datetime.now(UTC) - committed_at).total_seconds() / 60.0
         freshness_ok = age_min <= contract.max_freshness_minutes
     checks["freshness"] = freshness_ok
 

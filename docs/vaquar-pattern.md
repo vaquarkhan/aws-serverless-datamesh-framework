@@ -9,10 +9,28 @@
 | **Pattern name** | Vaquar Pattern |
 | **Also known as** | PVDM (Physical · Verify · Durable · Metadata) |
 | **Version** | 1.0 |
+| **Inventor** | Vaquar Khan |
+| **Copyright** | © 2024–2026 Vaquar Khan — proprietary method (name + invariants) |
+| **Method status** | **Proprietary architectural method** (name + invariants). Reference implementation in this repo is **Apache-2.0**. |
 | **Canonical URL** | [vaquar-pattern.md](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md) |
 | **Origin** | [Serverless Data Mesh](https://github.com/vaquarkhan/aws-serverless-datamesh-framework) |
-| **Status** | Published reference pattern (Apache-2.0) |
 | **Problem class** | Governed domain writes on serverless compute without central ETL |
+
+---
+
+## Proprietary method note
+
+The **Vaquar Pattern (PVDM)** is a proprietary method created by **Vaquar Khan** for proof-gated serverless lakehouse publication.
+
+> **© 2024–2026 Vaquar Khan.** PVDM (Physical · Verify · Durable · Metadata) and the Vaquar Pattern are proprietary. All rights reserved in the method name, acronym, and publication invariant. The open-source `serverless-data-mesh` package is **Apache-2.0**; using the code does not transfer ownership of the method.
+
+When citing architecture reviews, RFPs, or papers, attribute the pattern name and invariant to the inventor.
+
+**Do not rename PVDM to five phases.** Optional SparkRules / integrity checks may run *before* Physical; they are not a fifth letter in the pattern acronym.
+
+<p align="center">
+  <img src="images/vaquar-pattern-proprietary-pvdm.png" alt="Vaquar Pattern PVDM proprietary method banner" width="960" />
+</p>
 
 ---
 
@@ -256,6 +274,25 @@ The Vaquar Pattern composes with (does not replace):
 | Trust CloudWatch "SUCCESS" | No multiset proof |
 | Single-account everything | No blast-radius separation |
 | Glue ETL as the write primitive | Not domain-owned serverless |
+
+---
+
+## Implementation fidelity (this repository)
+
+Is PVDM implemented properly in `aws-serverless-datamesh-framework`?
+
+| Phase | Required behavior | Code / infra evidence | Status |
+|-------|-------------------|----------------------|--------|
+| **P** Physical | Chunked write + timeout rollback + checkpoints | `IceGuardDurableCoordinator` + IceGuard `protect` | **Complete** |
+| **V** Verify | Multiset VRP; no metadata on FAIL | `VRPProofGenerator` + `validate_then_commit` | **Complete** |
+| **D** Durable | Step replay across Lambda segments | `@durable_execution`, durable steps, SFN resume | **Complete** |
+| **M** Metadata | Commit only after PASS | Glue REST adapter after verification | **Complete** |
+| Dual clocks | Configurable per-invoke + durable budget | Terraform `lambda_timeout_seconds`, `durable_execution_timeout_seconds` | **Complete** |
+| Three accounts | Producer / Steward / Publisher | `environments/multi-account/` | **Complete** |
+
+**Extensions (optional, not part of the four-letter acronym):** rules gate, PVDM-A attestation, KMS proof envelopes, observability dashboards.
+
+Local proof of the gate (no AWS): `serverless-data-mesh demo` — clean write commits; corrupt write is blocked.
 
 ---
 

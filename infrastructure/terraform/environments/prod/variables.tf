@@ -71,8 +71,27 @@ variable "enable_monitoring_alarms" {
 }
 
 variable "alarm_sns_topic_arns" {
-  type    = list(string)
-  default = []
+  description = "Extra existing SNS topic ARNs for CloudWatch alarms (merged with created ops topic)."
+  type        = list(string)
+  default     = []
+}
+
+variable "create_ops_sns_topic" {
+  description = "Create {name_prefix}-ops-alerts SNS topic and wire alarms + Lambda app alerts."
+  type        = bool
+  default     = true
+}
+
+variable "ops_alert_emails" {
+  description = "Email addresses subscribed to ops SNS (confirm the AWS subscription email)."
+  type        = list(string)
+  default     = []
+}
+
+variable "ops_alert_https_endpoints" {
+  description = "HTTPS webhook endpoints (e.g. Slack incoming webhooks) subscribed to ops SNS."
+  type        = list(string)
+  default     = []
 }
 
 variable "domain_id" {

@@ -17,8 +17,6 @@ def test_version_matches_version_file_or_metadata() -> None:
 
 
 def test_read_version_candidates() -> None:
-    from serverless_data_mesh import __init__ as init_mod
-
-    v = init_mod._read_version()
+    v = sdm.__version__
     assert v
-    assert v != "0.0.0" or True  # fallback only when no VERSION on path
+    assert isinstance(v, str)

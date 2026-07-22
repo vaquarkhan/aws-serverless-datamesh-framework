@@ -14,6 +14,8 @@ layer_lambda_manifest_path = "../../../../examples/medallion-e2e/generated/layer
 
 enable_durable_execution = true
 enable_monitoring_alarms = true
+create_ops_sns_topic     = true
+ops_alert_emails         = ["ops@example.com"]
 lambda_timeout_seconds   = 900
 lambda_memory_mb         = 4096
 

@@ -73,7 +73,7 @@ def check() -> list[str]:
     errors: list[str] = []
     pp = PYPROJECT.read_text(encoding="utf-8")
     init = INIT_PY.read_text(encoding="utf-8")
-    if f'path = "VERSION"' not in pp:
+    if 'path = "VERSION"' not in pp:
         errors.append("pyproject.toml missing [tool.hatch.version] path = VERSION")
     pv = pyproject_version(pp)
     if pv != version:

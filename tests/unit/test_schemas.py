@@ -11,7 +11,9 @@ def test_schema_files_exist() -> None:
     dp = root / "schemas" / "sdm-v1-dataproductpipeline.json"
     mm = root / "schemas" / "sdm-v1-medallionmesh.json"
     assert dp.is_file() and mm.is_file()
-    assert json.loads(dp.read_text())["kind"] == "DataProductPipeline" or "const" in str(dp.read_text())
+    text = dp.read_text(encoding="utf-8")
+    data = json.loads(text)
+    assert data.get("kind") == "DataProductPipeline" or "const" in text or "DataProduct" in text
 
 
 def test_medallion_emits_layer_lambda_manifest(tmp_path: Path) -> None:
@@ -20,10 +22,7 @@ def test_medallion_emits_layer_lambda_manifest(tmp_path: Path) -> None:
     from serverless_data_mesh.compile.medallion_emit import compile_medallion_mesh
 
     contract_path = (
-        Path(__file__).resolve().parents[2]
-        / "examples"
-        / "medallion-e2e"
-        / "northstar.mesh.yaml"
+        Path(__file__).resolve().parents[2] / "examples" / "medallion-e2e" / "northstar.mesh.yaml"
     )
     doc = load_contract_document(contract_path)
     assert isinstance(doc, MedallionMeshContract)

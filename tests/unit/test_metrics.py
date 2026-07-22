@@ -30,6 +30,25 @@ def test_publish_swallows_cloudwatch_errors(monkeypatch: pytest.MonkeyPatch) -> 
     client.put_metric_data.assert_called_once()
 
 
+def test_publish_happy_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("SDM_DISABLE_METRICS", raising=False)
+    monkeypatch.setenv("SDM_METRICS_ENABLED", "true")
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+    client = MagicMock()
+    publish_vrp_metric(
+        domain_id="orders",
+        verdict="PASS",
+        row_count=42,
+        workload_id="w-1",
+        cloudwatch_client=client,
+    )
+    client.put_metric_data.assert_called_once()
+    payload = client.put_metric_data.call_args.kwargs
+    assert payload["Namespace"] == "ServerlessDataMesh/Trust"
+    names = {m["MetricName"] for m in payload["MetricData"]}
+    assert names == {"VRPTrustScore", "VRPRowCount"}
+
+
 def test_publish_skipped_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("SDM_METRICS_ENABLED", "off")
     client = MagicMock()

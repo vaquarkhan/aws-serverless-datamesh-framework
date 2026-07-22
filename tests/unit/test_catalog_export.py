@@ -9,10 +9,7 @@ from serverless_data_mesh.catalog_export.backstage import export_backstage_catal
 
 def test_export_medallion_entities(tmp_path: Path) -> None:
     contract = (
-        Path(__file__).resolve().parents[2]
-        / "examples"
-        / "medallion-e2e"
-        / "northstar.mesh.yaml"
+        Path(__file__).resolve().parents[2] / "examples" / "medallion-e2e" / "northstar.mesh.yaml"
     )
     paths = export_backstage_catalog(contract, output_dir=tmp_path)
     assert len(paths) >= 7  # 6 layers + 1 system

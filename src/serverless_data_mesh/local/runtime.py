@@ -1,4 +1,7 @@
-"""Run the Vaquar Pattern (PVDM) lifecycle on local disk without AWS."""
+"""Run the Vaquar Pattern (PVDM) lifecycle on local disk without AWS.
+
+PVDM © 2024–2026 Vaquar Khan — proprietary method (Physical · Verify · Durable · Metadata).
+"""
 
 from __future__ import annotations
 
@@ -7,18 +10,20 @@ import os
 import tempfile
 import time
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from serverless_data_mesh.attestation.pvdma import maybe_attest_outcome
+from serverless_data_mesh.metrics.mesh_trust import publish_vrp_metric
+from serverless_data_mesh.observability.sns_notify import notify_vrp_failure
 from serverless_data_mesh.observability.structured import log_pvdm_outcome
+from serverless_data_mesh.orchestration.reprocess import attempt_vrp_repair
 from serverless_data_mesh.types.workload import (
     DataWriteWorkload,
     DomainTransactionBoundary,
     WriteOutcome,
 )
-from serverless_data_mesh.metrics.mesh_trust import publish_vrp_metric
-from serverless_data_mesh.orchestration.reprocess import attempt_vrp_repair
 from serverless_data_mesh.verification.backend import create_proof_generator
 from serverless_data_mesh.verification.vrp import validate_then_commit
 
@@ -168,7 +173,9 @@ class LocalPVDMRuntime:
                 handle.write(json.dumps(row) + "\n")
         return part
 
-    def _commit_metadata(self, *, workload: DataWriteWorkload, row_count: int, proof_id: str) -> str:
+    def _commit_metadata(
+        self, *, workload: DataWriteWorkload, row_count: int, proof_id: str
+    ) -> str:
         snapshots = json.loads(self._snapshot_file.read_text(encoding="utf-8"))
         snapshot_id = f"snap-{len(snapshots) + 1:06d}"
         snapshots.append(
@@ -178,7 +185,7 @@ class LocalPVDMRuntime:
                 "partition": workload.boundary.partition_spec,
                 "row_count": row_count,
                 "proof_id": proof_id,
-                "committed_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+                "committed_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
             }
         )
         self._snapshot_file.write_text(json.dumps(snapshots, indent=2), encoding="utf-8")
@@ -230,6 +237,23 @@ class LocalPVDMRuntime:
         )
 
         if verification.outcome != "PASS":
+            maybe_attest_outcome(
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload_id,
+                decision="deny",
+                vrp_verdict=verdict,
+                vrp_proof_uri=str(proof_path),
+                vrp_proof_id=proof.get("proof_id"),
+                chunk_index=0,
+                local_dir=str(self.root),
+            )
+            notify_vrp_failure(
+                domain_id=workload.boundary.domain_id,
+                workload_id=workload_id,
+                verdict=verdict,
+                reason=verification.reason,
+                proof_id=proof.get("proof_id"),
+            )
             log_pvdm_outcome(
                 outcome=WriteOutcome.VERIFICATION_FAILED.value,
                 domain_id=workload.boundary.domain_id,
@@ -249,6 +273,17 @@ class LocalPVDMRuntime:
                 consumer_row_count=self.consumer_row_count,
                 message=verification.reason,
             )
+
+        maybe_attest_outcome(
+            domain_id=workload.boundary.domain_id,
+            workload_id=workload_id,
+            decision="allow_commit",
+            vrp_verdict=verdict,
+            vrp_proof_uri=str(proof_path),
+            vrp_proof_id=proof.get("proof_id"),
+            chunk_index=0,
+            local_dir=str(self.root),
+        )
 
         if defer_snapshot:
             pending = self.catalog / "pending.json"

@@ -1,4 +1,4 @@
-﻿"""SparkRules engine connector for Lambda domain writers.
+"""SparkRules engine connector for Lambda domain writers.
 
 SparkRules runs on Lambda in two modes:
 
@@ -73,11 +73,15 @@ class SparkRulesConnector:
         """Load DRL from ``SPARKRULES_DRL`` (inline) or ``SPARKRULES_DRL_S3_URI``."""
         inline = os.environ.get("SPARKRULES_DRL")
         if inline:
-            return cls.from_drl(inline, policy_id=os.environ.get("SPARKRULES_POLICY_ID", "mesh-default"))
+            return cls.from_drl(
+                inline, policy_id=os.environ.get("SPARKRULES_POLICY_ID", "mesh-default")
+            )
 
         s3_uri = os.environ.get("SPARKRULES_DRL_S3_URI")
         if s3_uri:
-            return cls.from_s3(s3_uri, policy_id=os.environ.get("SPARKRULES_POLICY_ID", "mesh-default"))
+            return cls.from_s3(
+                s3_uri, policy_id=os.environ.get("SPARKRULES_POLICY_ID", "mesh-default")
+            )
 
         raise ValueError("Set SPARKRULES_DRL or SPARKRULES_DRL_S3_URI for SparkRulesConnector")
 

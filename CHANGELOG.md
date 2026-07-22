@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-21
+
+### Added
+
+- **PVDM-A Decision Attestation** + CLI `attest` + coordinator/local wiring
+- **Optional KMS VRP envelopes** (`VRP_KMS_KEY_ID`)
+- **Pre-physical rules gate** (`SDM_RULES_GATE` / SparkRules)
+- **Mesh control center UI** with dashboards, `/walkthrough` GIF demo, one-click demos
+- **README GIF walkthrough** + durable-compute example + Docker image (`ghcr.io`)
+- **100% coverage gate** for attestation / kms_sign / rules.gate / ui.data (`scripts/coverage_gate.py`)
+
 ### Fixed
 
 - **Lambda VERSION path**: `__init__.py` tries `serverless_data_mesh/VERSION`, repo root, and metadata; wheel bundles `VERSION` in package

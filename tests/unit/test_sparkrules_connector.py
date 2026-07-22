@@ -8,7 +8,6 @@ sparkrules = pytest.importorskip("sparkrules")
 
 from serverless_data_mesh.rules import SparkRulesConnector  # noqa: E402
 
-
 _SIMPLE_DRL = r"""
 rule PositiveAmount
 when

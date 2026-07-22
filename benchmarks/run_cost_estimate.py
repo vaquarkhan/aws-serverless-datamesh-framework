@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -76,7 +76,7 @@ def build_report() -> dict:
         "status": "pricing_model_estimated",
         "note": "Estimated from AWS public pricing. Validate with benchmarks/run_benchmark.sh on AWS.",
         "methodology_url": "benchmarks/README.md",
-        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
         "region": "us-east-2",
         "assumptions": {
             "lambda_memory_mb": 1024,

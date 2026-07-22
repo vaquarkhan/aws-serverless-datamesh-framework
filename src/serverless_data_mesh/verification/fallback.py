@@ -7,7 +7,7 @@ import hashlib
 import json
 import uuid
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from serverless_data_mesh.types.workload import DataWriteWorkload
@@ -163,7 +163,7 @@ class FallbackProofGenerator:
 
         document: dict[str, Any] = {
             "proof_version": "0.1-fallback",
-            "created_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+            "created_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
             "producer": self.producer,
             "boundary": {"mode": "OFFSET_RANGE", "value": boundary_value},
             "source_ref": workload.source_uri,
@@ -179,7 +179,9 @@ class FallbackProofGenerator:
         document["proof_id"] = hashlib.sha256(
             json.dumps(document, separators=(",", ":"), sort_keys=True).encode()
         ).hexdigest()
-        return document
+        from serverless_data_mesh.verification.kms_sign import attach_kms_signature
+
+        return attach_kms_signature(document)
 
     def persist_proof(
         self,

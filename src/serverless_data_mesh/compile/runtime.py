@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from serverless_data_mesh.compile.contract import MeshPipelineContract
 from serverless_data_mesh.config import MeshSettings
@@ -38,17 +39,13 @@ def build_workload_from_contract(
 ) -> DataWriteWorkload:
     """Map a Lambda/Step Functions event plus contract metadata to a workload."""
     parsed = (
-        contract
-        if isinstance(contract, MeshPipelineContract)
-        else contract_from_mapping(contract)
+        contract if isinstance(contract, MeshPipelineContract) else contract_from_mapping(contract)
     )
     if "workload_id" not in event or "total_records" not in event:
         raise WorkloadConfigurationError("event must include workload_id and total_records")
 
     active = settings
-    if active is None and (
-        "checkpoint_bucket" not in event or "proof_bucket" not in event
-    ):
+    if active is None and ("checkpoint_bucket" not in event or "proof_bucket" not in event):
         active = MeshSettings.from_environment()
 
     checkpoint_bucket = event.get(

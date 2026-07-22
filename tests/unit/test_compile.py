@@ -26,9 +26,7 @@ def test_load_and_validate_payments_contract(payments_contract_path: Path) -> No
     assert not validate_contract(contract)
 
 
-def test_compile_pipeline_writes_artifacts(
-    payments_contract_path: Path, tmp_path: Path
-) -> None:
+def test_compile_pipeline_writes_artifacts(payments_contract_path: Path, tmp_path: Path) -> None:
     contract = load_contract(payments_contract_path)
     result = compile_pipeline(contract, output_dir=tmp_path)
     root = result.output_root

@@ -41,14 +41,15 @@ def publish_vrp_metric(
         logger.debug("boto3 unavailable; skip CloudWatch metric")
         return
 
-    client = cloudwatch_client or boto3.client("cloudwatch")
-    value = 1.0 if verdict == "PASS" else 0.0
-
-    dimensions = [{"Name": "Domain", "Value": domain_id}]
-    if workload_id:
-        dimensions.append({"Name": "WorkloadId", "Value": workload_id})
-
     try:
+        region = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "us-east-1"
+        client = cloudwatch_client or boto3.client("cloudwatch", region_name=region)
+        value = 1.0 if verdict == "PASS" else 0.0
+
+        dimensions = [{"Name": "Domain", "Value": domain_id}]
+        if workload_id:
+            dimensions.append({"Name": "WorkloadId", "Value": workload_id})
+
         client.put_metric_data(
             Namespace=NAMESPACE,
             MetricData=[

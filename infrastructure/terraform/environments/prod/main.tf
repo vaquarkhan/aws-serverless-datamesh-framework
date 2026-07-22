@@ -50,6 +50,23 @@ module "messaging" {
   tags        = local.tags
 }
 
+module "sns" {
+  source = "../../modules/sns"
+
+  name_prefix          = var.name_prefix
+  create_topic         = var.create_ops_sns_topic
+  email_subscriptions  = var.ops_alert_emails
+  https_subscriptions  = var.ops_alert_https_endpoints
+  tags                 = local.tags
+}
+
+locals {
+  alarm_sns_arns = distinct(concat(
+    module.sns.alarm_actions,
+    var.alarm_sns_topic_arns,
+  ))
+}
+
 module "iam" {
   source = "../../modules/iam"
 
@@ -59,7 +76,12 @@ module "iam" {
   lakehouse_bucket_arn  = module.storage.lakehouse_bucket_arn
   glue_database_name    = var.glue_database_name
   glue_table_name       = var.glue_table_name
-  tags                  = local.tags
+  dlq_queue_arn         = module.messaging.dlq_arn
+  sns_topic_arn = coalesce(
+    module.sns.topic_arn,
+    try(var.alarm_sns_topic_arns[0], "")
+  )
+  tags = local.tags
 }
 
 module "lambda" {
@@ -85,6 +107,13 @@ module "lambda" {
     LAMBDA_TIMEOUT_SECONDS         = tostring(local.lambda_per_invocation_timeout)
     ICEGUARD_CHECKPOINT_INTERVAL   = var.iceberg_checkpoint_interval
     ICEGUARD_ROLLBACK_THRESHOLD_MS = tostring(local.iceguard_rollback_ms)
+    SDM_SNS_TOPIC_ARN = coalesce(
+      module.sns.topic_arn,
+      try(var.alarm_sns_topic_arns[0], "")
+    )
+    SDM_SNS_ENABLED = (
+      var.create_ops_sns_topic || length(var.alarm_sns_topic_arns) > 0
+    ) ? "true" : "false"
   }
 
   tags = local.tags
@@ -117,14 +146,16 @@ module "monitoring" {
   count  = var.enable_monitoring_alarms ? 1 : 0
   source = "../../modules/monitoring"
 
-  name_prefix               = var.name_prefix
-  lambda_function_name      = module.lambda.function_name
-  lambda_log_group_name     = module.lambda.log_group_name
-  dlq_queue_name            = "${var.name_prefix}-domain-writer-dlq"
-  alarm_actions             = var.alarm_sns_topic_arns
-  aws_region                = var.aws_region
-  trust_dashboard_domains   = var.trust_dashboard_domains
-  tags                      = local.tags
+  name_prefix             = var.name_prefix
+  lambda_function_name    = module.lambda.function_name
+  lambda_log_group_name   = module.lambda.log_group_name
+  dlq_queue_name          = "${var.name_prefix}-domain-writer-dlq"
+  alarm_actions           = local.alarm_sns_arns
+  ok_actions              = local.alarm_sns_arns
+  aws_region              = var.aws_region
+  trust_dashboard_domains = var.trust_dashboard_domains
+  state_machine_name      = var.enable_step_functions ? module.stepfunctions[0].state_machine_name : ""
+  tags                    = local.tags
 }
 
 module "governance" {

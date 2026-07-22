@@ -22,12 +22,9 @@ class MedallionCompileResult:
 
 def _emit_domain_orchestrator(domain_id: str, layers: list[str]) -> str:
     states: dict[str, Any] = {}
-    prev = None
     for i, layer in enumerate(layers):
         state_name = f"Run{layer.capitalize()}"
-        next_name = (
-            f"Run{layers[i + 1].capitalize()}" if i + 1 < len(layers) else None
-        )
+        next_name = f"Run{layers[i + 1].capitalize()}" if i + 1 < len(layers) else None
         states[state_name] = {
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
@@ -54,7 +51,6 @@ def _emit_domain_orchestrator(domain_id: str, layers: list[str]) -> str:
         if next_name is None:
             states[state_name]["End"] = True
             del states[state_name]["Next"]
-        prev = state_name
 
     return json.dumps(
         {
@@ -69,7 +65,7 @@ def _emit_domain_orchestrator(domain_id: str, layers: list[str]) -> str:
 def _emit_mesh_orchestrator(contract: MedallionMeshContract) -> str:
     branches = []
     for domain in contract.domains:
-        layer_names = [layer.layer for layer in domain.layers]
+        orch_arn = f"${{{domain.domain_id}_medallion_orchestrator_arn}}"
         branches.append(
             {
                 "StartAt": f"Domain_{domain.domain_id}",
@@ -78,7 +74,7 @@ def _emit_mesh_orchestrator(contract: MedallionMeshContract) -> str:
                         "Type": "Task",
                         "Resource": "arn:aws:states:::states:startExecution.sync:2",
                         "Parameters": {
-                            "StateMachineArn": f"${{{domain.domain_id}_medallion_orchestrator_arn}}",
+                            "StateMachineArn": orch_arn,
                             "Input": {"partition_dt": "${partition_dt}"},
                         },
                         "End": True,
@@ -131,7 +127,7 @@ def _emit_domain_readers_stub(
     transform_note = ", ".join(transforms) if transforms else "pass-through"
 
     if reference and upstream is None and layer_name == "bronze":
-        return f'''"""GENERATED reference readers for {domain_id}/{layer_name} (S3 landing → Parquet).
+        return f'''"""GENERATED reference readers for {domain_id}/{layer_name} (S3→Parquet).
 
 Layer: {layer_name} · Table: {layer_table} · Engine: {engine}
 Configure: BRONZE_LANDING_BUCKET, BRONZE_LANDING_KEY, ICEBERG_TABLE_BUCKET, TARGET_TABLE
@@ -264,9 +260,12 @@ def _emit_mesh_readme(contract: MedallionMeshContract, pipeline_count: int) -> s
 3. Implement `readers.py` in each layer (only hand-written code)
 4. Deploy terraform/ per layer + mesh orchestrator
 
-## Vaquar Pattern
+## Vaquar Pattern (PVDM)
 
-Each layer run: Physical → VRP → Durable → Metadata. Gold layer consumer_slas gate Lake Formation reads.
+© 2024–2026 Vaquar Khan. PVDM is a proprietary method (Physical → Verify → Durable → Metadata).
+Each layer run: Physical → VRP → Durable → Metadata.
+Gold layer consumer_slas gate Lake Formation reads.
+Reference implementation: Apache-2.0 (see NOTICE).
 """
 
 
@@ -286,7 +285,11 @@ def compile_medallion_mesh(
     pipeline_count = 0
 
     if source_contract_path and source_contract_path.is_file():
-        rel = "northstar.mesh.yaml" if "northstar" in source_contract_path.name else source_contract_path.name
+        rel = (
+            "northstar.mesh.yaml"
+            if "northstar" in source_contract_path.name
+            else source_contract_path.name
+        )
         dest = mesh_root / rel
         dest.write_text(source_contract_path.read_text(encoding="utf-8"), encoding="utf-8")
         all_written.append(rel)
@@ -298,7 +301,9 @@ def compile_medallion_mesh(
 
         layer_names = [layer.layer for layer in domain.layers]
         orch_path = domain_root / "orchestrator.asl.json"
-        orch_path.write_text(_emit_domain_orchestrator(domain.domain_id, layer_names), encoding="utf-8")
+        orch_path.write_text(
+            _emit_domain_orchestrator(domain.domain_id, layer_names), encoding="utf-8"
+        )
         all_written.append(f"{domain.domain_id}/orchestrator.asl.json")
 
         domain_manifest_layers: list[str] = []
@@ -307,7 +312,6 @@ def compile_medallion_mesh(
         for layer in domain.layers:
             pipeline_count += 1
             pipe_contract = contract.layer_pipeline_contract(domain, layer)
-            layer_out = domain_root / layer.layer
             result = compile_pipeline(
                 pipe_contract,
                 output_dir=mesh_root,

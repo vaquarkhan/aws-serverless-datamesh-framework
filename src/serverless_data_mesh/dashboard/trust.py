@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +11,7 @@ from serverless_data_mesh.dashboard.cloudwatch import fetch_cloudwatch_trust_row
 
 
 def _demo_rows() -> list[dict[str, Any]]:
-    now = datetime.now(timezone.utc).strftime("%I:%M %p")
+    now = datetime.now(UTC).strftime("%I:%M %p")
     return [
         {"domain": "orders", "last_vrp": now, "status": "PASS", "rows": "5.2M", "detail": ""},
         {"domain": "payments", "last_vrp": now, "status": "PASS", "rows": "1.1M", "detail": ""},
@@ -86,7 +86,7 @@ def render_trust_dashboard(
         mode = "live-proofs"
 
     html = HTML_TEMPLATE.format(
-        generated_at=datetime.now(timezone.utc).isoformat(),
+        generated_at=datetime.now(UTC).isoformat(),
         mode=mode,
         rows=_render_rows(rows),
         pass_count=sum(1 for r in rows if r["status"] == "PASS"),
@@ -126,7 +126,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <meta charset="utf-8"/>
   <title>Mesh Trust Dashboard</title>
   <style>
-    body {{ font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; margin: 2rem; }}
+    body {{
+      font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; margin: 2rem;
+    }}
     h1 {{ color: #38bdf8; }}
     .summary {{ display: flex; gap: 1.5rem; margin: 1.5rem 0; }}
     .card {{ background: #1e293b; padding: 1rem 1.5rem; border-radius: 8px; }}
@@ -144,7 +146,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
   <h1>Mesh Trust Dashboard</h1>
-  <p class="meta">Vaquar Pattern (PVDM) · mode: {mode} · generated {generated_at}</p>
+  <p class="meta">
+    Vaquar Pattern (PVDM) · © Vaquar Khan proprietary method ·
+    mode: {mode} · generated {generated_at}
+  </p>
   <div class="summary">
     <div class="card"><strong>{total}</strong> domains</div>
     <div class="card"><strong>{pass_count}</strong> PASS</div>
@@ -156,7 +161,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     {rows}
     </tbody>
   </table>
-  <p class="meta">Invariant: commit_metadata implies VRP = PASS</p>
+  <p class="meta">Invariant: commit_metadata implies VRP = PASS · © 2024–2026 Vaquar Khan (PVDM)</p>
 </body>
 </html>
 """

@@ -219,25 +219,17 @@ class MeshPipelineContract:
                 publisher=accounts_raw.get("publisher"),
             ),
             boundary=PipelineBoundary(
-                source_namespace=str(
-                    boundary_raw.get("source_namespace") or f"raw_{domain_id}"
-                ),
+                source_namespace=str(boundary_raw.get("source_namespace") or f"raw_{domain_id}"),
                 target_table=target_table,
                 partition_key=str(boundary_raw.get("partition_key") or "dt"),
-                quality_policy_id=str(
-                    boundary_raw.get("quality_policy_id") or "strict-zero-drop"
-                ),
+                quality_policy_id=str(boundary_raw.get("quality_policy_id") or "strict-zero-drop"),
                 max_chunk_records=int(boundary_raw.get("max_chunk_records") or 5000),
             ),
             workload=PipelineWorkload(
                 identity_fields=tuple(workload_raw.get("identity_fields") or ("id",)),
-                content_fields=tuple(
-                    workload_raw.get("content_fields") or ("id", "payload_hash")
-                ),
+                content_fields=tuple(workload_raw.get("content_fields") or ("id", "payload_hash")),
                 checkpoint_interval=int(workload_raw.get("checkpoint_interval") or 5000),
-                rollback_threshold_ms=int(
-                    workload_raw.get("rollback_threshold_ms") or 30_000
-                ),
+                rollback_threshold_ms=int(workload_raw.get("rollback_threshold_ms") or 30_000),
             ),
             governance=PipelineGovernance(
                 sla_freshness_hours=int(governance_raw.get("sla_freshness_hours") or 2),

@@ -8,7 +8,7 @@ import logging
 import os
 import tempfile
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import boto3
@@ -117,7 +117,7 @@ class VRPProofGenerator:
 
         document: dict[str, Any] = {
             "proof_version": "0.1",
-            "created_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+            "created_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
             "producer": self.producer,
             "boundary": {"mode": "OFFSET_RANGE", "value": boundary_value},
             "source_ref": workload.source_uri,
@@ -133,7 +133,9 @@ class VRPProofGenerator:
         document["proof_id"] = vr.hash_bytes(
             json.dumps(document, separators=(",", ":"), sort_keys=True).encode("utf-8")
         )
-        return document
+        from serverless_data_mesh.verification.kms_sign import attach_kms_signature
+
+        return attach_kms_signature(document)
 
     def persist_proof(
         self,
@@ -175,8 +177,7 @@ def validate_then_commit(
     mutated = len(proof["reconciliation"].get("mutated", []))
     duplicated = len(proof["reconciliation"].get("duplicated", []))
     reason = (
-        f"reconciliation {verdict}: missing={missing}, "
-        f"mutated={mutated}, duplicated={duplicated}"
+        f"reconciliation {verdict}: missing={missing}, mutated={mutated}, duplicated={duplicated}"
     )
     logger.error("VRP validation blocked metadata commit: %s", reason)
 

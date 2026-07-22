@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Consumer safety benchmark: quantify validate-then-commit guarantees.
 
@@ -30,9 +30,12 @@ try:
 except ImportError:
     vr = None
 
-from serverless_data_mesh.types.workload import DataWriteWorkload, DomainTransactionBoundary
-from serverless_data_mesh.verification.backend import create_proof_generator
-from serverless_data_mesh.verification.vrp import validate_then_commit
+from serverless_data_mesh.types.workload import (  # noqa: E402
+    DataWriteWorkload,
+    DomainTransactionBoundary,
+)
+from serverless_data_mesh.verification.backend import create_proof_generator  # noqa: E402
+from serverless_data_mesh.verification.vrp import validate_then_commit  # noqa: E402
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,7 +72,7 @@ def _records(n: int, *, mutate_last: bool = False) -> list[dict[str, str]]:
     return rows
 
 
-def run_benchmark() -> list[ScenarioResult]:
+def run_benchmark() -> tuple[list[ScenarioResult], str]:
     gen, backend = create_proof_generator()
     workload = _workload()
     scenarios: list[tuple[str, list[dict[str, str]], list[dict[str, str]], str]] = [
@@ -100,7 +103,7 @@ def run_benchmark() -> list[ScenarioResult]:
                 latency_ms=round(elapsed_ms, 2),
             )
         )
-    return results
+    return results, backend
 
 
 def main() -> int:
@@ -108,11 +111,9 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="Emit JSON report")
     args = parser.parse_args()
 
-    results = run_benchmark()
+    results, backend = run_benchmark()
     all_passed = all(r.passed for r in results)
-    corrupt_blocked = all(
-        r.passed for r in results if r.name != "identical_source_sink"
-    )
+    corrupt_blocked = all(r.passed for r in results if r.name != "identical_source_sink")
 
     if args.json:
         report = {

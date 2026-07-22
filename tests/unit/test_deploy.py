@@ -9,10 +9,7 @@ from serverless_data_mesh.deploy.runner import deploy_mesh, result_to_dict
 
 def test_deploy_dry_run_skips_terraform(tmp_path: Path) -> None:
     contract = (
-        Path(__file__).resolve().parents[2]
-        / "examples"
-        / "medallion-e2e"
-        / "northstar.mesh.yaml"
+        Path(__file__).resolve().parents[2] / "examples" / "medallion-e2e" / "northstar.mesh.yaml"
     )
     out = tmp_path / "generated"
     result = deploy_mesh(
