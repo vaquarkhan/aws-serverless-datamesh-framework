@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from dataclasses import asdict, dataclass
@@ -24,6 +25,11 @@ from pathlib import Path
 # Repo root on path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+
+# CI / local benchmark: use Steward demo keys (not production secrets).
+os.environ.setdefault("SDM_ALLOW_UNSIGNED_PROOF", "1")
+os.environ.setdefault("SDM_VRP_HMAC_KEY", "a" * 64)
+os.environ.setdefault("SDM_STEWARD_SIGN_KEY", "b" * 64)
 
 try:
     import veridata_recon as vr  # noqa: F401

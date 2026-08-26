@@ -20,6 +20,11 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      SDM_ALLOW_UNSIGNED_PROOF: "1"
+      SDM_VRP_HMAC_KEY: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      SDM_STEWARD_SIGN_KEY: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+
     strategy:
 
       matrix:

@@ -25,6 +25,10 @@ from serverless_data_mesh.types.workload import (
     WriteOutcome,
 )
 from serverless_data_mesh.verification.backend import create_proof_generator
+from serverless_data_mesh.verification.commit_gate import (
+    bind_file_digests,
+    metadata_commit_gate,
+)
 from serverless_data_mesh.verification.vrp import validate_then_commit
 
 
@@ -88,6 +92,8 @@ class LocalPVDMRuntime:
     """
 
     def __init__(self, root: Path | None = None) -> None:
+        if not (os.environ.get("SDM_VRP_HMAC_KEY") or os.environ.get("VRP_STEWARD_HMAC_KEY")):
+            os.environ.setdefault("SDM_ALLOW_UNSIGNED_PROOF", "1")
         self.root = root or Path(tempfile.mkdtemp(prefix="sdm-demo-"))
         self.checkpoints = self.root / "checkpoints"
         self.proofs = self.root / "proofs"
@@ -98,6 +104,7 @@ class LocalPVDMRuntime:
         self._snapshot_file = self.catalog / "snapshots.json"
         if not self._snapshot_file.exists():
             self._snapshot_file.write_text("[]", encoding="utf-8")
+        os.environ.setdefault("SDM_NONCE_LEDGER_DIR", str(self.root / "nonces"))
 
     @property
     def consumer_row_count(self) -> int:
@@ -174,8 +181,28 @@ class LocalPVDMRuntime:
         return part
 
     def _commit_metadata(
-        self, *, workload: DataWriteWorkload, row_count: int, proof_id: str
+        self,
+        *,
+        workload: DataWriteWorkload,
+        row_count: int,
+        proof_id: str,
+        parquet_paths: list[str] | None = None,
+        file_digests: list[dict[str, str]] | None = None,
+        proof: dict[str, Any] | None = None,
     ) -> str:
+        paths = list(parquet_paths or [])
+        digests = list(file_digests or [])
+        proofs = [proof] if proof is not None else None
+        gate = metadata_commit_gate(
+            verification_passed=True,
+            parquet_paths=paths,
+            bound_digests=digests,
+            proofs=proofs,
+            expected_target=workload.target_uri,
+            proof_bucket=None,
+        )
+        if gate.outcome != "PASS":
+            raise RuntimeError(f"Local Metadata commit gate blocked: {gate.reason}")
         snapshots = json.loads(self._snapshot_file.read_text(encoding="utf-8"))
         snapshot_id = f"snap-{len(snapshots) + 1:06d}"
         snapshots.append(
@@ -217,7 +244,8 @@ class LocalPVDMRuntime:
         source = _records(record_count)
         sink = _records(record_count, corrupt_last=corrupt_sink)
 
-        self._write_physical(sink, part_name=f"{workload_id}-part-00000")
+        part_path = self._write_physical(sink, part_name=f"{workload_id}-part-00000")
+        file_digests = bind_file_digests([str(part_path.resolve())])
 
         proof = gen.build_proof(
             source_records=source,
@@ -225,6 +253,7 @@ class LocalPVDMRuntime:
             workload=workload,
             chunk_start=0,
             chunk_end=record_count,
+            file_digests=file_digests,
         )
         verification = validate_then_commit(proof)
         proof_path = self._persist_proof(proof, workload=workload, chunk_index=0)
@@ -323,6 +352,9 @@ class LocalPVDMRuntime:
             workload=workload,
             row_count=record_count,
             proof_id=proof["proof_id"],
+            parquet_paths=[str(part_path.resolve())],
+            file_digests=file_digests,
+            proof=proof,
         )
         log_pvdm_outcome(
             outcome=WriteOutcome.COMMITTED.value,
@@ -429,8 +461,18 @@ class LocalPVDMRuntime:
                 "consumer_row_count": self.consumer_row_count,
             }
 
-        self._write_physical(repaired_sink, part_name=f"{workload_id}-repaired")
-        proof_path = self._persist_proof(repair.proof, workload=workload, chunk_index=0)
+        part_path = self._write_physical(repaired_sink, part_name=f"{workload_id}-repaired")
+        file_digests = bind_file_digests([str(part_path.resolve())])
+        # Re-seal proof digests into a fresh envelope when repair proof lacks them.
+        sealed = gen.build_proof(
+            source_records=source,
+            sink_records=repaired_sink,
+            workload=workload,
+            chunk_start=0,
+            chunk_end=record_count,
+            file_digests=file_digests,
+        )
+        proof_path = self._persist_proof(sealed, workload=workload, chunk_index=0)
         publish_vrp_metric(
             domain_id=workload.boundary.domain_id,
             verdict="PASS",
@@ -440,7 +482,10 @@ class LocalPVDMRuntime:
         snapshot_id = self._commit_metadata(
             workload=workload,
             row_count=record_count,
-            proof_id=repair.proof["proof_id"],
+            proof_id=sealed["proof_id"],
+            parquet_paths=[str(part_path.resolve())],
+            file_digests=file_digests,
+            proof=sealed,
         )
         return {
             "outcome": "repaired_and_committed",

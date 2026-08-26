@@ -136,6 +136,7 @@ extend-exclude = [
     "examples/medallion-e2e/generated",
     "examples/retail-mesh/generated",
     "infrastructure/terraform/fixtures/generated-mesh",
+    "**/*.md",
 ]
 
 [tool.ruff.lint]

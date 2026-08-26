@@ -29,6 +29,10 @@ from serverless_data_mesh.types.workload import (
     SourceReaderFn,
     WriteOutcome,
 )
+from serverless_data_mesh.verification.commit_gate import (
+    bind_file_digests,
+    source_as_sink_allowed,
+)
 from serverless_data_mesh.verification.vrp import VRPProofGenerator, validate_then_commit
 
 logger = logging.getLogger(__name__)
@@ -74,7 +78,11 @@ class IceGuardDurableCoordinator:
         self._enable_rules_gate = enable_rules_gate
 
     def _initial_state(self, workload: DataWriteWorkload) -> OrchestrationState:
-        return OrchestrationState(workload_id=workload.workload_id)
+        return OrchestrationState(
+            workload_id=workload.workload_id,
+            target_uri=workload.target_uri,
+            proof_bucket=workload.proof_bucket,
+        )
 
     def _state_dict(self, state: OrchestrationState) -> dict[str, Any]:
         return {
@@ -83,6 +91,11 @@ class IceGuardDurableCoordinator:
             "committed_chunks": state.committed_chunks,
             "last_proof_hash": state.last_proof_hash,
             "all_parquet_paths": state.all_parquet_paths,
+            "all_file_digests": state.all_file_digests,
+            "all_chunks_verified": state.all_chunks_verified,
+            "all_proofs": state.all_proofs,
+            "target_uri": state.target_uri,
+            "proof_bucket": state.proof_bucket,
         }
 
     def _workload_dict(self, workload: DataWriteWorkload) -> dict[str, Any]:
@@ -119,6 +132,13 @@ class IceGuardDurableCoordinator:
         started = time.perf_counter()
         state = resume_state or self._initial_state(workload)
         outcome = WriteOutcome.RESUMED if state.next_offset > 0 else WriteOutcome.COMMITTED
+
+        if sink_reader is None and not source_as_sink_allowed():
+            raise ValueError(
+                "sink_reader is required for PVDM Verify (written multiset vs intent). "
+                "Pass a reader that reloads staged sink bytes, or set "
+                "SDM_ALLOW_SOURCE_AS_SINK=1 only for demos that intentionally weaken the gate."
+            )
 
         adapter = self._catalog or GlueRestCatalogAdapter.from_environment(
             namespace=workload.boundary.source_namespace,
@@ -161,8 +181,18 @@ class IceGuardDurableCoordinator:
 
                     paths = batch_writer(start, end)
                     chunk_paths_by_batch[(start, end)] = paths
+                    file_digests = bind_file_digests(paths)
 
-                    sink_records = sink_reader(start, end) if sink_reader else source_records
+                    if sink_reader is not None:
+                        sink_records = sink_reader(start, end)
+                    else:
+                        logger.warning(
+                            "SDM_ALLOW_SOURCE_AS_SINK: VRP compares source to itself "
+                            "for chunk [%s, %s)",
+                            start,
+                            end,
+                        )
+                        sink_records = source_records
                     proof = self._proofs.build_proof(
                         source_records=source_records,
                         sink_records=sink_records,
@@ -170,6 +200,7 @@ class IceGuardDurableCoordinator:
                         chunk_start=start,
                         chunk_end=end,
                         prev_proof_hash=state.last_proof_hash,
+                        file_digests=file_digests,
                     )
                     verification = validate_then_commit(proof)
                     if verification.outcome != "PASS" and enable_auto_repair and sink_reader:
@@ -249,6 +280,8 @@ class IceGuardDurableCoordinator:
                             parquet_paths=paths,
                             proof_s3_uri=proof_uri,
                             verification_passed=True,
+                            file_digests=file_digests,
+                            proof=proof,
                         )
                     )
                     state = OrchestrationState(**step_result["state"])
@@ -261,6 +294,11 @@ class IceGuardDurableCoordinator:
                     track_paths=lambda start, end: chunk_paths_by_batch.get((start, end), []),
                 )
 
+            if not state.all_chunks_verified:
+                raise VerificationRejectedError(
+                    "Refusing Metadata commit: not all chunks verification_passed"
+                )
+
             commit_result = self._durable.step(
                 durable_commit_metadata(
                     namespace=workload.boundary.source_namespace,
@@ -270,7 +308,13 @@ class IceGuardDurableCoordinator:
                         "app-id": "serverless-data-mesh",
                         "workload-id": workload.workload_id,
                         "domain-id": workload.boundary.domain_id,
+                        "proof-chain-tail": state.last_proof_hash or "",
                     },
+                    verification_passed=True,
+                    file_digests=state.all_file_digests,
+                    proofs=state.all_proofs,
+                    expected_target=workload.target_uri,
+                    proof_bucket=workload.proof_bucket,
                 )
             )
             duration_ms = round((time.perf_counter() - started) * 1000, 1)

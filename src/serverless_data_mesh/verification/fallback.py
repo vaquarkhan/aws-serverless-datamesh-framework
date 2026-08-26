@@ -139,6 +139,7 @@ class FallbackProofGenerator:
         chunk_start: int,
         chunk_end: int,
         prev_proof_hash: str | None = None,
+        file_digests: list[dict[str, str]] | None = None,
     ) -> dict[str, Any]:
         reconciliation = reconcile_multiset(
             source=source_records,
@@ -176,6 +177,36 @@ class FallbackProofGenerator:
             "public_key": None,
             "chain": {"prev_proof_hash": prev_proof_hash},
         }
+        if file_digests:
+            document["physical_file_digests"] = file_digests
+
+        from serverless_data_mesh.verification.pvdm_primitives import (
+            build_pvdm_binding,
+            require_steward_keys,
+        )
+
+        vrp_key, steward_key = require_steward_keys()
+        binding = build_pvdm_binding(
+            workload_id=workload.workload_id,
+            chunk_id=f"{chunk_start}-{chunk_end}",
+            target=workload.target_uri,
+            partition=workload.boundary.partition_spec,
+            intended_rows=source_records,
+            written_rows=sink_records,
+            identity_fields=workload.identity_fields,
+            file_digests=file_digests or [],
+            vrp_key=vrp_key,
+            steward_key=steward_key,
+            reconciliation_verdict=reconciliation.get("verdict"),
+        )
+        document["pvdm_binding"] = binding.to_dict()
+        if binding.verdict != "PASS":
+            document["reconciliation"] = {
+                **reconciliation,
+                "verdict": "FAIL",
+                "keyed_mset": "FAIL",
+            }
+
         document["proof_id"] = hashlib.sha256(
             json.dumps(document, separators=(",", ":"), sort_keys=True).encode()
         ).hexdigest()

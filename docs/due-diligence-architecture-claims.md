@@ -68,6 +68,18 @@ Metadata (GlueCatalogConnector / PyIceberg — only if VRP = PASS)
 
 **Invariant (canonical):** `commit_metadata ⟹ VRP = PASS`
 
+**VLDB paper alignment (this repository is the production PVDM implementation):**
+
+| Paper MUST | Production mapping in this repo |
+|------------|----------------------------------|
+| N1 keyed MSet-Add-Hash | `verification/pvdm_primitives.multiset_hash` (HMAC-SHA256, mod 2^256) via `SDM_VRP_HMAC_KEY` |
+| N4 file digests + re-hash | `metadata_commit_gate` TOCTOU check |
+| N5 Steward sign + nonce + target | `pvdm_binding` on every proof; nonce ledger; target match at commit |
+| N10 no unsigned override | keys required unless `SDM_ALLOW_UNSIGNED_PROOF=1` (demo only) |
+| P·V·D·M phases | IceGuard → VRP+keyed binding → Durable SDK → Glue/PyIceberg behind commit gate |
+
+Steward keys (`SDM_VRP_HMAC_KEY`, `SDM_STEWARD_SIGN_KEY`) must live in the Steward trust domain (N2/N17), not be readable by untrusted Producer code in production.
+
 ---
 
 ## High-value additions (prioritized)
