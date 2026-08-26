@@ -238,8 +238,7 @@ def metadata_commit_gate(
         if actual != bound:
             return CommitGateResult(
                 "FAIL",
-                f"TOCTOU digest mismatch for {path}: verify={bound[:16]}… "
-                f"commit={actual[:16]}…",
+                f"TOCTOU digest mismatch for {path}: verify={bound[:16]}… commit={actual[:16]}…",
             )
 
     for path, bound in by_path.items():
