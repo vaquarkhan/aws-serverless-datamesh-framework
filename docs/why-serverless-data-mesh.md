@@ -427,7 +427,7 @@ IceGuard and Durable Execution solve **different time horizons**:
 | Concern | Owner | Time scale |
 |---------|-------|------------|
 | "This container is about to die" | IceGuard watchdog | Seconds before Lambda hard limit |
-| "This workload spans many containers" | Durable SDK + Step Functions | Configurable budget (e.g. 60–180+ min) |
+| "This workload spans many containers" | Durable SDK + Step Functions | Configurable durable budget (overcomes 15-min limit) |
 
 **Connection point:** When IceGuard rolls back near timeout, it returns `rolled_back` to Step Functions. The durable context has already checkpointed **completed** chunks. The next Lambda segment replays only pending work via `durable_write_chunk`, keyed by `workload_id`. Without this link, you get either duplicate writes (no IceGuard) or stuck workloads (no Durable).
 
@@ -490,7 +490,7 @@ SparkRules filters **business logic** (e.g. `amount > 0`). veridata-recon proves
 
 **Symptom:** EMR/Glue clusters run for 90 minutes once per night; 23 hours idle.
 
-**Solution:** Lambda scales to zero between backfills. Pay per segment invoked. Durable execution stretches 15-minute containers across a **configurable** workload budget (e.g. 60 / 90 / 120 / 180 minutes).
+**Solution:** Lambda scales to zero between backfills. Pay per segment invoked. Durable execution stretches 15-minute containers across a **configurable** workload budget (set to your backfill wall-clock).
 
 **Connectivity:** Step Functions → Lambda segments → zero idle cost between runs
 
@@ -569,11 +569,11 @@ gantt
     Final chunk committed :84, 90
 ```
 
-| Layer | Setting | Default | Role |
-|-------|---------|---------|------|
-| Per invocation | Lambda `timeout` | 900s (15 min) | One container segment |
-| Total budget | `durable_config.execution_timeout` | Configurable (e.g. 3600–10800s) | Durable execution ceiling |
-| Orchestration | Step Functions resume loop | ≥ 8 attempts | Chains segments |
+| Layer | Setting | Role |
+|-------|---------|------|
+| Per invocation | Lambda `timeout` (≤ 900s) | One container segment |
+| Total budget | `durable_config.execution_timeout` | **Configurable** durable ceiling (set to your job) |
+| Orchestration | Step Functions resume loop | Chains segments past the 15-min limit |
 
 Terraform tuning: **[terraform-guide.md](terraform-guide.md)**
 
@@ -586,7 +586,7 @@ Terraform tuning: **[terraform-guide.md](terraform-guide.md)**
 - Multiple domain teams publishing to a **shared Iceberg lakehouse**
 - **Federated AWS accounts** or planning Producer/Steward/Publisher split
 - Compliance or audit requirements beyond log statements
-- Backfills from **15-minute segments** across a **configurable** durable budget (e.g. 60–180+ min) on Lambda
+- Backfills from **15-minute segments** across a **configurable** durable budget on Lambda (any duration you set)
 - Desire to reduce Glue DPU spend for intermittent domain writes
 
 ### Defer when you have:
@@ -697,7 +697,7 @@ That requires:
 
 1. **Physical safety** (IceGuard) so Lambda timeouts do not corrupt the lakehouse
 2. **Cryptographic verification** (veridata-recon) so "success" means multiset match, not exit code 0
-3. **Durable orchestration** (AWS Durable Execution) so serverless economics extend across a configurable backlog budget (60 / 90 / 120 / 180+ minutes)
+3. **Durable orchestration** (AWS Durable Execution) so serverless economics extend across a configurable backlog budget (overcomes the 15-minute Lambda limit)
 4. **Governed metadata** (Glue Catalog Connector) so domains commit snapshots without Glue ETL lock-in
 5. **Federated accounts** (Producer, Steward, Publisher) so autonomy and audit coexist
 

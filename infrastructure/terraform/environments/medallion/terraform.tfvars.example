@@ -17,6 +17,8 @@ enable_monitoring_alarms = true
 create_ops_sns_topic     = true
 ops_alert_emails         = ["ops@example.com"]
 lambda_timeout_seconds   = 900
+# Workload clock: set to your backfill wall-clock (overcomes the 15-min Lambda limit)
+durable_execution_timeout_seconds = 5400
 lambda_memory_mb         = 4096
 
 # consumer_principal_arn = "arn:aws:iam::123456789012:role/athena-consumer"

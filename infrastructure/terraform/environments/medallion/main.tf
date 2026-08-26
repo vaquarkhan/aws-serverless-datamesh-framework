@@ -5,6 +5,10 @@ locals {
   }
   iceberg_warehouse = "${local.account_id}:s3tablescatalog/${var.lakehouse_bucket_name}"
 
+  # Dual clocks (how we overcome the 15-minute Lambda limit):
+  # - lambda_timeout_seconds: per-container cap (AWS hard max 900)
+  # - durable_execution_timeout_seconds: total job budget — set to whatever the
+  #   backfill needs; Step Functions + Durable Execution chain segments until done
   lambda_per_invocation_timeout = min(var.lambda_timeout_seconds, 900)
   durable_execution_timeout     = var.durable_execution_timeout_seconds
   checkpoint_retention_days     = max(7, var.durable_retention_days)

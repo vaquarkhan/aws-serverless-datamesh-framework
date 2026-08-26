@@ -141,7 +141,7 @@ flowchart LR
 | Clock | Owner | Scope |
 |-------|-------|-------|
 | **Container clock** | IceGuard watchdog | One Lambda invocation (max 900s) |
-| **Workload clock** | Durable SDK + Step Functions | Full backfill (e.g. 5400s) |
+| **Workload clock** | Durable SDK + Step Functions | Full backfill (configurable durable budget) |
 
 **Linkage key:** `workload_id` ties checkpoints, proofs, and durable step replay across segments.
 
@@ -229,7 +229,7 @@ outcome = coordinator.run_workload(workload)
 - Multiple domains publish to a **shared Iceberg lakehouse**
 - **Federated AWS accounts** (or planned split)
 - Auditors need **offline-verifiable** evidence per chunk
-- Backfills run on Lambda with a **configurable** durable budget (e.g. 60 / 90 / 120 / 180 minutes)
+- Backfills run on Lambda with a **configurable** durable budget (any duration you set; overcomes the 15-min limit)
 - "Job succeeded" has burned the organization before
 
 ### Do not apply when

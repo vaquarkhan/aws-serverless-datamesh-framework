@@ -1,11 +1,15 @@
 # Sample tfvars — durable Lambda dual clocks
 # Copy values into environments/prod or medallion terraform.tfvars
+#
+# Dual clocks: lambda_timeout_seconds = per-invoke cap (AWS max 900).
+# durable_execution_timeout_seconds = total job budget — set to whatever
+# your backfill needs (overcomes the 15-minute Lambda limit via segment chaining).
 
 enable_durable_execution          = true
-lambda_timeout_seconds            = 900
-durable_execution_timeout_seconds = 5400
+lambda_timeout_seconds            = 900     # segment clock (AWS max 15 min)
+durable_execution_timeout_seconds = 10800   # set to your backfill wall-clock
 durable_retention_days            = 14
 lambda_memory_mb                  = 4096
 iceguard_rollback_threshold_ms    = 30000
-max_resume_attempts               = 10
+max_resume_attempts               = 14
 resume_wait_seconds               = 60

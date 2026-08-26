@@ -11,6 +11,7 @@ publisher_account_id = "PUBLISHER_ACCOUNT_ID"
 lakehouse_bucket     = "sdm-publisher-lakehouse-PUBLISHER_ACCOUNT_ID"
 
 lambda_timeout_seconds            = 900
+# Workload clock: set to your backfill wall-clock (overcomes the 15-min Lambda limit)
 durable_execution_timeout_seconds = 5400
 
 # Optional SparkRules on Lambda: set after packaging with SDM_EXTRAS=rules

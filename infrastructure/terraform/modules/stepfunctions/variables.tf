@@ -24,8 +24,8 @@ variable "lambda_invoke_timeout_seconds" {
 variable "max_resume_attempts" {
   description = <<-EOT
     Max Step Functions resume loops after IceGuard rolled_back.
-    Size as ceil(durable_execution_timeout / lambda_timeout) + buffer
-    (e.g. 180-min / 15-min ≈ 12+2). Prod environments auto-bump if too low.
+    Size as ceil(durable_execution_timeout / lambda_timeout) + buffer so the
+    resume loop can cover your configured durable budget. Prod auto-bumps if too low.
   EOT
   type        = number
   default     = 10

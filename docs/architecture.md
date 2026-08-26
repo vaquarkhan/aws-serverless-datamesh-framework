@@ -113,21 +113,21 @@ Full guide: **[glue-connector.md](glue-connector.md)**.
 | **Durable Lambda** | Yes | `durable_config` + `@durable_execution` + Durable SDK steps |
 | **MicroVM** | Yes (AWS-managed) | Lambda runs on **Firecracker** microVMs; we do not operate Firecracker |
 | **On-demand instances** | On-demand **Lambda** | Scale to zero; **not** EC2 on-demand fleets |
-| **Configurable run time** | Yes (dual clocks) | Per-invoke ≤ 900s; durable budget **configurable** (e.g. 60–180+ min) |
+| **Configurable run time** | Yes (dual clocks) | Per-invoke ≤ 900s; durable budget **configurable** (any duration you set) |
 
 Sales diagram: [docs/images/durable-lambda-compute-model.png](images/durable-lambda-compute-model.png) · Hands-on: [examples/durable-compute/](../examples/durable-compute/)
 
 ## Long-running execution (configurable durable budget)
 
 Lambda containers still have a **15-minute hard cap** per invocation (`timeout = 900`).
-The framework supports longer backfills with **two cooperating clocks**. The **workload clock is not fixed at 90 minutes** — set it to what the job needs (60, 90, 120, 180 minutes, or longer; AWS Durable Execution allows up to ~1 year).
+This framework **overcomes that limit** with **two cooperating clocks**: each segment stays within 15 minutes; the workload clock is Terraform-tunable for whatever wall-clock time the backfill needs (AWS Durable Execution allows up to ~1 year).
 
-| Layer | Setting | Example | Role |
-|-------|---------|---------|------|
-| Per invocation | Lambda `timeout` | 900s (15 min) | One container segment; IceGuard watchdog fires before this limit |
-| Total durable budget | `durable_config.execution_timeout` | **Configurable** — e.g. 3600 / 5400 / 7200 / **10800** s | Ceiling for one execution ID across replays |
-| Orchestration | Step Functions `max_resume_attempts` | `ceil(durable/lambda)+2` | Re-invokes after `rolled_back` when a segment ends early |
-| Per SFN task | `TimeoutSeconds` on `lambda:invoke` | ~960s | Waits for **one** segment to return, not the full workload budget |
+| Layer | Setting | Role |
+|-------|---------|------|
+| Per invocation | Lambda `timeout` (≤ 900s) | One container segment; IceGuard watchdog fires before this limit |
+| Total durable budget | `durable_config.execution_timeout` | **Configurable** ceiling for one execution ID across replays |
+| Orchestration | Step Functions `max_resume_attempts` | Re-invokes after `rolled_back` when a segment ends early |
+| Per SFN task | `TimeoutSeconds` on `lambda:invoke` | Waits for **one** segment to return, not the full workload budget |
 
 ```mermaid
 sequenceDiagram
@@ -154,8 +154,8 @@ sequenceDiagram
 Tune in Terraform (`environments/prod/terraform.tfvars`):
 
 ```hcl
-# Examples: 3600=60m | 5400=90m | 7200=120m | 10800=180m
-durable_execution_timeout_seconds     = 10800  # e.g. 180 minutes
+# Set durable budget to your backfill wall-clock (overcomes the 15-min Lambda limit)
+durable_execution_timeout_seconds     = 10800
 max_resume_attempts                   = 14     # auto-bumped to ceil(durable/lambda)+2 if lower
 lambda_timeout_seconds                = 900
 ```

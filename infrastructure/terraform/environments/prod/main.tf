@@ -6,8 +6,10 @@ locals {
   iceberg_warehouse = "${local.account_id}:s3tablescatalog/${var.lakehouse_bucket_name}"
 
   # Two-layer timeout model (all knobs in terraform.tfvars):
-  # - lambda_timeout_seconds: per-container cap (max 900)
-  # - durable_execution_timeout_seconds: total durable budget (configurable; e.g. 5400=90m, 10800=180m)
+  # Dual clocks (how we overcome the 15-minute Lambda limit):
+  # - lambda_timeout_seconds: per-container cap (AWS hard max 900)
+  # - durable_execution_timeout_seconds: total job budget — set to whatever the
+  #   backfill needs; Step Functions + Durable Execution chain segments until done
   # - sfn_invoke_timeout_buffer_seconds: Step Functions wait = lambda + buffer
   lambda_per_invocation_timeout = min(
     coalesce(var.lambda_per_invocation_timeout_seconds, var.lambda_timeout_seconds),

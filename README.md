@@ -159,8 +159,8 @@ terraform apply
 | | |
 |--|--|
 | **You do** | Package the Lambda zip + `terraform apply` ([durable-compute example](examples/durable-compute/)) |
-| **You get** | Durable Lambda on Firecracker, on-demand scale-to-zero, dual clocks (e.g. 900s × 5400s) |
-| **Benefit** | Configurable durable backfills (e.g. 60–180+ min) without idle EMR/Glue clusters |
+| **You get** | Durable Lambda on Firecracker, on-demand scale-to-zero, dual clocks (segment + workload) |
+| **Benefit** | Backfills longer than 15 minutes without idle EMR/Glue clusters |
 
 ### Step 6  -  Observe & attest
 
@@ -249,7 +249,7 @@ Most data mesh programs reorganize teams but leave the **write path** centralize
 |------|-------------------|-------------------------------|
 | **Silent data loss** | Partition row counts drift; discovered days later | VRP `FAIL` blocks Iceberg snapshot; consumers never see bad data |
 | **"Job succeeded" ≠ correct** | Glue exit code 0 with 6 missing rows | Multiset cryptographic proof per chunk |
-| **Lambda 15-min limit** | "Use EMR/Glue for real backfills" | Durable Execution + Step Functions resume → **configurable** workload budget (e.g. 60 / 90 / 120 / 180 min) |
+| **Lambda 15-min limit** | "Use EMR/Glue for real backfills" | Durable Execution + Step Functions resume → **configurable** total runtime (overcomes the per-invoke limit) |
 | **Retry duplicates data** | Re-invoke creates duplicate Parquet | IceGuard rollback + `workload_id` checkpoints |
 | **Platform bottleneck** | Every domain waits on central ETL | Each domain owns a Lambda writer + declared contract |
 | **No audit evidence** | Sample rows and debate | Immutable VRP proofs in Steward S3; offline `verify_proof` |
@@ -309,7 +309,7 @@ This framework is the **reference implementation** of the **[Vaquar Pattern](doc
 |-------|-----------|---------|--------------|
 | **Physical** | IceGuard SafeWriter | Parquet in Publisher S3; checkpoints in Steward S3 | **Yes**  -  `IceGuardDurableCoordinator` + IceGuard watchdog |
 | **Verify** | veridata-recon + keyed Steward binding | VRP proof stored; `validate_then_commit` + Metadata TOCTOU gate | **Yes**  -  PASS blocks FAIL before metadata |
-| **Durable** | AWS Durable SDK + Step Functions | 15-min segments → **configurable** total budget | **Yes**  -  `@durable_execution` + SFN resume |
+| **Durable** | AWS Durable SDK + Step Functions | 15-min segments chained to any configured total | **Yes**  -  `@durable_execution` + SFN resume |
 | **Metadata** | GlueCatalogConnector | Iceberg snapshot **only after** VRP PASS | **Yes**  -  proof-gated commit |
 
 Optional (not a fifth PVDM phase): SparkRules DRL / rules gate before Physical; PVDM-A decision attestation after Verify.
@@ -341,23 +341,23 @@ What makes this new vs Outbox, Saga, Medallion, and Glue bookmarks: **Iceberg pu
 
 | Knob | tfvars / variable | Meaning | Limits |
 |------|-------------------|---------|--------|
-| **Container clock** | `lambda_timeout_seconds` | One Lambda invocation | 1–**900** s (AWS hard max) |
-| **Workload clock** | `durable_execution_timeout_seconds` | Total durable budget across replays | **Configurable** — e.g. 3600 / 5400 / 7200 / 10800 s (60 / 90 / 120 / 180 min); AWS allows up to ~1 year |
+| **Container clock** | `lambda_timeout_seconds` | One Lambda invocation | 1–**900** s (AWS hard max / 15 min) |
+| **Workload clock** | `durable_execution_timeout_seconds` | Total durable budget across segments | **Configurable** — set to your backfill wall-clock (AWS allows up to ~1 year) |
 | **IceGuard lead time** | `iceguard_rollback_threshold_ms` | Rollback before hard kill | Auto or explicit ms |
 | **SFN resume** | `max_resume_attempts`, `resume_wait_seconds` | Re-invoke after `rolled_back` | Tunable (auto-bumped from durable ÷ segment) |
 
 ```hcl
 # infrastructure/terraform/environments/prod/terraform.tfvars (example)
 enable_durable_execution           = true
-lambda_timeout_seconds             = 900     # 15 min per segment (AWS max)
-# Workload clock — pick what the backfill needs (not fixed at 90 min):
-#   3600 = 60 min | 5400 = 90 min | 7200 = 120 min | 10800 = 180 min
-durable_execution_timeout_seconds  = 10800   # e.g. 180 min total durable budget
+lambda_timeout_seconds             = 900      # 15 min per segment (AWS max)
+# Workload clock: set to whatever your job needs — this is how we overcome the
+# 15-minute Lambda limit (segments chain until the durable budget is used).
+durable_execution_timeout_seconds  = 10800
 lambda_memory_mb                   = 4096
-iceguard_rollback_threshold_ms     = 30000   # yield 30s before timeout
+iceguard_rollback_threshold_ms     = 30000    # yield before hard timeout
 ```
 
-Long backfills = **many durable segments** (each ≤ `lambda_timeout_seconds`), not one forever-running process. Set `durable_execution_timeout_seconds` to match the job (60, 90, 120, 180 minutes, or longer). IceGuard rolls back incomplete chunks; Durable SDK replays completed steps; Step Functions resumes on `rolled_back`.
+Long backfills = **many durable segments** (each ≤ `lambda_timeout_seconds`), not one forever-running process. Configure `durable_execution_timeout_seconds` for the full job; IceGuard rolls back incomplete chunks; Durable SDK replays completed steps; Step Functions resumes on `rolled_back`.
 
 → [Durable compute example](examples/durable-compute/README.md) · [Architecture](docs/architecture.md#durable-lambda-compute-model)
 
@@ -449,7 +449,7 @@ enriched, audit = connector.apply_chunk(source_records)
 <td width="50%" valign="top">
 
 ### Serverless at scale
-- 15-min Lambda segments → configurable durable budget (60 / 90 / 120 / 180+ min)
+- 15-min Lambda segments chained to a configurable total runtime (overcomes the AWS per-invoke limit)
 - IceGuard watchdog rollback before hard timeout
 - Durable step replay: no duplicate committed chunks
 - Terraform-tunable `lambda_timeout_seconds`

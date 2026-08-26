@@ -396,7 +396,7 @@ sequenceDiagram
   <img src="images/lambda-execution-flow.png" alt="Lambda durable execution across segments" width="960" />
 </p>
 
-Lambda has a **hard 900-second container limit**. Serious backfills often need **60, 90, 120, 180 minutes or more**. The Vaquar Pattern uses **two cooperating clocks** — the workload clock is **Terraform-tunable**, not fixed at 90 minutes:
+Lambda has a **hard 900-second container limit**. Serious backfills often need far longer. The Vaquar Pattern uses **two cooperating clocks** — the workload clock is **Terraform-tunable** to any duration you set, overcoming the per-invoke limit:
 
 ```mermaid
 gantt
@@ -414,12 +414,12 @@ gantt
     Final commit metadata :84, 90
 ```
 
-| Clock | Setting | Example | Role |
-|-------|---------|---------|------|
-| **Container** | Lambda `timeout` | 900s | One IceGuard-protected segment |
-| **Workload** | `durable_execution_timeout` | 3600 / 5400 / 7200 / **10800** s | Total budget (60 / 90 / 120 / **180** min) |
-| **Orchestration** | SFN `max_resume_attempts` | `ceil(durable/lambda)+2` | Chains segments |
-| **Watchdog** | `rollback_threshold_ms` | ~30s before limit | IceGuard rollback margin |
+| Clock | Setting | Role |
+|-------|---------|------|
+| **Container** | Lambda `timeout` (≤ 900s) | One IceGuard-protected segment |
+| **Workload** | `durable_execution_timeout` | **Configurable** total budget (set to your backfill wall-clock) |
+| **Orchestration** | SFN `max_resume_attempts` | Chains segments (`ceil(durable/lambda)+2`) |
+| **Watchdog** | `rollback_threshold_ms` | IceGuard rollback margin before hard kill |
 
 **Linkage key:** `workload_id` appears in checkpoints, proofs, durable steps, and snapshot properties.
 
@@ -557,7 +557,7 @@ make gate-demo
 - Multiple domains → shared Iceberg lakehouse
 - Federated AWS accounts (or planned)
 - Compliance beyond log statements
-- Backfills with a **configurable** durable budget on Lambda (e.g. 60–180+ min)
+- Backfills with a **configurable** durable budget on Lambda (any duration you set; overcomes the 15-min limit)
 - "Job succeeded" has burned you before
 
 ### When to defer

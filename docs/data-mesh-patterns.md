@@ -204,8 +204,8 @@ gantt
 
 ```hcl
 lambda_timeout_seconds              = 900    # per invocation (max 900)
-# Examples: 3600=60m | 5400=90m | 7200=120m | 10800=180m
-durable_execution_timeout_seconds   = 10800  # total durable budget (e.g. 180 min)
+# Workload clock: set to your backfill wall-clock (overcomes the 15-min Lambda limit)
+durable_execution_timeout_seconds   = 10800
 lambda_memory_mb                    = 4096
 sfn_invoke_timeout_buffer_seconds   = 60    # SFN wait = lambda + buffer
 resume_wait_seconds                 = 60
@@ -402,7 +402,7 @@ flowchart TB
 | Glue jobs for everything | Glue **catalog connector** only |
 | "Trust the pipeline logs" | VRP cryptographic proof per chunk |
 | Retry until success | `verification_failed` stops the line |
-| 15-min Lambda limit = blocker | Segmented execution with configurable durable budget (60–180+ min) |
+| 15-min Lambda limit = blocker | Segmented execution with configurable durable budget (any duration you set) |
 | Single account lake | Producer · Steward · Publisher |
 
 ---

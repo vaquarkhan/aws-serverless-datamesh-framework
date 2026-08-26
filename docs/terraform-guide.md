@@ -83,10 +83,11 @@ enable_monitoring_alarms    = true
 
 # Long backfills: configure all timeout knobs in terraform.tfvars
 lambda_timeout_seconds            = 900
-durable_execution_timeout_seconds = 5400
+# Workload clock: set to your backfill wall-clock (overcomes the 15-min Lambda limit)
+durable_execution_timeout_seconds = 10800
 lambda_memory_mb                  = 4096
 durable_retention_days            = 14
-max_resume_attempts               = 10
+max_resume_attempts               = 14
 sfn_invoke_timeout_buffer_seconds = 60
 resume_wait_seconds               = 60
 # iceguard_rollback_threshold_ms  = null  # auto-derived from lambda_timeout_seconds
@@ -97,7 +98,7 @@ resume_wait_seconds               = 60
 | Setting | Meaning |
 |---------|---------|
 | `lambda_timeout_seconds = 900` | AWS hard max per container (15 min) |
-| `durable_execution_timeout_seconds` | **Configurable** total budget — e.g. `3600` / `5400` / `7200` / `10800` (60 / 90 / 120 / 180 min) |
+| `durable_execution_timeout_seconds` | **Configurable** total job budget (set to your backfill wall-clock; overcomes the 15-min Lambda limit) |
 | `lambda_memory_mb` | Chunk throughput: raise if p99 duration nears timeout |
 | `sfn_invoke_timeout_buffer_seconds` | SFN `TimeoutSeconds` = lambda + buffer |
 | `max_resume_attempts` | Resume loops after `rolled_back`; prod auto-bumps to `ceil(durable/lambda)+2` |

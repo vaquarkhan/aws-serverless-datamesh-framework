@@ -51,9 +51,10 @@ variable "enable_durable_execution" {
 variable "durable_execution_timeout" {
   description = <<-EOT
     Total durable execution budget in seconds across all platform-managed replays
-    within one execution. Configurable workload clock — e.g. 3600 / 5400 / 7200 / 10800
-    (60 / 90 / 120 / 180 minutes). Default 5400. AWS allows up to 31622400 (366 days).
-    Set >= expected backfill wall-clock time when invoking via qualified ARN directly.
+    within one execution (workload clock). Set this to your expected backfill
+    wall-clock time — the framework chains ≤15-minute Lambda segments until this
+    budget is exhausted, overcoming the AWS per-invocation limit.
+    AWS allows up to 31622400 seconds (~366 days). Default 5400.
   EOT
   type        = number
   default     = 5400
