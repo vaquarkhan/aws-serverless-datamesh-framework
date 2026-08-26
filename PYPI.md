@@ -33,7 +33,7 @@ pip install "serverless-data-mesh[dev]"     # pytest, ruff, pre-commit
 |---------|--------|
 | Silent data loss on backfill | VRP `FAIL` blocks Iceberg snapshot |
 | "Job succeeded" is not proof | Cryptographic multiset proof per chunk |
-| Lambda 15-minute limit | Durable Execution + Step Functions (90+ min) |
+| Lambda 15-minute limit | Durable Execution + Step Functions (configurable budget, e.g. 60–180+ min) |
 | Retry duplicates data | IceGuard rollback + `workload_id` checkpoints |
 | Central ETL bottleneck | Per-domain Lambda writer + transaction boundary |
 | Federated blast radius | Producer · Steward · Publisher accounts |

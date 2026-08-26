@@ -14,8 +14,8 @@ variable "lambda_qualified_arn" {
 variable "lambda_invoke_timeout_seconds" {
   description = <<-EOT
     How long Step Functions waits for ONE Lambda segment to return.
-    Must exceed per-invocation Lambda timeout (900s) but is NOT the 90-minute
-    total: use max_resume_attempts for multi-segment backfills.
+    Must exceed per-invocation Lambda timeout (900s) but is NOT the full
+    durable workload budget: use max_resume_attempts for multi-segment backfills.
   EOT
   type        = number
   default     = 960
@@ -24,7 +24,8 @@ variable "lambda_invoke_timeout_seconds" {
 variable "max_resume_attempts" {
   description = <<-EOT
     Max Step Functions resume loops after IceGuard rolled_back.
-    For 90-minute backfills: need at least ceil(5400/900)=6 attempts; default 10 includes buffer.
+    Size as ceil(durable_execution_timeout / lambda_timeout) + buffer
+    (e.g. 180-min / 15-min ≈ 12+2). Prod environments auto-bump if too low.
   EOT
   type        = number
   default     = 10

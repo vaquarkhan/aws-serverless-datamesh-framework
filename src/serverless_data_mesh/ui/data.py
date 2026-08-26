@@ -285,7 +285,7 @@ def _tutorial_steps() -> list[dict[str, str]]:
             "image": "/tutorial/step-05-deploy.png",
             "gif": "/tutorial/step-05-deploy.gif",
             "do": "Package zip + terraform apply with lambda_timeout + durable budget.",
-            "benefit": "Firecracker on-demand Lambda; 90+ min backfills; no idle clusters.",
+            "benefit": "Firecracker on-demand Lambda; configurable durable budget (60–180+ min); no idle clusters.",
             "blurb": "Production compute without EMR sprawl.",
         },
         {

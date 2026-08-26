@@ -302,7 +302,7 @@ print(f"Committed snapshot {snapshot_id}")
 
 ### What we try to achieve
 
-Run 90+ minute backfills on Lambda without duplicating data: each verified chunk is a durable step; timeouts trigger IceGuard rollback; the next invocation resumes from the last checkpoint.
+Run long backfills on Lambda without duplicating data: set `durable_execution_timeout_seconds` to the job budget (e.g. 60 / 90 / 120 / 180 minutes). Each verified chunk is a durable step; timeouts trigger IceGuard rollback; the next invocation resumes from the last checkpoint.
 
 ### Code (local simulation: no Lambda required)
 
