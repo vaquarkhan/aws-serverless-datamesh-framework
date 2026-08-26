@@ -12,6 +12,8 @@
 | **Inventor** | Vaquar Khan |
 | **Copyright** | © 2024–2026 Vaquar Khan — proprietary method (name + invariants) |
 | **Method status** | **Proprietary architectural method** (name + invariants). Reference implementation in this repo is **Apache-2.0**. |
+| **Paper (arXiv)** | [arXiv:2608.14643](https://arxiv.org/abs/2608.14643) — *Proof-Gated Publication* |
+| **Reference gate** | [Proof-gated-publication-PVDM](https://github.com/vaquarkhan/Proof-gated-publication-PVDM) (adversarial suite + benchmarks) |
 | **Canonical URL** | [vaquar-pattern.md](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md) |
 | **Origin** | [Serverless Data Mesh](https://github.com/vaquarkhan/aws-serverless-datamesh-framework) |
 | **Problem class** | Governed domain writes on serverless compute without central ETL |
@@ -298,15 +300,35 @@ Local proof of the gate (no AWS): `serverless-data-mesh demo` — clean write co
 
 ## How to cite
 
-**Canonical URL:**
+**Paper (preferred for academic citation):**
+
+- Preprint: [arXiv:2608.14643](https://arxiv.org/abs/2608.14643) — Viquar Khan, *Proof-Gated Publication: Verify-Before-Commit Content Integrity for Serverless Data-Mesh Lakehouses*
+- Artifact (reference gate + suite): [github.com/vaquarkhan/Proof-gated-publication-PVDM](https://github.com/vaquarkhan/Proof-gated-publication-PVDM)
+
+**Canonical pattern URL (this production framework):**
 
 https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md
 
 **Academic / blog:**
 
-> Vaquar Pattern: Proof-Gated Serverless Lakehouse Publication (PVDM). Serverless Data Mesh reference implementation. https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md
+> Vaquar Pattern / PVDM: Proof-Gated Serverless Lakehouse Publication. Preprint https://arxiv.org/abs/2608.14643 ; production mapping https://github.com/vaquarkhan/aws-serverless-datamesh-framework
 
-**BibTeX:**
+**BibTeX (paper):**
+
+```bibtex
+@misc{khan2026pvdm,
+  author       = {Viquar Khan},
+  title        = {Proof-Gated Publication: Verify-Before-Commit Content Integrity
+                  for Serverless Data-Mesh Lakehouses},
+  year         = {2026},
+  eprint       = {2608.14643},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.DB},
+  url          = {https://arxiv.org/abs/2608.14643}
+}
+```
+
+**BibTeX (pattern / production framework):**
 
 ```bibtex
 @misc{khan2026vaquar,
@@ -315,13 +337,14 @@ https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/v
   year         = {2026},
   version      = {1.0},
   howpublished = {GitHub},
-  url          = {https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md}
+  url          = {https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md},
+  note         = {See also arXiv:2608.14643 and Proof-gated-publication-PVDM}
 }
 ```
 
 **Architecture docs:**
 
-> We apply the **Vaquar Pattern** (PVDM) for domain writes: Physical → Verify → Durable → Metadata, with Steward notarization and VRP-gated Iceberg commits.
+> We apply the **Vaquar Pattern** (PVDM) for domain writes: Physical → Verify → Durable → Metadata, with Steward notarization and VRP-gated Iceberg commits. See arXiv:2608.14643.
 
 **Terraform / runbooks:**
 
@@ -333,7 +356,8 @@ https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/v
 
 | Implementation | Platform | Status |
 |----------------|----------|--------|
-| [Serverless Data Mesh](https://github.com/vaquarkhan/aws-serverless-datamesh-framework) | AWS Lambda + Iceberg + Glue REST | Reference implementation (this repo) |
+| [Serverless Data Mesh](https://github.com/vaquarkhan/aws-serverless-datamesh-framework) | AWS Lambda + Iceberg + Glue REST | Production mapping (this repo) |
+| [Proof-gated-publication-PVDM](https://github.com/vaquarkhan/Proof-gated-publication-PVDM) | Stdlib reference gate + suites | Paper artifact ([arXiv:2608.14643](https://arxiv.org/abs/2608.14643)) |
 | *Your implementation* | Databricks, GCP, Azure, … | Open: submit a PR to list it here |
 
 The pattern is platform-agnostic. This repository is the **reference implementation** for AWS.

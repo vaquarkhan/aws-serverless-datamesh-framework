@@ -10,7 +10,7 @@ This document maps **data mesh concepts** to **named patterns** in the framework
 
 | Data mesh concept | Pattern in framework | Code / infra | Doc |
 |-------------------|----------------------|--------------|-----|
-| **Proof-gated publication** | **Vaquar Pattern (PVDM)** | `IceGuardDurableCoordinator` | **[vaquar-pattern.md](vaquar-pattern.md)** |
+| **Proof-gated publication** | **Vaquar Pattern (PVDM)** | `IceGuardDurableCoordinator` | **[vaquar-pattern.md](vaquar-pattern.md)** · [arXiv:2608.14643](https://arxiv.org/abs/2608.14643) |
 | Domain ownership | Domain Transaction Boundary | `DomainTransactionBoundary` | [domain-contracts.md](domain-contracts.md) |
 | Data product contract | Data Product Contract | `DataProductContract` | This doc §2 |
 | Federated governance | Steward Notary | Steward S3 proofs + Glue catalog | [data-mesh-end-to-end.md](data-mesh-end-to-end.md) |

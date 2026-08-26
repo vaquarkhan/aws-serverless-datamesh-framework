@@ -21,7 +21,7 @@ An open Python framework for **federated data mesh** lakehouse publication on AW
 **domain-oriented ownership**, **data as a product**, and **self-serve write infrastructure** for cross-domain teams.<br/>
 **Producer** domains publish governed **data products** - **Steward** notaries enforce **federated computational governance** - **Publisher** zones expose consumer-ready **Iceberg data products** to the mesh.
 
-[**PyPI**](https://pypi.org/project/serverless-data-mesh/) · [**Docker (GHCR)**](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/pkgs/container/serverless-data-mesh) · [**Walkthrough**](#how-to-start---walkthrough-gifs--benefits) · [**GIF gallery**](docs/visual-tutorial.md) · [**Vaquar Pattern**](docs/vaquar-pattern.md) · [**Deploy**](docs/aws-production-deploy.md)
+[**PyPI**](https://pypi.org/project/serverless-data-mesh/) · [**Docker (GHCR)**](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/pkgs/container/serverless-data-mesh) · [**Walkthrough**](#how-to-start---walkthrough-gifs--benefits) · [**GIF gallery**](docs/visual-tutorial.md) · [**Vaquar Pattern**](docs/vaquar-pattern.md) · [**Paper (arXiv)**](https://arxiv.org/abs/2608.14643) · [**Deploy**](docs/aws-production-deploy.md)
 
 </div>
 
@@ -265,8 +265,24 @@ Most data mesh programs reorganize teams but leave the **write path** centralize
 This framework is the **reference implementation** of the **[Vaquar Pattern](docs/vaquar-pattern.md)**  -  a proprietary architectural method invented by **Vaquar Khan** for proof-gated serverless lakehouse publication.
 
 <p align="center">
+  <img src="docs/images/pvdm-lifecycle-readme.png" alt="PVDM lifecycle: Physical, Verify, Durable, Metadata with fail-closed VRP FAIL branch" width="920" />
+</p>
+
+<p align="center">
+  <img src="docs/images/pvdm-fail-closed-vs-traditional.png" alt="Traditional exit-code publish vs PVDM fail-closed gate: corrupt data never reaches consumers" width="920" />
+</p>
+
+<p align="center">
   <img src="docs/images/vaquar-pattern-proprietary-pvdm.png" alt="The Vaquar Pattern PVDM: proprietary method by Vaquar Khan  -  Physical Verify Durable Metadata" width="920" />
 </p>
+
+**Read the paper & reference gate**
+
+| | |
+|--|--|
+| **arXiv preprint** | [arXiv:2608.14643](https://arxiv.org/abs/2608.14643) — *Proof-Gated Publication: Verify-Before-Commit Content Integrity for Serverless Data-Mesh Lakehouses* |
+| **Reference gate + adversarial suite** | [github.com/vaquarkhan/Proof-gated-publication-PVDM](https://github.com/vaquarkhan/Proof-gated-publication-PVDM) (stdlib gate, 30/30 suite, Spark/Iceberg benchmarks) |
+| **This repo** | Production AWS mapping (IceGuard · veridata-recon · Durable SDK · Glue/Iceberg) |
 
 > **Proof-Gated Serverless Lakehouse Publication (PVDM)**  
 > Physical → Verify → Durable → Metadata  
@@ -279,16 +295,20 @@ This framework is the **reference implementation** of the **[Vaquar Pattern](doc
 | **Inventor** | Vaquar Khan |
 | **Copyright** | © 2024–2026 Vaquar Khan  -  proprietary method (name + invariants) |
 | **Status** | Proprietary method · open reference implementation (Apache-2.0) |
-| **Cite** | [docs/vaquar-pattern.md](docs/vaquar-pattern.md) · [NOTICE](NOTICE) |
+| **Cite** | [arXiv:2608.14643](https://arxiv.org/abs/2608.14643) · [docs/vaquar-pattern.md](docs/vaquar-pattern.md) · [NOTICE](NOTICE) |
 
 <p align="center">
   <img src="docs/images/why-sdm-four-phase-connectivity.png" alt="Vaquar Pattern four phases: Physical, Verify, Durable, Metadata with cross-account flows" width="920" />
 </p>
 
+<p align="center">
+  <img src="docs/images/vaquar-pattern-invariant.png" alt="Vaquar Pattern invariant: metadata commit only when VRP equals PASS" width="920" />
+</p>
+
 | Phase | Component | Outcome | Implemented? |
 |-------|-----------|---------|--------------|
 | **Physical** | IceGuard SafeWriter | Parquet in Publisher S3; checkpoints in Steward S3 | **Yes**  -  `IceGuardDurableCoordinator` + IceGuard watchdog |
-| **Verify** | veridata-recon | VRP proof stored; `validate_then_commit` gate | **Yes**  -  PASS blocks FAIL before metadata |
+| **Verify** | veridata-recon + keyed Steward binding | VRP proof stored; `validate_then_commit` + Metadata TOCTOU gate | **Yes**  -  PASS blocks FAIL before metadata |
 | **Durable** | AWS Durable SDK + Step Functions | 15-min segments → 90+ min workloads | **Yes**  -  `@durable_execution` + SFN resume |
 | **Metadata** | GlueCatalogConnector | Iceberg snapshot **only after** VRP PASS | **Yes**  -  proof-gated commit |
 
@@ -296,6 +316,8 @@ Optional (not a fifth PVDM phase): SparkRules DRL / rules gate before Physical; 
 
 What makes this new vs Outbox, Saga, Medallion, and Glue bookmarks: **Iceberg publication is gated on cryptographic multiset proof**, not executor success.
 
+**See it live:** [How to start (GIF walkthrough)](#how-to-start---walkthrough-gifs--benefits) · `serverless-data-mesh demo` · UI `/walkthrough`  
+**Paper:** [arXiv:2608.14643](https://arxiv.org/abs/2608.14643) · **Reference gate:** [Proof-gated-publication-PVDM](https://github.com/vaquarkhan/Proof-gated-publication-PVDM)  
 **Pattern spec:** [docs/vaquar-pattern.md](docs/vaquar-pattern.md) · **Full blog:** [docs/blog-the-vaquar-pattern.md](docs/blog-the-vaquar-pattern.md) · **Compute model:** [examples/durable-compute/](examples/durable-compute/)
 
 ---
@@ -776,8 +798,10 @@ terraform init && terraform apply
 | Document | What you will learn |
 |----------|---------------------|
 | **[Metadata-driven pipelines](docs/metadata-driven-pipeline.md)** | **Complete guide: YAML schema, bronze/silver/gold, compile, deploy** |
-| **[Visual tutorial (GIFs)](docs/visual-tutorial.md)** | Step-by-step animated walkthrough + control UI Tutorial tab |
 | **[Vaquar Pattern (proprietary method)](docs/vaquar-pattern.md)** | Formal PVDM spec  -  cite this; inventor attribution |
+| **[PVDM paper (arXiv:2608.14643)](https://arxiv.org/abs/2608.14643)** | Proof-gated publication preprint (methods + evaluation) |
+| **[PVDM reference gate](https://github.com/vaquarkhan/Proof-gated-publication-PVDM)** | Stdlib gate + 30-case adversarial suite + Spark benchmarks |
+| **[Visual tutorial (GIFs)](docs/visual-tutorial.md)** | Step-by-step animated walkthrough + control UI Tutorial tab |
 | **[Durable compute example](examples/durable-compute/README.md)** | Lambda dual clocks, Firecracker, on-demand, tfvars |
 | **[Observability (production)](docs/observability-production.md)** | Structured logs, VRP S3 proofs, CloudWatch dashboard, DLQ smoke tests |
 | **[Medallion example](examples/medallion-e2e/README.md)** | One YAML → 6 pipelines + orchestrators |
@@ -865,11 +889,13 @@ Apache-2.0 for the reference implementation code. See [LICENSE](LICENSE).
 
 **PVDM / Vaquar Pattern** is a **proprietary method** of **Vaquar Khan** (© 2024–2026). See [NOTICE](NOTICE) and [docs/vaquar-pattern.md](docs/vaquar-pattern.md).
 
+**Paper:** [arXiv:2608.14643](https://arxiv.org/abs/2608.14643) · **Reference gate + suite:** [Proof-gated-publication-PVDM](https://github.com/vaquarkhan/Proof-gated-publication-PVDM)
+
 ---
 
 <div align="center">
 
-**Serverless Data Mesh** · [PyPI](https://pypi.org/project/serverless-data-mesh/) · [Vaquar Pattern blog](docs/blog-the-vaquar-pattern.md) · [GitHub](https://github.com/vaquarkhan/aws-serverless-datamesh-framework)
+**Serverless Data Mesh** · [PyPI](https://pypi.org/project/serverless-data-mesh/) · [Paper](https://arxiv.org/abs/2608.14643) · [Vaquar Pattern blog](docs/blog-the-vaquar-pattern.md) · [GitHub](https://github.com/vaquarkhan/aws-serverless-datamesh-framework)
 
 *Domain teams own the write path. The mesh proves correctness before consumers see a snapshot.*
 

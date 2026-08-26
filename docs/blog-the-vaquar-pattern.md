@@ -8,6 +8,8 @@
 |--|--|
 | **Pattern** | Vaquar Pattern |
 | **Acronym** | **PVDM** (Physical · Verify · Durable · Metadata) |
+| **Paper (arXiv)** | [arXiv:2608.14643](https://arxiv.org/abs/2608.14643) |
+| **Reference gate** | [Proof-gated-publication-PVDM](https://github.com/vaquarkhan/Proof-gated-publication-PVDM) |
 | **Canonical spec** | [vaquar-pattern.md](vaquar-pattern.md) |
 | **Reference impl** | [Serverless Data Mesh](https://github.com/vaquarkhan/aws-serverless-datamesh-framework) |
 | **Try in 60s** | `pip install serverless-data-mesh && serverless-data-mesh demo` |

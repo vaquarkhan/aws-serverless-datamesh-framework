@@ -10,6 +10,8 @@ An open Python framework for **domain-oriented**, **federated data mesh** teams 
 
 Introduces the **[Vaquar Pattern](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md)** (PVDM): Physical → Verify → Durable → Metadata. Invariant: `commit_metadata ⟹ VRP = PASS`.
 
+**Paper:** [arXiv:2608.14643](https://arxiv.org/abs/2608.14643) · **Reference gate:** [Proof-gated-publication-PVDM](https://github.com/vaquarkhan/Proof-gated-publication-PVDM)
+
 ## Install
 
 ```bash
@@ -84,6 +86,8 @@ outcome = coordinator.run_workload(workload)
 ## Documentation
 
 - [GitHub README](https://github.com/vaquarkhan/aws-serverless-datamesh-framework#readme)
+- [PVDM paper (arXiv:2608.14643)](https://arxiv.org/abs/2608.14643)
+- [PVDM reference gate](https://github.com/vaquarkhan/Proof-gated-publication-PVDM)
 - [Vaquar Pattern](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/vaquar-pattern.md)
 - [Getting started](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/getting-started.md)
 - [PyPI guide](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/pypi.md)
