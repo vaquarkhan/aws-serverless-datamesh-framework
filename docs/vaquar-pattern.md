@@ -229,7 +229,7 @@ outcome = coordinator.run_workload(workload)
 - Multiple domains publish to a **shared Iceberg lakehouse**
 - **Federated AWS accounts** (or planned split)
 - Auditors need **offline-verifiable** evidence per chunk
-- Backfills run **15-90+ minutes** on Lambda
+- Backfills run on Lambda with a **configurable** durable budget (e.g. 60 / 90 / 120 / 180 minutes)
 - "Job succeeded" has burned the organization before
 
 ### Do not apply when

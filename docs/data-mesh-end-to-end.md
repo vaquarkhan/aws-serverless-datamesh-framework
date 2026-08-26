@@ -14,7 +14,7 @@ This document explains how **Serverless Data Mesh** works from first principles 
 4. [Glue Catalog Connector (not Glue ETL)](#4-glue-catalog-connector-not-glue-etl)
 5. [End-to-end journey (one backfill)](#5-end-to-end-journey-one-backfill)
 6. [Transaction boundary (four phases)](#6-transaction-boundary-four-phases)
-7. [90-minute execution on 15-minute Lambda](#7-90-minute-execution-on-15-minute-lambda)
+7. [Configurable durable execution on 15-minute Lambda](#7-configurable-durable-execution-on-15-minute-lambda)
 8. [VRP proofs and audit trail](#8-vrp-proofs-and-audit-trail)
 9. [IAM and cross-account trust](#9-iam-and-cross-account-trust)
 10. [Deploy per account](#10-deploy-per-account)
@@ -177,7 +177,7 @@ Lambda is the **execution unit** for domain writes - not because batch EMR is wr
 
 1. **Domains are independent**: each team ships a small handler, not a shared cluster.
 2. **Cost follows usage**: backfills scale to zero between runs.
-3. **Durable Execution**: AWS now chains 15-minute segments into **90+ minute** jobs.
+3. **Durable Execution**: AWS now chains 15-minute segments into a **configurable** total budget (e.g. 60 / 90 / 120 / 180 minutes).
 4. **IceGuard**: turns Lambda's hard timeout into a **safe rollback + resume** primitive.
 
 ![Lambda execution flow](../images/lambda-execution-flow.png)
@@ -394,18 +394,18 @@ flowchart TB
 
 ---
 
-## 7. 90-minute execution on 15-minute Lambda
+## 7. Configurable durable execution on 15-minute Lambda
 
-Lambda has a **hard 15-minute per-invocation limit**. The framework still supports **90+ minute backfills** via two cooperating clocks:
+Lambda has a **hard 15-minute per-invocation limit**. The framework still supports longer backfills via two cooperating clocks — the **workload clock is configurable**, not fixed at 90 minutes:
 
-| Setting | Default | Meaning |
+| Setting | Example | Meaning |
 |---------|---------|---------|
-| `lambda_per_invocation_timeout_seconds` | 900 | One container segment |
-| `durable_execution_timeout_seconds` | 5400 | Total durable budget (90 min) |
-| `max_resume_attempts` | 10 | Step Functions loops after `rolled_back` |
-| Step Functions `TimeoutSeconds` | 960 | Waits for one segment, not 90 min |
+| `lambda_timeout_seconds` | 900 | One container segment |
+| `durable_execution_timeout_seconds` | 3600 / 5400 / 7200 / **10800** | Total durable budget (60 / 90 / 120 / **180** min) |
+| `max_resume_attempts` | auto `ceil(durable/lambda)+2` | Step Functions loops after `rolled_back` |
+| Step Functions `TimeoutSeconds` | ~960 | Waits for one segment, not the full workload |
 
-See [architecture.md: Long-running execution](architecture.md#long-running-execution-90-minutes) for sequence diagrams and Terraform tuning.
+See [architecture.md: Long-running execution](architecture.md#long-running-execution-configurable-durable-budget) for sequence diagrams and Terraform tuning.
 
 ---
 

@@ -22,11 +22,13 @@ Copy into `infrastructure/terraform/environments/prod/terraform.tfvars` (or meda
 ```hcl
 enable_durable_execution          = true
 lambda_timeout_seconds            = 900     # segment clock (max 15 min)
-durable_execution_timeout_seconds = 5400    # workload clock (90 min)
+# Workload clock — configurable; examples:
+#   3600 = 60 min | 5400 = 90 min | 7200 = 120 min | 10800 = 180 min
+durable_execution_timeout_seconds = 10800   # e.g. 180 min total budget
 durable_retention_days            = 14
 lambda_memory_mb                  = 4096
 iceguard_rollback_threshold_ms    = 30000   # rollback 30s before hard timeout
-max_resume_attempts               = 10
+max_resume_attempts               = 14      # auto-bumped if too low for durable÷segment
 resume_wait_seconds               = 60
 sfn_invoke_timeout_buffer_seconds = 60
 ```
@@ -37,6 +39,14 @@ sfn_invoke_timeout_buffer_seconds = 60
 lambda_timeout_seconds            = 300     # 5 min segments
 durable_execution_timeout_seconds = 3600    # 60 min total
 iceguard_rollback_threshold_ms    = 20000
+```
+
+### Other common workload budgets
+
+```hcl
+durable_execution_timeout_seconds = 5400    # 90 min
+# durable_execution_timeout_seconds = 7200  # 120 min
+# durable_execution_timeout_seconds = 10800 # 180 min
 ```
 
 ### Longer durable budget (large backfills)

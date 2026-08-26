@@ -104,7 +104,7 @@ cat response.json
 ### `modules/lambda`
 
 - `timeout`: per-invocation container limit (**max 900s / 15 min**, AWS hard cap)
-- `durable_config.execution_timeout`: total durable budget (default **5400s / 90 min**)
+- `durable_config.execution_timeout`: total durable budget (**configurable**; default **5400s / 90 min** — set 10800 for 180 min, etc.)
 - `durable_config.retention_period`: durable checkpoint retention days (default 14)
 - Publishes `live` alias (**required** for durable invocation)
 
@@ -118,7 +118,7 @@ State machine routes on handler `outcome`:
 | `rolled_back` | Wait 60s → re-invoke (up to `max_resume_attempts`) |
 | `verification_failed` | Fail (inspect VRP proofs in S3) |
 
-Each `lambda:invoke` task uses `TimeoutSeconds` ≈ Lambda timeout + 60s (waits for **one** 15-min segment, not the full 90 minutes). For a 90-minute backfill you need at least `ceil(5400/900) = 6` resume attempts; prod auto-bumps `max_resume_attempts` if set too low.
+Each `lambda:invoke` task uses `TimeoutSeconds` ≈ Lambda timeout + 60s (waits for **one** 15-min segment, not the full durable budget). Size resumes with `ceil(durable_execution_timeout_seconds / lambda_timeout_seconds)`; prod auto-bumps `max_resume_attempts` if set too low.
 
 Customize in `terraform.tfvars`:
 

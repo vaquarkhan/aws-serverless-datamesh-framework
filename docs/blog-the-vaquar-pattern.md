@@ -31,7 +31,7 @@
 5. [PVDM: four phases in depth](#5-pvdm-four-phases-in-depth)
 6. [Three accounts: Producer, Steward, Publisher](#6-three-accounts-producer-steward-publisher)
 7. [End-to-end journey: one chunk, start to finish](#7-end-to-end-journey-one-chunk-start-to-finish)
-8. [Two clocks: 15 minutes vs 90 minutes](#8-two-clocks-15-minutes-vs-90-minutes)
+8. [Two clocks: 15-minute segments vs configurable durable budget](#8-two-clocks-15-minute-segments-vs-configurable-durable-budget)
 9. [The verification gate: seeing failure work](#9-the-verification-gate-seeing-failure-work)
 10. [Multi-domain mesh transactions](#10-multi-domain-mesh-transactions)
 11. [How this differs from every alternative](#11-how-this-differs-from-every-alternative)
@@ -366,7 +366,7 @@ sequenceDiagram
     ATH->>S3P: Query new snapshot
 ```
 
-### Timeline (typical 90-minute backfill)
+### Timeline (example multi-hour backfill)
 
 | Time | Event | Outcome |
 |------|-------|---------|
@@ -390,17 +390,17 @@ sequenceDiagram
 
 ---
 
-## 8. Two clocks: 15 minutes vs 90 minutes
+## 8. Two clocks: 15-minute segments vs configurable durable budget
 
 <p align="center">
   <img src="images/lambda-execution-flow.png" alt="Lambda durable execution across segments" width="960" />
 </p>
 
-Lambda has a **hard 900-second container limit**. Serious backfills need **90+ minutes**. The Vaquar Pattern uses **two cooperating clocks**:
+Lambda has a **hard 900-second container limit**. Serious backfills often need **60, 90, 120, 180 minutes or more**. The Vaquar Pattern uses **two cooperating clocks** — the workload clock is **Terraform-tunable**, not fixed at 90 minutes:
 
 ```mermaid
 gantt
-    title Vaquar Pattern: 90-minute workload across Lambda segments
+    title Vaquar Pattern: multi-segment workload (budget = durable_execution_timeout)
     dateFormat X
     axisFormat %M min
 
@@ -414,11 +414,11 @@ gantt
     Final commit metadata :84, 90
 ```
 
-| Clock | Setting | Default | Role |
+| Clock | Setting | Example | Role |
 |-------|---------|---------|------|
 | **Container** | Lambda `timeout` | 900s | One IceGuard-protected segment |
-| **Workload** | `durable_execution_timeout` | 5400s | Total budget across replays |
-| **Orchestration** | SFN `max_resume_attempts` | ≥ 8 | Chains segments |
+| **Workload** | `durable_execution_timeout` | 3600 / 5400 / 7200 / **10800** s | Total budget (60 / 90 / 120 / **180** min) |
+| **Orchestration** | SFN `max_resume_attempts` | `ceil(durable/lambda)+2` | Chains segments |
 | **Watchdog** | `rollback_threshold_ms` | ~30s before limit | IceGuard rollback margin |
 
 **Linkage key:** `workload_id` appears in checkpoints, proofs, durable steps, and snapshot properties.
@@ -557,7 +557,7 @@ make gate-demo
 - Multiple domains → shared Iceberg lakehouse
 - Federated AWS accounts (or planned)
 - Compliance beyond log statements
-- Backfills 15-90+ minutes on Lambda
+- Backfills with a **configurable** durable budget on Lambda (e.g. 60–180+ min)
 - "Job succeeded" has burned you before
 
 ### When to defer

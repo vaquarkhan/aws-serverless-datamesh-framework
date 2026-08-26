@@ -92,18 +92,18 @@ resume_wait_seconds               = 60
 # iceguard_rollback_threshold_ms  = null  # auto-derived from lambda_timeout_seconds
 ```
 
-### 90-minute backfills (two clocks)
+### Configurable durable backfills (two clocks)
 
 | Setting | Meaning |
 |---------|---------|
 | `lambda_timeout_seconds = 900` | AWS hard max per container (15 min) |
-| `durable_execution_timeout_seconds = 5400` | Total durable execution budget (90 min) |
+| `durable_execution_timeout_seconds` | **Configurable** total budget — e.g. `3600` / `5400` / `7200` / `10800` (60 / 90 / 120 / 180 min) |
 | `lambda_memory_mb` | Chunk throughput: raise if p99 duration nears timeout |
 | `sfn_invoke_timeout_buffer_seconds` | SFN `TimeoutSeconds` = lambda + buffer |
 | `max_resume_attempts` | Resume loops after `rolled_back`; prod auto-bumps to `ceil(durable/lambda)+2` |
 | `iceguard_rollback_threshold_ms` | Null = auto (~33ms × lambda timeout, clamped 10s–60s) |
 
-Step Functions waits **~960s per invoke** (one segment), not 90 minutes. A 90-minute job typically needs ~6 segment invocations plus resume buffer.
+Step Functions waits **~960s per invoke** (one segment), not the full workload budget. Size resumes from `ceil(durable_execution_timeout_seconds / lambda_timeout_seconds) + buffer`.
 
 After apply, verify:
 

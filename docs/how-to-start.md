@@ -94,7 +94,7 @@ On Mac/Linux use `\` instead of `^` for line breaks.
 |--|--|
 | **You do** | Package Lambda zip + `terraform apply` (see [durable-compute](../examples/durable-compute/README.md)) |
 | **You get** | Durable Lambda on Firecracker, on-demand scale-to-zero, dual clocks (e.g. 900s × 5400s) |
-| **Benefit** | 90+ minute backfills without idle EMR/Glue clusters |
+| **Benefit** | Configurable durable backfills (e.g. 60–180+ min) without idle EMR/Glue clusters |
 
 ### Step 6 — Observe & attest
 
