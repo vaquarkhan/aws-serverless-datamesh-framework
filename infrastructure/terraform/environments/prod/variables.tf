@@ -130,7 +130,11 @@ variable "lambda_memory_mb" {
 }
 
 variable "durable_execution_timeout_seconds" {
-  description = "Total durable execution budget in seconds (configurable workload clock). Examples: 3600=60m, 5400=90m, 7200=120m, 10800=180m. AWS allows up to 31622400 (~1 year)."
+  description = <<-EOT
+    Total durable execution budget in seconds (workload clock).
+    Set to your backfill wall-clock needs — segments chain past the 15-minute
+    Lambda limit until this budget is used. AWS max ~31622400 (~1 year).
+  EOT
   type        = number
   default     = 5400
 

@@ -16,7 +16,7 @@ output "alias_name" {
 }
 
 output "durable_execution_timeout" {
-  description = "Total durable execution budget in seconds (e.g. 5400=90m, 10800=180m)."
+  description = "Total durable execution budget in seconds (workload clock; set to your backfill needs)."
   value       = var.enable_durable_execution ? var.durable_execution_timeout : null
 }
 

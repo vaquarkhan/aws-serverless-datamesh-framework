@@ -35,7 +35,7 @@ Step Functions ──resume loop──► Lambda :live (Durable)
    committed | verification_failed | rolled_back → retry
 ```
 
-**Compute model:** Durable Lambda on Firecracker microVMs · on-demand scale-to-zero · dual clocks (`lambda_timeout_seconds` ≤ 900 + `durable_execution_timeout_seconds` default 5400). See [examples/durable-compute](../../examples/durable-compute/).
+**Compute model:** Durable Lambda on Firecracker microVMs · on-demand scale-to-zero · dual clocks (`lambda_timeout_seconds` ≤ 900 + configurable `durable_execution_timeout_seconds`). See [examples/durable-compute](../../examples/durable-compute/).
 
 ## Prerequisites
 
@@ -104,7 +104,7 @@ cat response.json
 ### `modules/lambda`
 
 - `timeout`: per-invocation container limit (**max 900s / 15 min**, AWS hard cap)
-- `durable_config.execution_timeout`: total durable budget (**configurable**; default **5400s / 90 min** — set 10800 for 180 min, etc.)
+- `durable_config.execution_timeout`: total durable budget (**configurable** — set to your backfill needs; chains past the 15-min Lambda limit)
 - `durable_config.retention_period`: durable checkpoint retention days (default 14)
 - Publishes `live` alias (**required** for durable invocation)
 
@@ -124,9 +124,10 @@ Customize in `terraform.tfvars`:
 
 ```hcl
 lambda_timeout_seconds            = 900
-durable_execution_timeout_seconds = 5400
+# Set durable budget to your backfill wall-clock (overcomes the 15-min Lambda limit)
+durable_execution_timeout_seconds = 10800
 lambda_memory_mb                  = 4096
-max_resume_attempts               = 10
+max_resume_attempts               = 14
 ```
 
 After apply: `terraform output execution_timeouts`

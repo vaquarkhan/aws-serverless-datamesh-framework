@@ -177,7 +177,7 @@ Lambda is the **execution unit** for domain writes - not because batch EMR is wr
 
 1. **Domains are independent**: each team ships a small handler, not a shared cluster.
 2. **Cost follows usage**: backfills scale to zero between runs.
-3. **Durable Execution**: AWS now chains 15-minute segments into a **configurable** total budget (e.g. 60 / 90 / 120 / 180 minutes).
+3. **Durable Execution**: AWS now chains 15-minute segments into a **configurable** total budget (any duration you set in Terraform).
 4. **IceGuard**: turns Lambda's hard timeout into a **safe rollback + resume** primitive.
 
 ![Lambda execution flow](../images/lambda-execution-flow.png)
@@ -396,14 +396,14 @@ flowchart TB
 
 ## 7. Configurable durable execution on 15-minute Lambda
 
-Lambda has a **hard 15-minute per-invocation limit**. The framework still supports longer backfills via two cooperating clocks — the **workload clock is configurable**, not fixed at 90 minutes:
+Lambda has a **hard 15-minute per-invocation limit**. The framework overcomes that with two cooperating clocks — set the **workload clock** in Terraform to whatever wall-clock your backfill needs:
 
-| Setting | Example | Meaning |
-|---------|---------|---------|
-| `lambda_timeout_seconds` | 900 | One container segment |
-| `durable_execution_timeout_seconds` | 3600 / 5400 / 7200 / **10800** | Total durable budget (60 / 90 / 120 / **180** min) |
-| `max_resume_attempts` | auto `ceil(durable/lambda)+2` | Step Functions loops after `rolled_back` |
-| Step Functions `TimeoutSeconds` | ~960 | Waits for one segment, not the full workload |
+| Setting | Meaning |
+|---------|---------|
+| `lambda_timeout_seconds` (≤ 900) | One container segment |
+| `durable_execution_timeout_seconds` | **Configurable** total durable budget (any duration you set) |
+| `max_resume_attempts` | Step Functions loops after `rolled_back` (auto `ceil(durable/lambda)+2`) |
+| Step Functions `TimeoutSeconds` | Waits for one segment, not the full workload |
 
 See [architecture.md: Long-running execution](architecture.md#long-running-execution-configurable-durable-budget) for sequence diagrams and Terraform tuning.
 

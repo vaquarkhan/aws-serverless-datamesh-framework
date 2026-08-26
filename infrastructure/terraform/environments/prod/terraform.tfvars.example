@@ -25,19 +25,20 @@ trust_dashboard_domains     = ["orders", "payments", "inventory"]
 # enable_lake_formation_governance = true
 # consumer_principal_arn = "arn:aws:iam::123456789012:role/athena-consumer"
 
-lambda_timeout_seconds              = 600   # 10 min segments in dev
-durable_execution_timeout_seconds   = 3600  # 1 hour total
+lambda_timeout_seconds              = 600   # 10 min segments in this example
+# Workload clock: set to your backfill wall-clock (overcomes the 15-min Lambda limit)
+durable_execution_timeout_seconds   = 3600
 durable_retention_days              = 14
 lambda_memory_mb                    = 2048
 max_resume_attempts                 = 8
 sfn_invoke_timeout_buffer_seconds   = 60
 resume_wait_seconds                 = 30
 
-# Production backfills (uncomment / override):
+# Longer production backfills (uncomment / override):
 # lambda_timeout_seconds            = 900   # 15 min: AWS max per invocation
-# durable_execution_timeout_seconds = 5400  # 90 min total durable budget
+# durable_execution_timeout_seconds = 10800 # set to whatever your job needs
 # lambda_memory_mb                  = 4096
-# max_resume_attempts               = 10
+# max_resume_attempts               = 14
 
 # Optional: also page an existing platform topic
 # alarm_sns_topic_arns = ["arn:aws:sns:us-east-2:123456789012:platform-alerts"]

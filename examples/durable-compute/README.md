@@ -1,9 +1,9 @@
 # Durable compute example — Lambda dual clocks
 
-Configure **Durable Lambda**, Firecracker isolation (AWS-managed), **on-demand** scaling, and **tunable run times** for domain writers.
+Configure **Durable Lambda**, Firecracker isolation (AWS-managed), **on-demand** scaling, and a **configurable workload clock** so jobs can run longer than the AWS 15-minute per-invoke limit.
 
 <p align="center">
-  <img src="../../docs/images/durable-lambda-compute-model.png" alt="Durable Lambda compute model" width="920" />
+  <img src="../../docs/images/durable-lambda-compute-model.png" alt="Durable Lambda compute model: Firecracker, dual clocks, configurable durable budget" width="920" />
 </p>
 
 ## What this demonstrates
@@ -13,7 +13,8 @@ Configure **Durable Lambda**, Firecracker isolation (AWS-managed), **on-demand**
 | Durable Lambda? | **Yes** — `enable_durable_execution = true` |
 | MicroVM? | **Firecracker** under Lambda (AWS-managed) |
 | On-demand EC2? | **No** — on-demand **Lambda** only |
-| Configurable time? | **Yes** — per-invoke + durable budget |
+| Overcome 15-min limit? | **Yes** — chain segments via Durable Execution + Step Functions |
+| Configurable time? | **Yes** — set `durable_execution_timeout_seconds` to your backfill needs |
 
 ## Sample `terraform.tfvars`
 
@@ -21,13 +22,13 @@ Copy into `infrastructure/terraform/environments/prod/terraform.tfvars` (or meda
 
 ```hcl
 enable_durable_execution          = true
-lambda_timeout_seconds            = 900     # segment clock (max 15 min)
-# Workload clock — configurable; examples:
-#   3600 = 60 min | 5400 = 90 min | 7200 = 120 min | 10800 = 180 min
-durable_execution_timeout_seconds = 10800   # e.g. 180 min total budget
+lambda_timeout_seconds            = 900     # segment clock (AWS max 15 min)
+# Workload clock: set to your job's wall-clock. Segments chain until this budget
+# is used — this is how the framework overcomes the 15-minute Lambda limit.
+durable_execution_timeout_seconds = 10800
 durable_retention_days            = 14
 lambda_memory_mb                  = 4096
-iceguard_rollback_threshold_ms    = 30000   # rollback 30s before hard timeout
+iceguard_rollback_threshold_ms    = 30000   # rollback before hard timeout
 max_resume_attempts               = 14      # auto-bumped if too low for durable÷segment
 resume_wait_seconds               = 60
 sfn_invoke_timeout_buffer_seconds = 60
@@ -37,55 +38,12 @@ sfn_invoke_timeout_buffer_seconds = 60
 
 ```hcl
 lambda_timeout_seconds            = 300     # 5 min segments
-durable_execution_timeout_seconds = 3600    # 60 min total
+durable_execution_timeout_seconds = 3600    # set total budget for your job
 iceguard_rollback_threshold_ms    = 20000
-```
-
-### Other common workload budgets
-
-```hcl
-durable_execution_timeout_seconds = 5400    # 90 min
-# durable_execution_timeout_seconds = 7200  # 120 min
-# durable_execution_timeout_seconds = 10800 # 180 min
-```
-
-### Longer durable budget (large backfills)
-
-```hcl
-lambda_timeout_seconds            = 900
-durable_execution_timeout_seconds = 21600   # 6 hours
-max_resume_attempts               = 30
-```
-
-## Handler (Durable Execution)
-
-Domain writers use the Durable SDK decorator (see `examples/domain_writer/handler.py`):
-
-```python
-from aws_durable_execution_sdk_python import DurableContext, durable_execution
-
-@durable_execution
-def handler(event: dict, context: DurableContext) -> dict:
-    ...
-```
-
-Terraform attaches `durable_config` and the alias `:live` required for durable invokes.
-
-## Local UI review
-
-```bash
-# From repo root
-serverless-data-mesh apply \
-  --contract examples/medallion-e2e/northstar.mesh.yaml \
-  --output examples/medallion-e2e/generated
-
-serverless-data-mesh ui \
-  --path examples/medallion-e2e/generated \
-  --host 127.0.0.1 --port 8765 --open
 ```
 
 ## Related
 
-- [Vaquar Pattern / proprietary PVDM](../../docs/vaquar-pattern.md)
 - [Architecture — dual clocks](../../docs/architecture.md#durable-lambda-compute-model)
-- [Prod Terraform variables](../../infrastructure/terraform/environments/prod/variables.tf)
+- [Terraform guide](../../docs/terraform-guide.md)
+- [Vaquar Pattern / proprietary PVDM](../../docs/vaquar-pattern.md)

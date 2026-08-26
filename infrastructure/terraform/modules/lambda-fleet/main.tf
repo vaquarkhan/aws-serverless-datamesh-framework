@@ -36,6 +36,8 @@ variable "enable_durable_execution" {
 }
 
 variable "durable_execution_timeout" {
+  # Workload clock: set to your backfill wall-clock. Segments chain past the
+  # 15-minute Lambda limit until this budget is used.
   type    = number
   default = 5400
 }
