@@ -14,7 +14,7 @@ from serverless_data_mesh.config import MeshSettings
 from serverless_data_mesh.orchestration import IceGuardDurableCoordinator
 from serverless_data_mesh.verification import VRPProofGenerator
 
-from .io import records_from_source, write_parquet_chunk
+from .io import records_from_source, sink_reader as read_staged_sink, write_parquet_chunk
 from .rules_io import enrich_records_with_rules
 from .workload import build_workload
 
@@ -53,8 +53,14 @@ def handler(event: dict[str, Any], context: DurableContext) -> dict[str, Any]:
 
     result = coordinator.execute_workload(
         workload,
-        batch_writer=lambda start, end: write_parquet_chunk(workload.target_uri, start, end),
+        batch_writer=lambda start, end: write_parquet_chunk(
+            workload.target_uri,
+            start,
+            end,
+            source_uri=workload.source_uri,
+        ),
         source_reader=source_reader,
+        sink_reader=lambda start, end: read_staged_sink(workload.target_uri, start, end),
     )
 
     logger.info("Domain write finished: %s", json.dumps(result, default=str))

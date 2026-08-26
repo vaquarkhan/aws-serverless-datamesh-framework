@@ -284,9 +284,9 @@ Is PVDM implemented properly in `aws-serverless-datamesh-framework`?
 | Phase | Required behavior | Code / infra evidence | Status |
 |-------|-------------------|----------------------|--------|
 | **P** Physical | Chunked write + timeout rollback + checkpoints | `IceGuardDurableCoordinator` + IceGuard `protect` | **Complete** |
-| **V** Verify | Multiset VRP; no metadata on FAIL | `VRPProofGenerator` + `validate_then_commit` | **Complete** |
+| **V** Verify | Keyed multiset VRP + Steward-signed binding; sink_reader required | `VRPProofGenerator` / fallback + `pvdm_binding`; `SDM_VRP_HMAC_KEY` | **Complete** |
 | **D** Durable | Step replay across Lambda segments | `@durable_execution`, durable steps, SFN resume | **Complete** |
-| **M** Metadata | Commit only after PASS | Glue REST adapter after verification | **Complete** |
+| **M** Metadata | Commit only after PASS; signature, target, nonce, TOCTOU | `metadata_commit_gate` inside `durable_commit_metadata` | **Complete** |
 | Dual clocks | Configurable per-invoke + durable budget | Terraform `lambda_timeout_seconds`, `durable_execution_timeout_seconds` | **Complete** |
 | Three accounts | Producer / Steward / Publisher | `environments/multi-account/` | **Complete** |
 
