@@ -25,6 +25,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+import os
+
+# CI / local benchmark: use Steward demo keys (not production secrets).
+os.environ.setdefault("SDM_ALLOW_UNSIGNED_PROOF", "1")
+os.environ.setdefault("SDM_VRP_HMAC_KEY", "a" * 64)
+os.environ.setdefault("SDM_STEWARD_SIGN_KEY", "b" * 64)
+
 try:
     import veridata_recon as vr  # noqa: F401
 except ImportError:
