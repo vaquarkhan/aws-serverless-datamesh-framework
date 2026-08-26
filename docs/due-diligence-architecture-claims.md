@@ -78,6 +78,8 @@ Metadata (GlueCatalogConnector / PyIceberg — only if VRP = PASS)
 | N10 no unsigned override | keys required unless `SDM_ALLOW_UNSIGNED_PROOF=1` (demo only) |
 | P·V·D·M phases | IceGuard → VRP+keyed binding → Durable SDK → Glue/PyIceberg behind commit gate |
 
+**Paper & artifacts:** [arXiv:2608.14643](https://arxiv.org/abs/2608.14643) · [Proof-gated-publication-PVDM](https://github.com/vaquarkhan/Proof-gated-publication-PVDM) (reference gate; not claimed identical to this production framework).
+
 Steward keys (`SDM_VRP_HMAC_KEY`, `SDM_STEWARD_SIGN_KEY`) must live in the Steward trust domain (N2/N17), not be readable by untrusted Producer code in production.
 
 ---
