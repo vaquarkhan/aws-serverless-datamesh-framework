@@ -14,8 +14,9 @@ import hmac
 import json
 import os
 import secrets
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 MOD = 2**256
 
@@ -26,9 +27,7 @@ def canonical_row(row: Mapping[str, Any], fields: Iterable[str] | None = None) -
         projected = {k: row.get(k) for k in fields}
     else:
         projected = dict(row)
-    return json.dumps(projected, sort_keys=True, separators=(",", ":"), default=str).encode(
-        "utf-8"
-    )
+    return json.dumps(projected, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
 
 
 def _element_hash(key: bytes, blob: bytes) -> int:

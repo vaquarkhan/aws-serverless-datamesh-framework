@@ -15,7 +15,9 @@ os.environ.setdefault("AWS_REGION", "us-east-1")
 os.environ.setdefault("SDM_VRP_HMAC_KEY", "a" * 64)
 os.environ.setdefault("SDM_STEWARD_SIGN_KEY", "b" * 64)
 os.environ.setdefault("SDM_ALLOW_UNSIGNED_PROOF", "1")
-os.environ.setdefault("SDM_NONCE_LEDGER_DIR", os.path.join(os.environ.get("TEMP", "/tmp"), "sdm-test-nonces"))
+os.environ.setdefault(
+    "SDM_NONCE_LEDGER_DIR", os.path.join(os.environ.get("TEMP", "/tmp"), "sdm-test-nonces")
+)
 
 
 @pytest.fixture

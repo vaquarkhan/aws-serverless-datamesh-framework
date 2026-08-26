@@ -24,7 +24,9 @@ def _local_root() -> Path:
     if raw:
         path = Path(raw)
     else:
-        path = Path(os.environ.get("TMPDIR") or os.environ.get("TEMP") or "/tmp") / "sdm-nonce-ledger"
+        path = (
+            Path(os.environ.get("TMPDIR") or os.environ.get("TEMP") or "/tmp") / "sdm-nonce-ledger"
+        )
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -84,7 +86,9 @@ def claim_nonce(
     if not _claim_local(nonce):
         raise NonceReplayError(f"nonce already used (local ledger): {nonce}")
 
-    bucket = proof_bucket or os.environ.get("VRP_PROOF_BUCKET") or os.environ.get("SDM_PROOF_BUCKET")
+    bucket = (
+        proof_bucket or os.environ.get("VRP_PROOF_BUCKET") or os.environ.get("SDM_PROOF_BUCKET")
+    )
     if bucket and not bucket.startswith("/") and "://" not in bucket:
         if not _claim_s3(nonce, bucket, s3_client=s3_client):
             raise NonceReplayError(f"nonce already used (s3 ledger): {nonce}")

@@ -14,7 +14,8 @@ from serverless_data_mesh.config import MeshSettings
 from serverless_data_mesh.orchestration import IceGuardDurableCoordinator
 from serverless_data_mesh.verification import VRPProofGenerator
 
-from .io import records_from_source, sink_reader as read_staged_sink, write_parquet_chunk
+from .io import records_from_source, write_parquet_chunk
+from .io import sink_reader as read_staged_sink
 from .rules_io import enrich_records_with_rules
 from .workload import build_workload
 
