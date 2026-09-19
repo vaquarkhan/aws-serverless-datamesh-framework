@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-09-19
+
+### Changed
+
+- PyPI project links: Homepage / Documentation / Website → GitHub Pages (`https://vaquarkhan.github.io/aws-serverless-datamesh-framework/`)
+- PYPI.md: surface website + paper PDF at top
+
 ## [1.4.1] - 2026-09-19
 
 ### Fixed

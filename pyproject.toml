@@ -85,11 +85,13 @@ publish = [
 serverless-data-mesh = "serverless_data_mesh.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/vaquarkhan/aws-serverless-datamesh-framework"
-Documentation = "https://github.com/vaquarkhan/aws-serverless-datamesh-framework#readme"
+Homepage = "https://vaquarkhan.github.io/aws-serverless-datamesh-framework/"
+Documentation = "https://vaquarkhan.github.io/aws-serverless-datamesh-framework/"
+Website = "https://vaquarkhan.github.io/aws-serverless-datamesh-framework/"
 Repository = "https://github.com/vaquarkhan/aws-serverless-datamesh-framework"
 Changelog = "https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/CHANGELOG.md"
 "PyPI" = "https://pypi.org/project/serverless-data-mesh/"
+Paper = "https://arxiv.org/pdf/2608.14643"
 
 [tool.hatch.version]
 path = "VERSION"
