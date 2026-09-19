@@ -51,8 +51,13 @@ resume_wait_seconds                 = 30
 # Optional: also page an existing platform topic
 # alarm_sns_topic_arns = ["arn:aws:sns:us-east-2:123456789012:platform-alerts"]
 
-# Networking (default = NO VPC — Lambda on AWS-managed network, not account default VPC)
-# lambda_subnet_ids         = ["subnet-aaa", "subnet-bbb"]
-# lambda_security_group_ids = ["sg-cccc"]
-# IAM: Terraform creates {name_prefix}-domain-writer + Step Functions roles automatically.
-# When subnets are set, AWSLambdaVPCAccessExecutionRole is already attached.
+# Networking — choose ONE mode (Design UI writes these into terraform.contract.txt):
+# vpc_mode = "none"     # default: NO VPC (AWS-managed network — not account default VPC)
+# vpc_mode = "existing" # attach to your subnets/SGs:
+#   lambda_subnet_ids         = ["subnet-aaa", "subnet-bbb"]
+#   lambda_security_group_ids = ["sg-cccc"]
+# vpc_mode = "create"   # Terraform creates private VPC + Lambda SG:
+#   vpc_cidr_block = "10.80.0.0/16"
+#   vpc_az_count   = 2
+#
+# IAM: Terraform always creates {name_prefix}-domain-writer (+ SFN/EventBridge). Do not paste role ARNs.

@@ -176,17 +176,19 @@ Key variables:
 | `durable_execution_timeout_seconds` | Total job budget |
 | `sfn_lambda_invoke_mode` | `sync` (AWS ≤15 min) or `async_callback` (LMI ≤90 min) |
 | `enable_lambda_managed_instances` | Opt-in LMI + capacity provider ARN |
-| `lambda_subnet_ids` / `lambda_security_group_ids` | Optional VPC attach (default **empty = no VPC**) |
+| `lambda_subnet_ids` / `lambda_security_group_ids` | Used when `vpc_mode=existing` |
+| `vpc_mode` | `none` (default) · `existing` · `create` |
+| `vpc_cidr_block` / `vpc_az_count` | Used when `vpc_mode=create` |
 
 ### VPC & IAM (defaults — honest answers)
 
 | Topic | Default | Notes |
 |-------|---------|--------|
-| **VPC** | **None** | Lambdas are **not** placed in your account default VPC. Empty `subnet_ids` = AWS-managed network (public AWS APIs). Set `lambda_subnet_ids` + `lambda_security_group_ids` only when you need private ENIs (RDS, private endpoints, etc.). |
-| **IAM** | **Terraform-created** | Module `iam` creates `{name_prefix}-domain-writer` (Lambda) and Step Functions / EventBridge roles with least-privilege S3/Glue/CW policies. You do **not** paste role ARNs into the Design UI. VPC ENI policy (`AWSLambdaVPCAccessExecutionRole`) is attached so optional VPC works. |
-| **Accounts** | Placeholders in Design | Replace Producer / Steward / Publisher 12-digit IDs before real multi-account deploy. |
+| **VPC** | **`none`** | Lambdas are **not** in your account default VPC. `none` = AWS-managed network. **`existing`** = your subnet/SG IDs. **`create`** = Terraform module `vpc-lambda` builds a private VPC + Lambda SG. |
+| **IAM** | **Terraform-created** | `{name_prefix}-domain-writer` (+ Step Functions / EventBridge). Design UI asks for **account IDs + region + VPC mode** — never role ARNs. |
+| **Accounts** | Single or three | Design → Create data mesh: single-account (POC) or Producer · Steward · Publisher. |
 
-Design Studio **AWS deploy** fields write accounts + networking notes into `mesh.yaml` and `terraform.contract.txt`.
+Design Studio **Create data mesh** writes region, accounts, and networking into `mesh.yaml` + `terraform.contract.txt`.
 
 ### First run
 

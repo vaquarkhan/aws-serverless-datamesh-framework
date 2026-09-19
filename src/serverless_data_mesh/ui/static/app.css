@@ -436,6 +436,64 @@ code, .mono { font-family: var(--mono); font-size: 0.82rem; }
 }
 .aws-hint code { font-family: var(--mono); font-size: 0.72rem; color: var(--accent); }
 .aws-hint strong { color: var(--gold); font-weight: 600; }
+
+.create-mesh {
+  margin-bottom: 1rem;
+  padding: 1rem 1.15rem 1.1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(18,36,30,0.95), rgba(8,16,13,0.92));
+  box-shadow: var(--shadow);
+}
+.create-mesh-head {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+.create-mesh-head h2 {
+  margin: 0.15rem 0 0; font-family: var(--display); font-size: 1.35rem; font-weight: 600;
+}
+.create-mesh-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+@media (max-width: 1100px) {
+  .create-mesh-grid { grid-template-columns: 1fr; }
+}
+.create-mesh .create-step {
+  margin: 0; padding: 0.75rem; border: 1px solid var(--line); border-radius: 14px;
+  background: rgba(0,0,0,0.22); border-bottom: 1px solid var(--line);
+}
+.choice-row {
+  display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.55rem;
+}
+.choice-card {
+  display: grid; grid-template-columns: auto 1fr; column-gap: 0.55rem; row-gap: 0.1rem;
+  align-items: start;
+  padding: 0.55rem 0.65rem; border-radius: 12px;
+  border: 1px solid var(--line); background: rgba(0,0,0,0.22);
+  cursor: pointer; transition: 0.15s ease;
+}
+.choice-card:hover { border-color: rgba(61,207,142,0.45); }
+.choice-card:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.choice-card input {
+  margin-top: 0.2rem; grid-row: 1 / span 2;
+  accent-color: var(--accent);
+}
+.choice-card strong { font-size: 0.86rem; color: var(--text); }
+.choice-card span { font-size: 0.72rem; color: var(--muted); line-height: 1.35; grid-column: 2; }
+.design-multi-only.is-hidden,
+.design-vpc-existing.is-hidden,
+.design-vpc-create.is-hidden { display: none !important; }
+
+.studio-inspector {
+  max-height: calc(100vh - 200px);
+  overflow: auto;
+}
 .inspector-actions { display: flex; flex-direction: column; gap: 0.4rem; }
 .design-json { max-height: 280px; flex: 1; margin: 0; }
 .design-export summary {

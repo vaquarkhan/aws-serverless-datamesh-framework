@@ -69,45 +69,99 @@
     };
   }
 
+  function splitIds(raw) {
+    return String(raw || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  function radioValue(name, fallback) {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el?.value || fallback;
+  }
+
+  function syncAccountFields() {
+    const multi = radioValue("design-acct-mode", "single") === "multi";
+    document.querySelectorAll(".design-multi-only").forEach((el) => {
+      el.classList.toggle("is-hidden", !multi);
+    });
+    if (!multi) {
+      const p = $("#design-acct-producer")?.value || "111111111111";
+      if ($("#design-acct-steward")) $("#design-acct-steward").value = p;
+      if ($("#design-acct-publisher")) $("#design-acct-publisher").value = p;
+    }
+  }
+
+  function syncVpcFields() {
+    const mode = radioValue("design-vpc-mode", "none");
+    document.querySelectorAll(".design-vpc-existing").forEach((el) => {
+      el.classList.toggle("is-hidden", mode !== "existing");
+    });
+    document.querySelectorAll(".design-vpc-create").forEach((el) => {
+      el.classList.toggle("is-hidden", mode !== "create");
+    });
+    const hint = $("#design-aws-hint");
+    if (!hint) return;
+    if (mode === "existing") {
+      hint.innerHTML =
+        "Attach writers to <strong>your</strong> private subnets + SG. Values go into <code>mesh.yaml</code> and <code>terraform.contract.txt</code> as <code>vpc_mode=existing</code>.";
+    } else if (mode === "create") {
+      hint.innerHTML =
+        "Terraform module <code>vpc-lambda</code> will create a private VPC + subnets + Lambda SG (<code>vpc_mode=create</code>). IAM still auto-created.";
+    } else {
+      hint.innerHTML =
+        "Default = <strong>no VPC</strong> (AWS-managed Lambda network). This is <em>not</em> your account default VPC. Choose existing or create only for private ENIs.";
+    }
+  }
+
   function buildContract() {
     const org = ($("#design-org")?.value || "xyz-org").trim();
     const prefix = ($("#design-prefix")?.value || "xyz").trim();
     const region = ($("#design-region")?.value || "us-east-2").trim();
-    const producer = ($("#design-acct-producer")?.value || "111111111111").trim();
-    const steward = ($("#design-acct-steward")?.value || "222222222222").trim();
-    const publisher = ($("#design-acct-publisher")?.value || "333333333333").trim();
-    const netMode = $("#design-networking")?.value || "none";
-    const subnets = ($("#design-subnets")?.value || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const sgs = ($("#design-sgs")?.value || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const networking =
-      netMode === "vpc"
-        ? {
-            mode: "vpc",
-            note: "Pass lambda_subnet_ids / lambda_security_group_ids in terraform.tfvars",
-            subnet_ids: subnets,
-            security_group_ids: sgs,
-          }
-        : {
-            mode: "none",
-            note: "No VPC attachment — Lambda uses AWS-managed network (not account default VPC). IAM roles are created by Terraform.",
-          };
+    const acctMode = radioValue("design-acct-mode", "single");
+    let producer = ($("#design-acct-producer")?.value || "111111111111").trim();
+    let steward = ($("#design-acct-steward")?.value || producer).trim();
+    let publisher = ($("#design-acct-publisher")?.value || producer).trim();
+    if (acctMode === "single") {
+      steward = producer;
+      publisher = producer;
+    }
+    const vpcMode = radioValue("design-vpc-mode", "none");
+    let networking;
+    if (vpcMode === "existing") {
+      networking = {
+        mode: "existing",
+        vpc_id: ($("#design-vpc-id")?.value || "").trim() || null,
+        subnet_ids: splitIds($("#design-subnets")?.value),
+        security_group_ids: splitIds($("#design-sgs")?.value),
+        note: "vpc_mode=existing — set lambda_subnet_ids / lambda_security_group_ids in terraform.tfvars",
+      };
+    } else if (vpcMode === "create") {
+      networking = {
+        mode: "create",
+        cidr_block: ($("#design-vpc-cidr")?.value || "10.80.0.0/16").trim(),
+        az_count: Number($("#design-vpc-azs")?.value || 2),
+        note: "vpc_mode=create — Terraform module vpc-lambda creates private VPC + Lambda SG",
+      };
+    } else {
+      networking = {
+        mode: "none",
+        note: "vpc_mode=none — no VPC attachment (AWS-managed network, not account default VPC)",
+      };
+    }
     return {
       apiVersion: "sdm/v1",
       kind: "MedallionMesh",
       metadata: {
         organization: org,
         description:
-          "Mesh designed in control UI (drag-drop). Compile with serverless-data-mesh apply.",
+          "Mesh designed in control UI. Compile with serverless-data-mesh apply.",
       },
       spec: {
         name_prefix: prefix,
         aws_region: region,
+        account_topology: acctMode,
         accounts: {
           producer,
           steward,
@@ -408,23 +462,37 @@
       status("Sample xyz domain with bronze → silver → gold.");
     });
 
-    ["design-org", "design-prefix", "design-region", "design-acct-producer", "design-acct-steward", "design-acct-publisher", "design-subnets", "design-sgs"].forEach((id) => {
+    [
+      "design-org",
+      "design-prefix",
+      "design-region",
+      "design-acct-producer",
+      "design-acct-steward",
+      "design-acct-publisher",
+      "design-subnets",
+      "design-sgs",
+      "design-vpc-id",
+      "design-vpc-cidr",
+      "design-vpc-azs",
+    ].forEach((id) => {
       $(`#${id}`)?.addEventListener("input", refreshJson);
+      $(`#${id}`)?.addEventListener("change", refreshJson);
     });
 
-    $("#design-networking")?.addEventListener("change", () => {
-      const vpc = $("#design-networking")?.value === "vpc";
-      document.querySelectorAll(".design-vpc-fields").forEach((el) => {
-        el.classList.toggle("is-hidden", !vpc);
+    document.querySelectorAll('input[name="design-acct-mode"]').forEach((el) => {
+      el.addEventListener("change", () => {
+        syncAccountFields();
+        refreshJson();
       });
-      const hint = $("#design-aws-hint");
-      if (hint) {
-        hint.innerHTML = vpc
-          ? "VPC mode: set subnet + SG IDs here (copied into mesh.yaml notes) and mirror them as <code>lambda_subnet_ids</code> / <code>lambda_security_group_ids</code> in terraform.tfvars. IAM still auto-created by Terraform (includes VPC ENI policy)."
-          : "IAM roles are created by Terraform (<code>*-domain-writer</code>, Step Functions, EventBridge) — you do not paste role ARNs here. Default networking is <strong>no VPC</strong> (AWS-managed Lambda network). That is not your account’s default VPC.";
-      }
-      refreshJson();
     });
+    document.querySelectorAll('input[name="design-vpc-mode"]').forEach((el) => {
+      el.addEventListener("change", () => {
+        syncVpcFields();
+        refreshJson();
+      });
+    });
+    syncAccountFields();
+    syncVpcFields();
 
     $("#btn-design-copy")?.addEventListener("click", async () => {
       const text = JSON.stringify(buildContract(), null, 2);

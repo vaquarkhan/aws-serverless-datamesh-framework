@@ -83,6 +83,114 @@
 
       <main>
         <section id="panel-design" class="panel active">
+          <article class="create-mesh" aria-label="Create data mesh">
+            <div class="create-mesh-head">
+              <div>
+                <p class="palette-title">Create data mesh</p>
+                <h2>Region · accounts · VPC</h2>
+              </div>
+              <span class="badge pass" id="design-live-badge">editing</span>
+            </div>
+            <div class="create-mesh-grid">
+              <div class="create-step">
+                <p class="palette-title">1 · Where</p>
+                <div class="meta-grid">
+                  <label class="meta-field">Organization
+                    <input id="design-org" type="text" value="xyz-org" />
+                  </label>
+                  <label class="meta-field">Name prefix
+                    <input id="design-prefix" type="text" value="xyz" />
+                  </label>
+                  <label class="meta-field">AWS region
+                    <select id="design-region">
+                      <option value="us-east-2" selected>us-east-2 (Ohio)</option>
+                      <option value="us-east-1">us-east-1 (N. Virginia)</option>
+                      <option value="us-west-2">us-west-2 (Oregon)</option>
+                      <option value="eu-west-1">eu-west-1 (Ireland)</option>
+                      <option value="eu-central-1">eu-central-1 (Frankfurt)</option>
+                      <option value="ap-southeast-1">ap-southeast-1 (Singapore)</option>
+                      <option value="ap-south-1">ap-south-1 (Mumbai)</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              <div class="create-step">
+                <p class="palette-title">2 · Accounts</p>
+                <div class="choice-row" role="radiogroup" aria-label="Account topology">
+                  <label class="choice-card">
+                    <input type="radio" name="design-acct-mode" value="single" checked />
+                    <strong>Single account</strong>
+                    <span>POC — one account for all roles</span>
+                  </label>
+                  <label class="choice-card">
+                    <input type="radio" name="design-acct-mode" value="multi" />
+                    <strong>Three accounts</strong>
+                    <span>Producer · Steward · Publisher</span>
+                  </label>
+                </div>
+                <div class="meta-grid">
+                  <label class="meta-field">Producer account
+                    <input id="design-acct-producer" type="text" value="111111111111" maxlength="12" inputmode="numeric" />
+                  </label>
+                  <label class="meta-field design-multi-only is-hidden">Steward account
+                    <input id="design-acct-steward" type="text" value="222222222222" maxlength="12" inputmode="numeric" />
+                  </label>
+                  <label class="meta-field design-multi-only is-hidden">Publisher account
+                    <input id="design-acct-publisher" type="text" value="333333333333" maxlength="12" inputmode="numeric" />
+                  </label>
+                </div>
+                <p class="aws-hint">IAM roles are created by Terraform — do not paste role ARNs.</p>
+              </div>
+
+              <div class="create-step">
+                <p class="palette-title">3 · Networking (VPC)</p>
+                <div class="choice-row" role="radiogroup" aria-label="VPC mode">
+                  <label class="choice-card">
+                    <input type="radio" name="design-vpc-mode" value="none" checked />
+                    <strong>Default — no VPC</strong>
+                    <span>AWS-managed network (not account default VPC)</span>
+                  </label>
+                  <label class="choice-card">
+                    <input type="radio" name="design-vpc-mode" value="existing" />
+                    <strong>Use existing VPC</strong>
+                    <span>Your subnet + security group IDs</span>
+                  </label>
+                  <label class="choice-card">
+                    <input type="radio" name="design-vpc-mode" value="create" />
+                    <strong>Create new VPC</strong>
+                    <span>Terraform builds private VPC + Lambda SG</span>
+                  </label>
+                </div>
+                <div class="meta-grid design-vpc-existing is-hidden">
+                  <label class="meta-field">VPC ID (optional)
+                    <input id="design-vpc-id" type="text" placeholder="vpc-0abc…" />
+                  </label>
+                  <label class="meta-field">Private subnet IDs
+                    <input id="design-subnets" type="text" placeholder="subnet-aaa, subnet-bbb" />
+                  </label>
+                  <label class="meta-field">Security group IDs
+                    <input id="design-sgs" type="text" placeholder="sg-cccc" />
+                  </label>
+                </div>
+                <div class="meta-grid design-vpc-create is-hidden">
+                  <label class="meta-field">New VPC CIDR
+                    <input id="design-vpc-cidr" type="text" value="10.80.0.0/16" />
+                  </label>
+                  <label class="meta-field">Availability zones
+                    <select id="design-vpc-azs">
+                      <option value="2" selected>2 AZs</option>
+                      <option value="3">3 AZs</option>
+                    </select>
+                  </label>
+                </div>
+                <p class="aws-hint" id="design-aws-hint">
+                  Default = <strong>no VPC</strong>. Choose existing or create only for private ENIs.
+                </p>
+              </div>
+            </div>
+          </article>
+
           <div class="studio">
             <aside class="studio-palette">
               <p class="palette-title">Blocks</p>
@@ -123,8 +231,8 @@
                   <span class="conn"></span>
                   <span class="nv gold">G</span>
                 </div>
-                <h2>Drop a domain to begin</h2>
-                <p>Then stack bronze → silver → gold. Generate writes <code>mesh.yaml</code> and compiles pipelines into <code>generated/</code>.</p>
+                <h2>Drop domains next</h2>
+                <p>Region / accounts / VPC are set above. Stack bronze → silver → gold, then Generate.</p>
               </div>
               <div id="design-nodes" class="design-nodes"></div>
             </div>
@@ -132,50 +240,7 @@
             <aside class="studio-inspector">
               <div class="inspector-head">
                 <h2>Live contract</h2>
-                <span class="badge pass" id="design-live-badge">editing</span>
               </div>
-              <div class="meta-grid">
-                <label class="meta-field">Organization
-                  <input id="design-org" type="text" value="xyz-org" />
-                </label>
-                <label class="meta-field">Prefix
-                  <input id="design-prefix" type="text" value="xyz" />
-                </label>
-                <label class="meta-field">Region
-                  <input id="design-region" type="text" value="us-east-2" />
-                </label>
-              </div>
-
-              <p class="palette-title" style="margin-top:.75rem">AWS deploy</p>
-              <div class="meta-grid">
-                <label class="meta-field">Producer account
-                  <input id="design-acct-producer" type="text" value="111111111111" maxlength="12" />
-                </label>
-                <label class="meta-field">Steward account
-                  <input id="design-acct-steward" type="text" value="222222222222" maxlength="12" />
-                </label>
-                <label class="meta-field">Publisher account
-                  <input id="design-acct-publisher" type="text" value="333333333333" maxlength="12" />
-                </label>
-                <label class="meta-field">Networking
-                  <select id="design-networking">
-                    <option value="none" selected>No VPC (default — not account default VPC)</option>
-                    <option value="vpc">Attach VPC (set subnets/SGs in tfvars)</option>
-                  </select>
-                </label>
-                <label class="meta-field design-vpc-fields is-hidden" id="design-vpc-fields">
-                  Subnet IDs (comma-separated)
-                  <input id="design-subnets" type="text" placeholder="subnet-aaa, subnet-bbb" />
-                </label>
-                <label class="meta-field design-vpc-fields is-hidden" id="design-sg-fields">
-                  Security group IDs
-                  <input id="design-sgs" type="text" placeholder="sg-cccc" />
-                </label>
-              </div>
-              <p class="aws-hint" id="design-aws-hint">
-                IAM roles are created by Terraform (<code>*-domain-writer</code>, Step Functions, EventBridge) — you do not paste role ARNs here.
-                Default networking is <strong>no VPC</strong> (AWS-managed Lambda network). That is not your account’s default VPC.
-              </p>
               <div class="inspector-actions" id="design-actions-form">
                 <button type="button" class="btn primary block" id="btn-design-apply-secondary">Generate pipelines</button>
                 <button type="button" class="btn ghost block" id="btn-design-save">Save mesh.yaml only</button>
@@ -190,7 +255,7 @@
                 </details>
               </div>
               <pre id="design-json" class="codeblock design-json" aria-live="polite">{}</pre>
-              <p class="status-line" id="design-status">Drag blocks · Generate writes mesh.yaml + apply</p>
+              <p class="status-line" id="design-status">Set region · accounts · VPC above, then drop domains</p>
             </aside>
           </div>
         </section>

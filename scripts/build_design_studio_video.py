@@ -1,7 +1,4 @@
-"""Scripted Design Studio demo video: VPC/IAM honesty + generate path + paper.
-
-Writes docs/media/design-studio-demo.mp4 (+ poster) for GitHub Pages.
-"""
+"""Rebuild Design Studio demo video — create mesh (region/accounts/VPC)."""
 
 from __future__ import annotations
 
@@ -36,146 +33,133 @@ def font(size: int, bold: bool = False):
     return ImageFont.load_default()
 
 
-def base() -> tuple[Image.Image, ImageDraw.ImageDraw]:
+def slide(path: Path, title: str, lines: list[str], cap: str, highlight: int | None = None) -> None:
     img = Image.new("RGB", (W, H), BG)
     draw = ImageDraw.Draw(img)
-    draw.rectangle((0, 0, 210, H), fill=(12, 22, 19))
-    draw.rectangle((210, 0, W, 88), fill=(10, 18, 15))
-    draw.text((28, 28), "PVDM", fill=ACCENT, font=font(22, True))
-    draw.text((28, 58), "Data Mesh", fill=TEXT, font=font(14))
-    for i, label in enumerate(["Design", "Overview", "Pipelines", "Trust", "PVDM"]):
-        y = 110 + i * 48
-        if i == 0:
-            draw.rectangle((16, y - 8, 194, y + 28), fill=(20, 48, 36))
-            draw.rectangle((16, y - 8, 20, y + 28), fill=ACCENT)
-        draw.text((36, y), label, fill=ACCENT if i == 0 else MUTED, font=font(16))
-    return img, draw
-
-
-def caption(draw: ImageDraw.ImageDraw, text: str) -> None:
-    draw.rectangle((0, H - 110, W, H), fill=(6, 14, 11))
-    draw.rectangle((0, H - 110, 8, H), fill=ACCENT)
-    y = H - 88
-    for line in text.split("\n")[:3]:
-        draw.text((28, y), line, fill=TEXT, font=font(24))
-        y += 30
-
-
-def slide(path: Path, title: str, body: list[str], cap: str) -> None:
-    img, draw = base()
-    draw.text((240, 28), "Mesh Design Studio", fill=TEXT, font=font(28, True))
-    draw.text((240, 62), "Create · Observe · Deploy", fill=GOLD, font=font(14))
-    draw.rounded_rectangle((240, 110, W - 40, H - 130), radius=18, fill=PANEL, outline=(40, 70, 55))
-    draw.text((270, 140), title, fill=GOLD, font=font(22, True))
+    draw.rectangle((0, 0, W, 72), fill=(10, 18, 15))
+    draw.text((36, 22), "Create data mesh", fill=GOLD, font=font(16, True))
+    draw.text((220, 18), "Mesh Design Studio", fill=TEXT, font=font(28, True))
+    draw.rounded_rectangle((40, 100, W - 40, H - 120), radius=20, fill=PANEL, outline=(40, 70, 55))
+    draw.text((70, 130), title, fill=GOLD, font=font(26, True))
     y = 190
-    for line in body:
-        draw.text((270, y), line, fill=TEXT, font=font(20))
-        y += 36
-    caption(draw, cap)
+    for i, line in enumerate(lines):
+        box = (70, y - 8, W - 70, y + 48)
+        if highlight is not None and i == highlight:
+            draw.rounded_rectangle(box, radius=10, fill=(20, 48, 36), outline=ACCENT)
+        draw.text((90, y), line, fill=TEXT if highlight != i else ACCENT, font=font(22))
+        y += 64
+    draw.rectangle((0, H - 100, W, H), fill=(6, 14, 11))
+    draw.rectangle((0, H - 100, 8, H), fill=ACCENT)
+    cy = H - 78
+    for part in cap.split("\n")[:2]:
+        draw.text((28, cy), part, fill=TEXT, font=font(24))
+        cy += 32
     path.parent.mkdir(parents=True, exist_ok=True)
-    img.save(path)
+    img.save(path, optimize=True)
 
 
 def main() -> None:
-    if FRAMES.exists():
-        for f in FRAMES.glob("*.png"):
-            f.unlink()
     FRAMES.mkdir(parents=True, exist_ok=True)
-
     slides = [
         (
-            "01.png",
-            "1 · Design-first studio",
+            "v2-01.png",
+            "1 · Where — region",
             [
-                "Left rail: Design is home",
-                "Palette → medallion canvas → live contract",
-                "Generate writes mesh.yaml + apply → generated/",
+                "Organization + name prefix",
+                "AWS region dropdown (us-east-2, …)",
+                "Written into mesh.yaml + terraform.contract.txt",
             ],
-            "Design Studio: compose domains, then generate pipelines in-project.",
+            "Step 1: choose the AWS region for this data mesh.",
+            1,
         ),
         (
-            "02.png",
-            "2 · VPC default (honest)",
+            "v2-02.png",
+            "2 · Accounts",
             [
-                "Default = NO VPC attachment",
-                "Not your account default VPC",
-                "AWS-managed Lambda network for public AWS APIs",
-                "Optional: set subnet + SG IDs in tfvars / Design UI",
+                "Single account (POC) — one ID for all roles",
+                "OR three accounts — Producer · Steward · Publisher",
+                "IAM roles are Terraform-created (no role ARNs in UI)",
             ],
-            "Networking default: no VPC. Attach only when you need private ENIs.",
+            "Step 2: pick account topology and 12-digit account IDs.",
+            0,
         ),
         (
-            "03.png",
-            "3 · IAM roles (Terraform)",
+            "v2-03.png",
+            "3 · VPC — three choices",
             [
-                "Terraform creates *-domain-writer role",
-                "+ Step Functions + EventBridge roles",
-                "You do not paste role ARNs in the Design UI",
-                "VPC ENI policy attached for optional VPC",
+                "Default — no VPC (AWS-managed; NOT account default VPC)",
+                "Use existing VPC — paste subnet + security group IDs",
+                "Create new VPC — Terraform module vpc-lambda",
             ],
-            "IAM is Terraform-owned. Design UI only sets account IDs + networking mode.",
+            "Step 3: networking is an explicit choice during mesh creation.",
+            None,
         ),
         (
-            "04.png",
-            "4 · Paper + Pages",
+            "v2-04.png",
+            "Create new VPC details",
             [
-                "Research paper: arXiv:2608.14643 (PDF)",
-                "GitHub Pages docs site embeds demos",
-                "Local UI remains the deploy control plane",
+                "vpc_mode = create",
+                "CIDR e.g. 10.80.0.0/16",
+                "2 or 3 AZs → private subnets + Lambda SG",
             ],
-            "Paper: https://arxiv.org/pdf/2608.14643 · Pages: docs/ on GitHub Actions.",
+            "Create mode: Terraform builds private networking for Lambda ENIs.",
+            0,
         ),
         (
-            "05.png",
-            "5 · Path to AWS",
+            "v2-05.png",
+            "Then generate",
             [
-                "1 Design → 2 Generate → 3 Package",
-                "4 terraform apply (prod env)",
-                "5 Step Functions run · PVDM gate",
+                "Drop bronze → silver → gold domains",
+                "Generate → mesh.yaml + apply → generated/",
+                "terraform apply uses vpc_mode from the contract hint",
             ],
-            "End-to-end: Design → Generate → package → Terraform → SFN / PVDM.",
+            "Design → Generate → package → Terraform. Video player uses direct MP4 src.",
+            1,
         ),
     ]
+    for name, title, lines, cap, hi in slides:
+        slide(FRAMES / name, title, lines, cap, hi)
 
-    for name, title, body, cap in slides:
-        slide(FRAMES / name, title, body, cap)
-
-    list_file = OUT_DIR / "concat.txt"
-    # 3.5s per slide
-    lines = []
+    concat = OUT_DIR / "concat.txt"
+    lines_out: list[str] = []
     for name, *_ in slides:
-        lines.append(f"file '{(FRAMES / name).as_posix()}'")
-        lines.append("duration 3.5")
-    lines.append(f"file '{(FRAMES / slides[-1][0]).as_posix()}'")
-    list_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        lines_out.append(f"file '{(FRAMES / name).resolve().as_posix()}'")
+        lines_out.append("duration 4")
+    lines_out.append(f"file '{(FRAMES / slides[-1][0]).resolve().as_posix()}'")
+    concat.write_text("\n".join(lines_out) + "\n", encoding="utf-8")
 
-    out_mp4 = ROOT / "docs" / "media" / "design-studio-demo.mp4"
+    out = ROOT / "docs" / "media" / "design-studio-demo.mp4"
     poster = ROOT / "docs" / "media" / "design-studio-demo-poster.png"
-    Image.open(FRAMES / "01.png").save(poster)
+    Image.open(FRAMES / "v2-03.png").save(poster)
 
-    ffmpeg = FFMPEG if FFMPEG.is_file() else Path("ffmpeg")
-    cmd = [
-        str(ffmpeg),
-        "-y",
-        "-f",
-        "concat",
-        "-safe",
-        "0",
-        "-i",
-        str(list_file),
-        "-vf",
-        "fps=30,format=yuv420p",
-        "-c:v",
-        "libx264",
-        "-pix_fmt",
-        "yuv420p",
-        "-movflags",
-        "+faststart",
-        str(out_mp4),
-    ]
-    subprocess.run(cmd, check=True)
-    print(f"Wrote {out_mp4}")
-    print(f"Poster {poster}")
+    ffmpeg = str(FFMPEG if FFMPEG.is_file() else "ffmpeg")
+    subprocess.run(
+        [
+            ffmpeg,
+            "-y",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            str(concat),
+            "-vf",
+            "fps=30,format=yuv420p",
+            "-c:v",
+            "libx264",
+            "-profile:v",
+            "main",
+            "-level",
+            "4.0",
+            "-pix_fmt",
+            "yuv420p",
+            "-movflags",
+            "+faststart",
+            str(out),
+        ],
+        check=True,
+    )
+    print(f"Wrote {out} ({out.stat().st_size} bytes)")
 
 
 if __name__ == "__main__":

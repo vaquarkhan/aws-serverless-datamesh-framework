@@ -230,16 +230,43 @@ variable "consumer_principal_arn" {
 
 variable "lambda_subnet_ids" {
   description = <<-EOT
-    Optional subnet IDs for Lambda VPC attachment.
-    Default [] = no VPC (Lambda on AWS-managed network — NOT your account default VPC).
-    Set with lambda_security_group_ids when writers must reach private endpoints.
+    Subnet IDs when vpc_mode=existing.
+    Ignored when vpc_mode=none or vpc_mode=create.
   EOT
   type        = list(string)
   default     = []
 }
 
 variable "lambda_security_group_ids" {
-  description = "Security group IDs required when lambda_subnet_ids is non-empty."
+  description = "Security group IDs when vpc_mode=existing."
   type        = list(string)
   default     = []
+}
+
+variable "vpc_mode" {
+  description = <<-EOT
+    Lambda networking:
+    - none (default): no VPC — AWS-managed network (NOT account default VPC)
+    - existing: attach to lambda_subnet_ids + lambda_security_group_ids
+    - create: Terraform creates a private VPC + subnets + Lambda SG
+  EOT
+  type        = string
+  default     = "none"
+
+  validation {
+    condition     = contains(["none", "existing", "create"], lower(var.vpc_mode))
+    error_message = "vpc_mode must be none, existing, or create."
+  }
+}
+
+variable "vpc_cidr_block" {
+  description = "CIDR when vpc_mode=create."
+  type        = string
+  default     = "10.80.0.0/16"
+}
+
+variable "vpc_az_count" {
+  description = "AZ/subnet count when vpc_mode=create (2 or 3)."
+  type        = number
+  default     = 2
 }

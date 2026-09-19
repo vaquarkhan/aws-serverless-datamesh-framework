@@ -30,6 +30,18 @@ locals {
   checkpoint_retention_days     = max(7, var.durable_retention_days)
   min_resume_attempts           = ceil(var.durable_execution_timeout_seconds / local.lambda_per_invocation_timeout) + 2
   effective_max_resume_attempts = max(var.max_resume_attempts, local.min_resume_attempts)
+
+  vpc_mode = lower(var.vpc_mode)
+  lambda_subnet_ids = (
+    local.vpc_mode == "create" ? try(module.vpc_lambda[0].subnet_ids, []) :
+    local.vpc_mode == "existing" ? var.lambda_subnet_ids :
+    []
+  )
+  lambda_security_group_ids = (
+    local.vpc_mode == "create" ? try(module.vpc_lambda[0].security_group_ids, []) :
+    local.vpc_mode == "existing" ? var.lambda_security_group_ids :
+    []
+  )
 }
 
 check "timeout_coherence" {
@@ -70,6 +82,29 @@ check "async_callback_needs_lmi_for_gt_15" {
     )
     error_message = "lambda_timeout_seconds > 900 requires enable_lambda_managed_instances=true."
   }
+}
+
+check "vpc_existing_needs_ids" {
+  assert {
+    condition = (
+      local.vpc_mode != "existing"
+      || (
+        length(var.lambda_subnet_ids) > 0
+        && length(var.lambda_security_group_ids) > 0
+      )
+    )
+    error_message = "vpc_mode=existing requires lambda_subnet_ids and lambda_security_group_ids."
+  }
+}
+
+module "vpc_lambda" {
+  count  = local.vpc_mode == "create" ? 1 : 0
+  source = "../../modules/vpc-lambda"
+
+  name_prefix = var.name_prefix
+  cidr_block  = var.vpc_cidr_block
+  az_count    = var.vpc_az_count
+  tags        = local.tags
 }
 
 module "storage" {
@@ -140,8 +175,8 @@ module "lambda" {
   dlq_arn                  = module.messaging.dlq_arn
   enable_lambda_managed_instances = var.enable_lambda_managed_instances
   lambda_managed_instances_capacity_provider_arn = var.lambda_managed_instances_capacity_provider_arn
-  subnet_ids         = var.lambda_subnet_ids
-  security_group_ids = var.lambda_security_group_ids
+  subnet_ids         = local.lambda_subnet_ids
+  security_group_ids = local.lambda_security_group_ids
 
   environment_variables = {
     ICEGUARD_CHECKPOINT_BUCKET      = module.storage.checkpoint_bucket_name

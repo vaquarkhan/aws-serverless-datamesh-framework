@@ -82,33 +82,49 @@ def save_designer_contract(
 
     # Pointer Terraform / CI can read without guessing filenames
     net = (contract.get("spec") or {}).get("networking") or {}
-    net_mode = str(net.get("mode") or "none")
-    subnet_line = ""
-    if net_mode == "vpc":
+    net_mode = str(net.get("mode") or "none").lower()
+    region = str((contract.get("spec") or {}).get("aws_region") or "us-east-2")
+    accounts = (contract.get("spec") or {}).get("accounts") or {}
+    prefix = str((contract.get("spec") or {}).get("name_prefix") or "sdm")
+
+    if net_mode == "existing":
         subs = ", ".join(f'"{s}"' for s in (net.get("subnet_ids") or []))
         sgs = ", ".join(f'"{s}"' for s in (net.get("security_group_ids") or []))
-        subnet_line = (
-            "\n# VPC attachment (from Design UI)\n"
+        vpc_line = (
+            "\nvpc_mode = \"existing\"\n"
             f"lambda_subnet_ids         = [{subs}]\n"
             f"lambda_security_group_ids = [{sgs}]\n"
         )
+        if net.get("vpc_id"):
+            vpc_line += f"# existing vpc_id note: {net.get('vpc_id')}\n"
+    elif net_mode == "create":
+        cidr = net.get("cidr_block") or "10.80.0.0/16"
+        azs = int(net.get("az_count") or 2)
+        vpc_line = (
+            "\nvpc_mode = \"create\"\n"
+            f'vpc_cidr_block = "{cidr}"\n'
+            f"vpc_az_count   = {azs}\n"
+        )
     else:
-        subnet_line = (
-            "\n# Networking: default = NO VPC (AWS-managed Lambda network).\n"
-            "# This is NOT your account default VPC. Uncomment to attach:\n"
-            '# lambda_subnet_ids         = ["subnet-aaa", "subnet-bbb"]\n'
-            '# lambda_security_group_ids = ["sg-cccc"]\n'
+        vpc_line = (
+            "\nvpc_mode = \"none\"\n"
+            "# No VPC — AWS-managed Lambda network (NOT account default VPC)\n"
         )
 
     hint = (
-        "# Canonical mesh contract written by control UI Design tab\n"
+        "# Canonical mesh contract written by control UI — Create data mesh\n"
         f"MESH_CONTRACT={paths['yaml'].as_posix()}\n"
         f"MESH_GENERATED={paths['generated'].as_posix()}\n"
+        f"aws_region   = \"{region}\"\n"
+        f"name_prefix  = \"{prefix}\"\n"
+        f"# accounts: producer={accounts.get('producer')} "
+        f"steward={accounts.get('steward')} publisher={accounts.get('publisher')}\n"
+        "# IAM: Terraform creates *-domain-writer + Step Functions + EventBridge "
+        "(do not paste role ARNs)\n"
+        f"{vpc_line}"
         "# Next: serverless-data-mesh apply --contract $MESH_CONTRACT --output $MESH_GENERATED\n"
-        "# IAM: Terraform creates {name_prefix}-domain-writer + Step Functions + EventBridge roles\n"
-        "#      (AWSLambdaBasicExecutionRole + Durable + VPCAccess). Do not paste role ARNs in YAML.\n"
-        "# Then: package Lambda zip + terraform apply (see infrastructure/terraform/environments/prod)\n"
-        f"{subnet_line}"
+        "# Then: package Lambda zip + terraform apply "
+        "(infrastructure/terraform/environments/prod)\n"
     )
     paths["terraform_hint"].write_text(hint, encoding="utf-8")
     written.append(str(paths["terraform_hint"]))
