@@ -95,18 +95,24 @@ resume_wait_seconds               = 60
 
 ### Configurable durable backfills (15–90 min segments + workload clock)
 
+| Variable | Role |
+|----------|------|
+| `lambda_timeout_seconds` | Segment clock: **≤900** on-demand (15 min); **≤5400** with LMI (90 min async/ESM) |
+| `enable_lambda_managed_instances` | Opt-in LMI capacity provider attachment |
+| `sfn_lambda_invoke_mode` | `sync` (default, AWS ≤15 min) or `async_callback` (waitForTaskToken; LMI ≤90 min) |
+| `durable_execution_timeout_seconds` | Workload clock — any duration (AWS durable max ~1 year) |
+| `sfn_invoke_timeout_buffer_seconds` | SFN wait = effective segment wait + buffer |
+| `iceguard_rollback_threshold_ms` | Yield before hard kill so Iceberg stays clean |
+
+**Important:** 90 min applies to async/ESM / durable-async on LMI. Step Functions **sync** invoke is still capped at **15 min** by AWS. For SFN + segments above 900s set `sfn_lambda_invoke_mode = "async_callback"`. See [lambda-managed-instances.md](lambda-managed-instances.md).
+
 | Setting | Meaning |
 |---------|---------|
-| `lambda_timeout_seconds` | Segment clock: **≤900** on-demand (15 min); **≤5400** with LMI (90 min async/ESM) |
-| `enable_lambda_managed_instances` | Opt-in Lambda Managed Instances capacity |
 | `lambda_managed_instances_capacity_provider_arn` | Required when LMI is enabled |
-| `durable_execution_timeout_seconds` | **Configurable** total job budget (any wall-clock you set) |
 | `lambda_memory_mb` | Chunk throughput: raise if p99 duration nears timeout |
-| `sfn_invoke_timeout_buffer_seconds` | SFN `TimeoutSeconds` = min(lambda, 900) + buffer (sync still ≤15 min) |
 | `max_resume_attempts` | Resume loops after `rolled_back`; prod auto-bumps to `ceil(durable/lambda)+2` |
-| `iceguard_rollback_threshold_ms` | Null = auto; IceGuard yields before hard kill → no corrupt Iceberg |
 
-Step Functions waits for **one sync segment** (≤ ~960s), not the full workload budget. On LMI, longer segments apply to **async / ESM / direct durable** paths — see [lambda-managed-instances.md](lambda-managed-instances.md).
+Step Functions waits for **one segment** — `sync` ≤ ~960s; `async_callback` = lambda timeout + buffer (up to ~5460s on LMI) — not the full workload budget.
 
 After apply, verify:
 
@@ -165,7 +171,8 @@ The **backfill orchestrator** state machine invokes the domain writer and loops 
 
 ### What we try to achieve
 
-Hands-free long backfills: IceGuard timeout rollbacks are automatically resumed without duplicating committed chunks. Each Step Functions invocation runs one sync segment (AWS sync ≤15 min); with LMI, async/direct durable paths may use up to 90-minute segments. The resume loop stitches segments until `committed` or `max_resume_attempts`.
+Hands-free long backfills: IceGuard timeout rollbacks are automatically resumed without duplicating committed chunks. Each Step Functions invocation runs one segment — **sync** mode is AWS-capped at 15 min; **async_callback** mode with LMI may wait up to 90 minutes per segment. The resume loop stitches segments until `committed` or `max_resume_attempts`.
+
 
 ```bash
 aws stepfunctions start-execution \

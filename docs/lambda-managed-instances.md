@@ -1,6 +1,8 @@
 # Lambda Managed Instances (15–90 min segments)
 
-Industry-standard segment clock for domain writers: **15 minutes on classic on-demand Lambda**, or **up to 90 minutes** on [AWS Lambda Managed Instances](https://aws.amazon.com/blogs/compute/announcing-90-minute-function-timeout-on-aws-lambda-managed-instances/) for async / ESM / durable-async invocations.
+Industry-standard segment clock for domain writers: **15 minutes on classic on-demand Lambda**, or **up to 90 minutes** on [AWS Lambda Managed Instances](https://aws.amazon.com/blogs/compute/announcing-90-minute-function-timeout-on-aws-lambda-managed-instances/) for **async / ESM / durable-async** invocations.
+
+**Important:** 90 minutes applies to async/ESM / durable-async on LMI. **Step Functions sync invoke is still capped at 15 minutes by AWS.** For SFN + LMI segments above 15 minutes, use `sfn_lambda_invoke_mode = "async_callback"` (`waitForTaskToken` + `InvocationType=Event`).
 
 This framework does **not** replace IceGuard or Durable Execution with a longer timeout. Longer segments reduce resume churn; **IceGuard + VRP + Durable** still prevent corrupt Iceberg publication.
 
@@ -9,7 +11,8 @@ This framework does **not** replace IceGuard or Durable Execution with a longer 
 | Layer | On-demand (default) | Managed Instances (opt-in) |
 |-------|---------------------|----------------------------|
 | Segment timeout | 1–**900** s (15 min) | 1–**5400** s (90 min) async/ESM |
-| Sync invoke (incl. Step Functions `lambda:invoke`) | ≤ 15 min | Still ≤ **15 min** (AWS sync cap) |
+| Step Functions `sync` (`lambda:invoke`) | ≤ 15 min | Still ≤ **15 min** (AWS sync cap) |
+| Step Functions `async_callback` (`waitForTaskToken`) | Same as segment + buffer | Up to **90 min** + buffer on LMI |
 | Durable total budget | Configurable (any duration) | Same |
 | IceGuard rollback before hard kill | Required | Required |
 | VRP before Glue/Iceberg metadata | Required | Required |
@@ -23,14 +26,16 @@ commit_metadata ⟹ VRP = PASS
 ## Terraform knobs
 
 ```hcl
-# Classic on-demand (default)
+# Classic on-demand + sync SFN (default)
 enable_lambda_managed_instances = false
+sfn_lambda_invoke_mode          = "sync"
 lambda_timeout_seconds          = 900   # max 15 min
 
-# Optional LMI — longer continuous async segments
+# Optional LMI — longer continuous async segments via SFN callback
 enable_lambda_managed_instances                    = true
 lambda_managed_instances_capacity_provider_arn     = "arn:aws:lambda:REGION:ACCOUNT:capacity-provider:NAME"
-lambda_timeout_seconds                             = 5400  # up to 90 min for async/ESM
+lambda_timeout_seconds                             = 5400  # up to 90 min
+sfn_lambda_invoke_mode                             = "async_callback"  # required when > 900s
 
 # Always: workload clock + IceGuard (any job length)
 enable_durable_execution              = true
@@ -39,6 +44,15 @@ iceguard_rollback_threshold_ms        = 30000  # yield before hard timeout
 ```
 
 Create the capacity provider in your account (VPC + operator role) via [`aws_lambda_capacity_provider`](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_capacity_provider), then pass its ARN. This repo attaches it to the domain-writer function; it does not invent a full VPC for you.
+
+### Dual Step Functions modes
+
+| Mode | ASL integration | Who completes the task | Max segment wait |
+|------|-----------------|------------------------|------------------|
+| `sync` | `arn:aws:states:::lambda:invoke` | Sync response payload | AWS **15 min** |
+| `async_callback` | `lambda:invoke.waitForTaskToken` + `InvocationType=Event` | Handler `SendTaskSuccess` / `SendTaskFailure` | Segment timeout (≤ **90 min** on LMI) |
+
+Handlers (`examples/domain_writer` and compiled metadata pipelines) unwrap `{task_token, workload}` and call the framework callback helper automatically.
 
 ## How Iceberg stays uncorrupted
 
@@ -53,8 +67,9 @@ A 90-minute segment can do more work per invoke, but a mid-segment kill still ro
 
 | Workload | Recommendation |
 |----------|----------------|
-| Spiky / scale-to-zero domains | On-demand Lambda, 15 min segments + durable resume |
-| Steady async backfills that benefit from longer continuous runs | LMI + up to 90 min segments + durable + IceGuard |
+| Spiky / scale-to-zero domains | On-demand Lambda, `sync` SFN, 15 min segments + durable resume |
+| Steady async backfills that benefit from longer continuous runs | LMI + `async_callback` SFN + up to 90 min segments + durable + IceGuard |
+| Direct durable invoke (no SFN) | LMI async/durable-async up to 90 min; no SFN mode needed |
 | Jobs longer than one segment | Always set `durable_execution_timeout_seconds` to the full wall-clock |
 
 ## References

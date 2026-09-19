@@ -9,4 +9,7 @@ lambda_timeout_seconds            = 600
 # Workload clock: set to your backfill wall-clock (IceGuard + Durable protect Iceberg)
 durable_execution_timeout_seconds = 3600
 # Optional LMI: enable_lambda_managed_instances = true (+ capacity provider ARN)
+# After Design tab "Save & generate pipelines", contract lives at mesh.yaml beside generated/:
+#   serverless-data-mesh apply --contract ../path/to/mesh.yaml --output ../path/to/generated
+# Terraform deploys the packaged Lambda zip (lambda_package_path), not the YAML directly.
 lambda_memory_mb                  = 2048

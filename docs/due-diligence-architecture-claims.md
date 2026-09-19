@@ -17,7 +17,9 @@ This document separates **what is true today**, **what is overstated**, and **wh
 | **Orchestration wording (Step Functions “continuation tokens”)** | **Misstated** — resume is outcome=`rolled_back` re-invoke + Durable checkpoints |
 | **“Five-phase PVDM” / mandatory Phase 0 Rules** | **Misstated** — SparkRules is **optional** pre-Physical; canonical PVDM is **four** phases |
 | **Agentic AI (PVDM-A, MCP, AgentCore, Presidio, PromptGuard, Spring AI OTel)** | **Not in this repo** — treat as roadmap, not current capability |
-| **Lambda Managed Instances 90-min segments** | **Opt-in Terraform** — `enable_lambda_managed_instances`; sync SFN still ≤15 min; IceGuard + Durable unchanged |
+| **Lambda Managed Instances 90-min segments** | **Opt-in Terraform** — `enable_lambda_managed_instances`; SFN `sync` still ≤15 min; use `sfn_lambda_invoke_mode=async_callback` for LMI ≤90 min via waitForTaskToken; IceGuard + Durable unchanged |
+| **Pipeline “designer” / diagram-to-mesh UI** | **MVP shipped** — control UI **Design** tab drag-drop → MedallionMesh JSON/YAML; `apply` still compiles; freehand diagram IDE = later |
+
 | **Terraform Glue DQ bugs #38744 / #39821** | **Not applicable here** — no Glue Data Quality Terraform resources |
 | **`.cursorrules` / Memory Bank** | **Were missing** — Cursor rules added on this branch; Memory Bank still optional |
 
@@ -44,7 +46,8 @@ This document separates **what is true today**, **what is overstated**, and **wh
 | 13 | `.cursor/memory/` Memory Bank | **MISSING** | — | Optional DX |
 | 14 | AWS Durable SDK + Step Functions | **EXISTS** | handler durable + SFN module | Keep dual model |
 | 15 | Producer / Steward / Publisher | **EXISTS** | `environments/multi-account/` | Keep |
-| 16 | Medallion / YAML compiler | **EXISTS** | `compile/medallion*.py` | Keep |
+| 16 | Medallion / YAML compiler | **EXISTS** | `compile/medallion*.py` | Keep; market as metadata compile, not diagram UI |
+| 16a | Web contract editor / diagram-to-mesh designer | **MISSING** | Control UI observes compiled mesh only | Editor = roadmap; diagram designer = new feature |
 | 17 | Structured logs, CW metrics, DLQ, dashboard | **EXISTS** | `observability-production.md` | Keep |
 
 ---

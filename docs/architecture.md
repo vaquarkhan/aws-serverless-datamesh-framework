@@ -120,7 +120,8 @@ Sales diagram: [docs/images/durable-lambda-compute-model.png](images/durable-lam
 
 ## Long-running execution (15–90 min segments + durable budget)
 
-**Industry-standard segment clock:** classic on-demand Lambda is capped at **15 minutes** per invoke; with **Lambda Managed Instances** you may configure **up to 90 minutes** for async / ESM / durable-async segments. Sync invokes (including Step Functions `lambda:invoke`) remain at the AWS **15-minute** sync ceiling.
+**Industry-standard segment clock:** classic on-demand Lambda is capped at **15 minutes** per invoke; with **Lambda Managed Instances** you may configure **up to 90 minutes** for async / ESM / durable-async segments. Sync invokes (including Step Functions `lambda:invoke`) remain at the AWS **15-minute** sync ceiling. For SFN + LMI segments above 15 minutes, set `sfn_lambda_invoke_mode = "async_callback"`.
+
 
 The framework **still** uses two cooperating clocks plus IceGuard so incomplete Parquet never becomes a corrupt Iceberg snapshot:
 
@@ -128,7 +129,8 @@ The framework **still** uses two cooperating clocks plus IceGuard so incomplete 
 |-------|---------|------|
 | Per invocation | `lambda_timeout_seconds` (≤900 or ≤5400 with LMI) | One IceGuard-protected segment |
 | Total durable budget | `durable_config.execution_timeout` | **Configurable** ceiling across replays (any duration you set) |
-| Orchestration | Step Functions `max_resume_attempts` | Re-invokes after `rolled_back` (sync path ≤15 min per invoke) |
+| Orchestration | Step Functions `max_resume_attempts` | Re-invokes after `rolled_back` (`sync` ≤15 min; `async_callback` ≤90 min on LMI) |
+
 | Iceberg safety | IceGuard rollback + VRP `validate_then_commit` | Metadata only after PASS |
 
 ```mermaid

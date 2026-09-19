@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-19
+
+### Added
+
+- **Design Studio — Create data mesh**: region, single/three-account topology, and VPC modes (`none` / `existing` / `create`) in the control UI
+- **Terraform `vpc-lambda` module** + prod `vpc_mode` (`none` | `existing` | `create`) for optional private networking
+- **GitHub Pages** site (`docs/index.html` + Actions workflow) with paper badge, greenfield + final UI videos
+- **Mesh designer** drag-drop → `mesh.yaml` / `apply` into project `generated/` (not download-only)
+- **Step Functions dual invoke**: `sync` (≤15 min) and `async_callback` (LMI ≤90 min) ASL + Lambda callback helper
+
+### Changed
+
+- IAM: correct `AWSLambdaBasicExecutionRole` + always attach `AWSLambdaVPCAccessExecutionRole` for optional VPC
+- Docs: developer UI → Terraform path documents honest VPC/IAM defaults
+
 ## [1.3.0] - 2026-09-19
 
 ### Added

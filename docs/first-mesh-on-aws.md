@@ -1,6 +1,7 @@
 # First mesh on AWS in 5 minutes
 
-End-to-end: YAML → generated pipelines → Terraform → Step Functions run.
+End-to-end: **YAML → generated pipelines** → Terraform → Step Functions run.  
+(Medallion compile fan-out is metadata — not a diagram designer. Control UI observes after `apply`.)
 
 ## Prerequisites
 

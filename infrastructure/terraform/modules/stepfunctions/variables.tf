@@ -11,11 +11,28 @@ variable "lambda_qualified_arn" {
   type        = string
 }
 
+variable "sfn_lambda_invoke_mode" {
+  description = <<-EOT
+    How Step Functions invokes the domain writer:
+    - sync: lambda:invoke (RequestResponse). AWS sync cap = 15 minutes.
+    - async_callback: lambda:invoke.waitForTaskToken + InvocationType=Event.
+      Use with Lambda Managed Instances for segments up to 90 minutes.
+      Handler must SendTaskSuccess/Failure (framework helper does this).
+  EOT
+  type        = string
+  default     = "sync"
+
+  validation {
+    condition     = contains(["sync", "async_callback"], lower(var.sfn_lambda_invoke_mode))
+    error_message = "sfn_lambda_invoke_mode must be sync or async_callback."
+  }
+}
+
 variable "lambda_invoke_timeout_seconds" {
   description = <<-EOT
-    How long Step Functions waits for ONE Lambda segment to return.
-    Must exceed per-invocation Lambda timeout (900s) but is NOT the full
-    durable workload budget: use max_resume_attempts for multi-segment backfills.
+    How long Step Functions waits for ONE Lambda segment.
+    sync: typically min(lambda_timeout, 900) + buffer.
+    async_callback: lambda_timeout + buffer (may be up to ~5460 with LMI 90 min).
   EOT
   type        = number
   default     = 960

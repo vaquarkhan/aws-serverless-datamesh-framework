@@ -2,6 +2,8 @@
 
 Animated walkthrough of the happy path. Stills + GIFs live in [`docs/images/tutorial/`](images/tutorial/).
 
+Pipelines are created from **YAML + `apply`**, not by drawing in the control UI. Closest “magic”: one medallion YAML → bronze/silver/gold via the compiler. A web contract editor is roadmap (*coming next*); a diagram-to-mesh designer would be a new feature later.
+
 <p align="center">
   <img src="images/tutorial/tutorial-overview.gif" alt="Full tutorial overview GIF" width="720" />
 </p>

@@ -2,6 +2,24 @@
 
 **Serverless Data Mesh** lets domain teams define **data products in YAML**. The compiler generates proof-gated serverless pipelines (Lambda + Step Functions + VRP + Iceberg), medallion bronze/silver/gold chains, consumer SLAs, and mesh orchestration.
 
+**Closest thing to “magic”:** drag Domain + Bronze/Silver/Gold in the control UI **Design** tab (or edit YAML) → live MedallionMesh JSON/YAML → `apply` compiles all layer pipelines. Design emits **metadata**; it does not deploy AWS by itself.
+
+### How users create pipelines
+
+```text
+Design tab (drag-drop) or new/edit mesh.yaml → apply/compile → readers.py → ui (observe) → Terraform
+```
+
+| Step | User action | Notes |
+|------|-------------|-------|
+| Design | UI **Design** tab: drag Domain + layers → JSON/YAML | Or `new` + edit YAML by hand |
+| Compile | `apply` (or `compile`) | Emits handlers, SFN ASL, VRP, SLAs, manifests |
+| Wire I/O | Fill each layer `readers.py` | `doctor` lists pending stubs |
+| Observe | Overview / Pipelines / Trust tabs | Inspect generated mesh |
+| Deploy | Lambda zip + Terraform | Step Functions / EventBridge run the mesh |
+
+**Control UI tabs:** Design (drag-drop metadata) · Overview · Pipelines · Trust · PVDM · Durable · Tutorial — plus Demo walkthrough, Refresh, Run PVDM demo, Attest demo.
+
 **Invariant (Vaquar Pattern):** `commit_metadata ⟹ VRP = PASS` for every layer and every domain.
 
 ---
@@ -806,12 +824,15 @@ result = run_metadata_pipeline(
 
 ## Roadmap (even easier)
 
-| Today | Coming next |
-|-------|-------------|
-| YAML → all pipelines via `apply` | `serverless-data-mesh deploy` (terraform apply wrapper) |
-| Templates via `new` | Web UI contract editor (drag-drop fields) |
-| `doctor` checks readers.py | Auto-detect JDBC/S3 from `source_uri` in YAML |
-| Manual Lambda package | CI GitHub Action template in repo |
-| Hand-written `readers.py` | Optional codegen from `transforms` + sample SQL |
+| Today (shipped) | Coming next (roadmap — not product yet) | Not implied / new feature later |
+|-----------------|------------------------------------------|----------------------------------|
+| **One medallion YAML → many bronze/silver/gold pipelines** via the compiler | Richer designer forms / import existing YAML | Full freehand diagram IDE |
+| **Design tab** drag Domain/Bronze/Silver/Gold → MedallionMesh JSON/YAML | Hosted multi-user contract editor | Design tab == AWS deploy (still need `apply` + Terraform) |
+| Templates via `new` | Auto-detect JDBC/S3 from `source_uri` in YAML | — |
+| `doctor` checks readers.py | CI GitHub Action template in repo | — |
+| Hand-written `readers.py` | Optional codegen from `transforms` + sample SQL | — |
+| Control UI: explore / trust / demos after `apply` | — | — |
 
-What is **already** drag-and-drop done: metadata → handlers, Step Functions, VRP config, SLAs, orchestrators, terraform stubs, tests, and deploy checklist.
+**Closest thing to “magic” today:** Design tab (or YAML) → metadata → compiler fan-out to all layers.
+
+What **is** automated today: designer metadata + compile → handlers, Step Functions, VRP config, SLAs, orchestrators, terraform stubs, tests, and deploy checklist.

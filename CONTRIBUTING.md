@@ -1,30 +1,33 @@
 # Contributing
 
-
-
 ## Development setup
-
-
 
 **Requires Python 3.12+** (veridata-recon ships cp312 wheels; Windows dev may need WSL or CI for Rust-backed deps).
 
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\Activate.ps1
+make install
+make test
+make benchmark          # consumer safety: corrupt data never PASSes
+make walkthrough        # interactive tutorial (no AWS)
+```
 
+## Local control UI + deploy path
+
+Full developer instructions: **[docs/developer-ui-and-deploy.md](docs/developer-ui-and-deploy.md)**  
+(GitHub Pages landing: `docs/index.html` · walkthrough: `docs/demo-walkthrough.html`)
 
 ```bash
-
-python3.12 -m venv .venv
-
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-
-make install
-
-make test
-
-make benchmark          # consumer safety: corrupt data never PASSes
-
-make walkthrough        # interactive tutorial (no AWS)
-
+pip install -e ".[dev]"
+serverless-data-mesh apply `
+  --contract examples/medallion-e2e/northstar.mesh.yaml `
+  --output examples/medallion-e2e/generated
+serverless-data-mesh ui --path examples/medallion-e2e/generated --open
+# → http://127.0.0.1:8765/  (Python ThreadingHTTPServer — not Jetty)
 ```
+
+Then: implement `readers.py` → package Lambda → `infrastructure/terraform/environments/prod`.
 
 
 

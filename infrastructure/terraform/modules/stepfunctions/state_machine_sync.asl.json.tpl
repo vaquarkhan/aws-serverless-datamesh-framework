@@ -1,5 +1,5 @@
-﻿{
-  "Comment": "Serverless Data Mesh: backfill orchestrator with resume loop after IceGuard rollback",
+{
+  "Comment": "Serverless Data Mesh: sync lambda:invoke resume loop (AWS sync cap 15 min per segment)",
   "StartAt": "InitializeRetryCounter",
   "States": {
     "InitializeRetryCounter": {

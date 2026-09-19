@@ -72,6 +72,17 @@ variable "sfn_invoke_timeout_buffer_seconds" {
   default = 60
 }
 
+variable "sfn_lambda_invoke_mode" {
+  description = "sync (≤15 min AWS sync) or async_callback (LMI ≤90 min via waitForTaskToken)."
+  type        = string
+  default     = "sync"
+
+  validation {
+    condition     = contains(["sync", "async_callback"], lower(var.sfn_lambda_invoke_mode))
+    error_message = "sfn_lambda_invoke_mode must be sync or async_callback."
+  }
+}
+
 variable "resume_wait_seconds" {
   type    = number
   default = 30
@@ -86,11 +97,16 @@ locals {
   account_id        = data.aws_caller_identity.current.account_id
   iceberg_warehouse = "${local.account_id}:s3tablescatalog/${var.lakehouse_bucket_name}"
 
+  sfn_invoke_mode               = lower(var.sfn_lambda_invoke_mode)
   lambda_segment_timeout_max    = var.enable_lambda_managed_instances ? 5400 : 900
   lambda_per_invocation_timeout = min(var.lambda_timeout_seconds, local.lambda_segment_timeout_max)
   durable_execution_timeout     = var.durable_execution_timeout_seconds
-  sfn_lambda_invoke_timeout     = min(local.lambda_per_invocation_timeout, 900) + var.sfn_invoke_timeout_buffer_seconds
-  iceguard_rollback_ms          = coalesce(
+  sfn_lambda_invoke_timeout = (
+    local.sfn_invoke_mode == "async_callback"
+    ? local.lambda_per_invocation_timeout + var.sfn_invoke_timeout_buffer_seconds
+    : min(local.lambda_per_invocation_timeout, 900) + var.sfn_invoke_timeout_buffer_seconds
+  )
+  iceguard_rollback_ms = coalesce(
     var.iceguard_rollback_threshold_ms,
     min(60000, max(10000, floor(local.lambda_per_invocation_timeout * 33)))
   )
@@ -102,6 +118,16 @@ check "timeout_coherence" {
   assert {
     condition     = local.durable_execution_timeout >= local.lambda_per_invocation_timeout
     error_message = "durable_execution_timeout_seconds must be >= lambda_timeout_seconds."
+  }
+}
+
+check "sfn_mode_for_long_segments" {
+  assert {
+    condition = (
+      local.lambda_per_invocation_timeout <= 900
+      || local.sfn_invoke_mode == "async_callback"
+    )
+    error_message = "lambda_timeout_seconds > 900 requires sfn_lambda_invoke_mode=async_callback."
   }
 }
 
@@ -156,6 +182,7 @@ module "stepfunctions" {
   name_prefix                   = var.name_prefix
   role_arn                      = module.iam.stepfunctions_role_arn
   lambda_qualified_arn          = module.lambda.qualified_invoke_arn
+  sfn_lambda_invoke_mode        = local.sfn_invoke_mode
   max_resume_attempts           = local.effective_max_resume_attempts
   lambda_invoke_timeout_seconds = local.sfn_lambda_invoke_timeout
   resume_wait_seconds           = var.resume_wait_seconds

@@ -32,12 +32,22 @@ On Mac/Linux use `\` instead of `^` for line breaks.
 
 **Browser opens:** [http://127.0.0.1:8765/](http://127.0.0.1:8765/)
 
-| What you see | What to click |
-|--------------|---------------|
-| Overview | KPIs + trust bars |
-| Pipelines | All bronze/silver/gold outputs |
-| Trust | VRP PASS/FAIL board |
-| Tutorial | GIF guide (same as below) |
+The control UI is for **observe / trust / demos** after compile. Pipelines come from **YAML → compiler** (one medallion contract → bronze/silver/gold). A web contract editor is *coming next* on the roadmap; a diagram-to-mesh designer is a separate future feature.
+
+| Tab / control | What it does |
+|---------------|--------------|
+| Overview | KPIs, mesh health, activity, trust snapshot |
+| Pipelines | Bronze/silver/gold table + Layer Lambda fleet |
+| Trust | VRP PASS/FAIL board + PVDM-A attestations |
+| PVDM | Four-phase invariant |
+| Durable | Dual clocks + compute model |
+| Tutorial | GIF stepper (Prev/Next) |
+| Demo walkthrough | Auto-play Do/Benefit (`/walkthrough`) |
+| Refresh | Reload dashboard |
+| Run PVDM demo | Local gate → updates Trust |
+| Attest demo | Sample PVDM-A attestation |
+
+**Create a pipeline (not in the UI):** `new` → edit `mesh.yaml` → `apply` → fill `readers.py` → package + Terraform. Details: [metadata-driven-pipeline.md](metadata-driven-pipeline.md).
 | **Run PVDM demo** (top button) | Local gate demo → updates Trust |
 
 **Video-style walkthrough page:** open `docs/demo-walkthrough.html` (Play/Pause, auto-advances every ~6.5s).

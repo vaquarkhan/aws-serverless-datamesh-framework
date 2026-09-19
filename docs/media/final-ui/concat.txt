@@ -1,0 +1,15 @@
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/final-ui/frames/01-create.png'
+duration 3.5
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/final-ui/frames/02-accounts.png'
+duration 3.5
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/final-ui/frames/03-vpc-create.png'
+duration 3.5
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/final-ui/frames/04-vpc-existing.png'
+duration 3.5
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/final-ui/frames/05-domains.png'
+duration 3.5
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/final-ui/frames/06-pipelines.png'
+duration 3.5
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/final-ui/frames/07-pvdm.png'
+duration 3.5
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/final-ui/frames/07-pvdm.png'

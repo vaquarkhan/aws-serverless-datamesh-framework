@@ -12,6 +12,11 @@ from aws_durable_execution_sdk_python import DurableContext, durable_execution
 from serverless_data_mesh.catalog import GlueRestCatalogAdapter
 from serverless_data_mesh.config import MeshSettings
 from serverless_data_mesh.orchestration import IceGuardDurableCoordinator
+from serverless_data_mesh.orchestration.sfn_callback import (
+    complete_task_token,
+    extract_task_token,
+    unwrap_workload_event,
+)
 from serverless_data_mesh.verification import VRPProofGenerator
 
 from .io import records_from_source, write_parquet_chunk
@@ -25,9 +30,17 @@ logger.setLevel(logging.INFO)
 
 @durable_execution
 def handler(event: dict[str, Any], context: DurableContext) -> dict[str, Any]:
-    """Compose durable orchestration, IceGuard, Glue REST, and veridata-recon proofs."""
+    """Compose durable orchestration, IceGuard, Glue REST, and veridata-recon proofs.
+
+    Supports both SFN modes:
+    - sync: event is the workload; return value is the Step Functions task result.
+    - async_callback: event includes ``task_token`` + ``workload``; result is also
+      reported via SendTaskSuccess so LMI segments can exceed the 15-min sync cap.
+    """
+    task_token = extract_task_token(event)
+    workload_event = unwrap_workload_event(event)
     settings = MeshSettings.from_environment()
-    workload = build_workload(event, settings)
+    workload = build_workload(workload_event, settings)
 
     catalog = GlueRestCatalogAdapter.from_environment(
         namespace=workload.boundary.source_namespace,
@@ -52,19 +65,29 @@ def handler(event: dict[str, Any], context: DurableContext) -> dict[str, Any]:
             return enrich_records_with_rules(records)
         return records
 
-    result = coordinator.execute_workload(
-        workload,
-        batch_writer=lambda start, end: write_parquet_chunk(
-            workload.target_uri,
-            start,
-            end,
-            source_uri=workload.source_uri,
-        ),
-        source_reader=source_reader,
-        sink_reader=lambda start, end: read_staged_sink(workload.target_uri, start, end),
-    )
+    try:
+        result = coordinator.execute_workload(
+            workload,
+            batch_writer=lambda start, end: write_parquet_chunk(
+                workload.target_uri,
+                start,
+                end,
+                source_uri=workload.source_uri,
+            ),
+            source_reader=source_reader,
+            sink_reader=lambda start, end: read_staged_sink(workload.target_uri, start, end),
+        )
+    except Exception as exc:
+        complete_task_token(
+            task_token=task_token,
+            result={"outcome": "unknown_failure", "message": str(exc)},
+            error=type(exc).__name__,
+            cause=str(exc),
+        )
+        raise
 
     logger.info("Domain write finished: %s", json.dumps(result, default=str))
+    complete_task_token(task_token=task_token, result=result)
     return result
 
 

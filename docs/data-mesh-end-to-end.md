@@ -404,7 +404,8 @@ Lambda **on-demand** has a **15-minute** per-invocation limit; **Managed Instanc
 | `enable_lambda_managed_instances` | Opt-in longer async segments |
 | `durable_execution_timeout_seconds` | **Configurable** total durable budget (any duration you set) |
 | `max_resume_attempts` | Step Functions loops after `rolled_back` (auto `ceil(durable/lambda)+2`) |
-| Step Functions `TimeoutSeconds` | Waits for one **sync** segment (≤15 min), not the full workload |
+| Step Functions `TimeoutSeconds` | Waits for one segment: `sync` ≤15 min; `async_callback` up to 90 min on LMI |
+
 
 
 See [architecture.md: Long-running execution](architecture.md#long-running-execution-configurable-durable-budget) for sequence diagrams and Terraform tuning.

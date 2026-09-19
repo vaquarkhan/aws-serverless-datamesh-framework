@@ -59,7 +59,7 @@ output "example_cli_invoke" {
 }
 
 output "execution_timeouts" {
-  description = "Segment + durable timeout model (on-demand 15 min or LMI up to 90 min segments)."
+  description = "Segment + durable + dual SFN invoke modes (sync ≤15 min; async_callback LMI ≤90 min)."
   value = {
     lambda_timeout_seconds                     = local.lambda_per_invocation_timeout
     lambda_managed_instances_enabled           = var.enable_lambda_managed_instances
@@ -67,6 +67,7 @@ output "execution_timeouts" {
     durable_execution_seconds                  = local.durable_execution_timeout
     durable_retention_days                     = var.durable_retention_days
     iceguard_rollback_threshold_ms             = local.iceguard_rollback_ms
+    sfn_lambda_invoke_mode                     = local.sfn_invoke_mode
     step_functions_invoke_seconds              = local.sfn_lambda_invoke_timeout
     step_functions_invoke_buffer_s             = var.sfn_invoke_timeout_buffer_seconds
     resume_wait_seconds                        = var.resume_wait_seconds

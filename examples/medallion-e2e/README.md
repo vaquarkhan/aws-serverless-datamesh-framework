@@ -3,7 +3,9 @@
 > **Full reference:** [docs/metadata-driven-pipeline.md](../../docs/metadata-driven-pipeline.md) — schema, field tables, deploy, CI/CD, validation rules.
 
 **One YAML file** defines bronze, silver, and gold layers for every domain.  
-`serverless-data-mesh compile` generates **all pipelines**, orchestrators, Lambda handlers, VRP gates, and consumer SLAs.
+`serverless-data-mesh compile` / `apply` generates **all pipelines**, orchestrators, Lambda handlers, VRP gates, and consumer SLAs.
+
+That fan-out is the closest thing to “magic” in this product — **still metadata, not drawing**. There is no diagram-to-mesh designer today; a web contract editor is roadmap-only (*coming next*). The control UI explores a compiled mesh; it does not design one.
 
 No Glue ETL. Spark runs on Lambda for silver/gold transforms where configured.
 

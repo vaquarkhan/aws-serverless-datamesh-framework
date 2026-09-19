@@ -5,3 +5,7 @@ output "state_machine_arn" {
 output "state_machine_name" {
   value = aws_sfn_state_machine.backfill.name
 }
+
+output "sfn_lambda_invoke_mode" {
+  value = local.invoke_mode
+}

@@ -99,14 +99,26 @@ def run_metadata_pipeline(
     batch_writer: BatchWriterFn,
     sink_reader: SourceReaderFn | None = None,
 ) -> dict[str, Any]:
-    """Execute IceGuardDurableCoordinator using contract-driven metadata."""
+    """Execute IceGuardDurableCoordinator using contract-driven metadata.
+
+    Supports both Step Functions modes: sync return value, and async_callback
+    via task_token + SendTaskSuccess (LMI segments up to 90 min).
+    """
     from serverless_data_mesh.catalog import GlueRestCatalogAdapter
     from serverless_data_mesh.orchestration import IceGuardDurableCoordinator
+    from serverless_data_mesh.orchestration.sfn_callback import (
+        complete_task_token,
+        extract_task_token,
+        unwrap_workload_event,
+    )
     from serverless_data_mesh.verification import VRPProofGenerator
+
+    task_token = extract_task_token(event)
+    workload_event = unwrap_workload_event(event)
 
     parsed = contract_from_mapping(contract)
     settings = MeshSettings.from_environment()
-    workload = build_workload_from_contract(event, parsed, settings=settings)
+    workload = build_workload_from_contract(workload_event, parsed, settings=settings)
 
     catalog = GlueRestCatalogAdapter.from_environment(
         namespace=workload.boundary.source_namespace,
@@ -125,10 +137,22 @@ def run_metadata_pipeline(
         rollback_threshold_ms=parsed.workload.rollback_threshold_ms,
     )
 
-    return coordinator.execute_workload(
-        workload,
-        batch_writer=batch_writer,
-        source_reader=source_reader,
-        sink_reader=sink_reader,
-        enable_auto_repair=parsed.governance.auto_repair,
-    )
+    try:
+        result = coordinator.execute_workload(
+            workload,
+            batch_writer=batch_writer,
+            source_reader=source_reader,
+            sink_reader=sink_reader,
+            enable_auto_repair=parsed.governance.auto_repair,
+        )
+    except Exception as exc:
+        complete_task_token(
+            task_token=task_token,
+            result={"outcome": "unknown_failure", "message": str(exc)},
+            error=type(exc).__name__,
+            cause=str(exc),
+        )
+        raise
+
+    complete_task_token(task_token=task_token, result=result)
+    return result
