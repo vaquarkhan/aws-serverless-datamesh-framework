@@ -235,7 +235,7 @@ flowchart TB
 
 | Concern | Solution |
 |---------|----------|
-| Lambda 15-min hard cap | Chain segments via SFN resume loop |
+| Lambda 15-min hard cap | Durable segments + optional LMI up to 90 min async; IceGuard protects Iceberg |
 | Retry without duplicate commits | Replay **completed** durable steps only |
 | Timeout mid-chunk | IceGuard rollback → `rolled_back` → resume |
 
@@ -416,7 +416,7 @@ gantt
 
 | Clock | Setting | Role |
 |-------|---------|------|
-| **Container** | Lambda `timeout` (≤ 900s) | One IceGuard-protected segment |
+| **Container** | Lambda `timeout` (≤900s · ≤5400s with LMI) | One IceGuard-protected segment |
 | **Workload** | `durable_execution_timeout` | **Configurable** total budget (set to your backfill wall-clock) |
 | **Orchestration** | SFN `max_resume_attempts` | Chains segments (`ceil(durable/lambda)+2`) |
 | **Watchdog** | `rollback_threshold_ms` | IceGuard rollback margin before hard kill |

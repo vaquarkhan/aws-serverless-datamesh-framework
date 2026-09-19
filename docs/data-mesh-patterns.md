@@ -203,8 +203,8 @@ gantt
 **Terraform knobs** (all in `terraform.tfvars`):
 
 ```hcl
-lambda_timeout_seconds              = 900    # per invocation (max 900)
-# Workload clock: set to your backfill wall-clock (overcomes the 15-min Lambda limit)
+lambda_timeout_seconds              = 900    # ≤900 on-demand; ≤5400 with LMI
+# Workload clock: set to your backfill wall-clock (IceGuard + Durable protect Iceberg)
 durable_execution_timeout_seconds   = 10800
 lambda_memory_mb                    = 4096
 sfn_invoke_timeout_buffer_seconds   = 60    # SFN wait = lambda + buffer
@@ -402,7 +402,7 @@ flowchart TB
 | Glue jobs for everything | Glue **catalog connector** only |
 | "Trust the pipeline logs" | VRP cryptographic proof per chunk |
 | Retry until success | `verification_failed` stops the line |
-| 15-min Lambda limit = blocker | Segmented execution with configurable durable budget (any duration you set) |
+| 15-min Lambda limit = blocker | 15–90 min segments (on-demand or LMI) + durable budget; IceGuard avoids corrupt Iceberg |
 | Single account lake | Producer · Steward · Publisher |
 
 ---

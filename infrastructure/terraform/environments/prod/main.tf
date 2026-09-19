@@ -5,31 +5,45 @@ locals {
   }
   iceberg_warehouse = "${local.account_id}:s3tablescatalog/${var.lakehouse_bucket_name}"
 
-  # Two-layer timeout model (all knobs in terraform.tfvars):
-  # Dual clocks (how we overcome the 15-minute Lambda limit):
-  # - lambda_timeout_seconds: per-container cap (AWS hard max 900)
-  # - durable_execution_timeout_seconds: total job budget — set to whatever the
-  #   backfill needs; Step Functions + Durable Execution chain segments until done
-  # - sfn_invoke_timeout_buffer_seconds: Step Functions wait = lambda + buffer
+  # Dual clocks + optional LMI longer segments:
+  # - lambda_timeout_seconds: segment clock (900 on-demand; up to 5400 with LMI)
+  # - durable_execution_timeout_seconds: total job budget (any duration you set)
+  # IceGuard rolls back before hard timeout so incomplete Parquet never commits.
+  lambda_segment_timeout_max = var.enable_lambda_managed_instances ? 5400 : 900
   lambda_per_invocation_timeout = min(
     coalesce(var.lambda_per_invocation_timeout_seconds, var.lambda_timeout_seconds),
-    900
+    local.lambda_segment_timeout_max
   )
-  durable_execution_timeout       = var.durable_execution_timeout_seconds
-  sfn_lambda_invoke_timeout       = local.lambda_per_invocation_timeout + var.sfn_invoke_timeout_buffer_seconds
-  iceguard_rollback_ms            = coalesce(
+  durable_execution_timeout     = var.durable_execution_timeout_seconds
+  # Step Functions lambda:invoke is synchronous — AWS still caps sync at 900s.
+  # Cap SFN wait accordingly even when LMI allows longer async segments.
+  sfn_lambda_invoke_timeout = min(local.lambda_per_invocation_timeout, 900) + var.sfn_invoke_timeout_buffer_seconds
+  iceguard_rollback_ms = coalesce(
     var.iceguard_rollback_threshold_ms,
     min(60000, max(10000, floor(local.lambda_per_invocation_timeout * 33)))
   )
-  checkpoint_retention_days       = max(7, var.durable_retention_days)
-  min_resume_attempts             = ceil(var.durable_execution_timeout_seconds / local.lambda_per_invocation_timeout) + 2
-  effective_max_resume_attempts   = max(var.max_resume_attempts, local.min_resume_attempts)
+  checkpoint_retention_days     = max(7, var.durable_retention_days)
+  min_resume_attempts           = ceil(var.durable_execution_timeout_seconds / local.lambda_per_invocation_timeout) + 2
+  effective_max_resume_attempts = max(var.max_resume_attempts, local.min_resume_attempts)
 }
 
 check "timeout_coherence" {
   assert {
     condition     = local.durable_execution_timeout >= local.lambda_per_invocation_timeout
     error_message = "durable_execution_timeout_seconds must be >= lambda_timeout_seconds."
+  }
+}
+
+check "lmi_capacity_provider" {
+  assert {
+    condition = (
+      !var.enable_lambda_managed_instances
+      || (
+        var.lambda_managed_instances_capacity_provider_arn != null
+        && var.lambda_managed_instances_capacity_provider_arn != ""
+      )
+    )
+    error_message = "enable_lambda_managed_instances=true requires lambda_managed_instances_capacity_provider_arn."
   }
 }
 
@@ -99,6 +113,8 @@ module "lambda" {
   timeout                   = local.lambda_per_invocation_timeout
   memory_size               = var.lambda_memory_mb
   dlq_arn                  = module.messaging.dlq_arn
+  enable_lambda_managed_instances = var.enable_lambda_managed_instances
+  lambda_managed_instances_capacity_provider_arn = var.lambda_managed_instances_capacity_provider_arn
 
   environment_variables = {
     ICEGUARD_CHECKPOINT_BUCKET      = module.storage.checkpoint_bucket_name

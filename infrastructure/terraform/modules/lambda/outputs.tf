@@ -21,8 +21,13 @@ output "durable_execution_timeout" {
 }
 
 output "per_invocation_timeout" {
-  description = "Lambda per-container timeout in seconds (max 900)."
+  description = "Lambda per-container timeout in seconds (900 on-demand; up to 5400 with LMI)."
   value       = var.timeout
+}
+
+output "lambda_managed_instances_enabled" {
+  description = "True when Lambda Managed Instances capacity is attached."
+  value       = var.enable_lambda_managed_instances
 }
 
 output "log_group_name" {

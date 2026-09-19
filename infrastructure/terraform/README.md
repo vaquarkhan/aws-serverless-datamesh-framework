@@ -35,7 +35,7 @@ Step Functions ──resume loop──► Lambda :live (Durable)
    committed | verification_failed | rolled_back → retry
 ```
 
-**Compute model:** Durable Lambda on Firecracker microVMs · on-demand scale-to-zero · dual clocks (`lambda_timeout_seconds` ≤ 900 + configurable `durable_execution_timeout_seconds`). See [examples/durable-compute](../../examples/durable-compute/).
+**Compute model:** Durable Lambda on Firecracker · on-demand or optional LMI (15–90 min segments) · durable budget any duration · IceGuard protects Iceberg. See [examples/durable-compute](../../examples/durable-compute/) · [docs/lambda-managed-instances.md](../../docs/lambda-managed-instances.md).
 
 ## Prerequisites
 
@@ -103,8 +103,9 @@ cat response.json
 
 ### `modules/lambda`
 
-- `timeout`: per-invocation container limit (**max 900s / 15 min**, AWS hard cap)
-- `durable_config.execution_timeout`: total durable budget (**configurable** — set to your backfill needs; chains past the 15-min Lambda limit)
+- `timeout`: per-invocation segment (**≤900s** on-demand; **≤5400s** with LMI async/ESM)
+- `enable_lambda_managed_instances` + capacity provider ARN: optional 90-min segments
+- `durable_config.execution_timeout`: total durable budget (**configurable** — any wall-clock; IceGuard + VRP gate Iceberg)
 - `durable_config.retention_period`: durable checkpoint retention days (default 14)
 - Publishes `live` alias (**required** for durable invocation)
 
@@ -118,16 +119,20 @@ State machine routes on handler `outcome`:
 | `rolled_back` | Wait 60s → re-invoke (up to `max_resume_attempts`) |
 | `verification_failed` | Fail (inspect VRP proofs in S3) |
 
-Each `lambda:invoke` task uses `TimeoutSeconds` ≈ Lambda timeout + 60s (waits for **one** 15-min segment, not the full durable budget). Size resumes with `ceil(durable_execution_timeout_seconds / lambda_timeout_seconds)`; prod auto-bumps `max_resume_attempts` if set too low.
+Each `lambda:invoke` task uses `TimeoutSeconds` ≈ min(Lambda timeout, 900) + 60s (SFN sync still ≤15 min). Size resumes with `ceil(durable_execution_timeout_seconds / lambda_timeout_seconds)`; prod auto-bumps `max_resume_attempts` if set too low.
 
 Customize in `terraform.tfvars`:
 
 ```hcl
 lambda_timeout_seconds            = 900
-# Set durable budget to your backfill wall-clock (overcomes the 15-min Lambda limit)
+# Set durable budget to your backfill wall-clock
 durable_execution_timeout_seconds = 10800
 lambda_memory_mb                  = 4096
 max_resume_attempts               = 14
+# Optional LMI (up to 90 min async segments):
+# enable_lambda_managed_instances = true
+# lambda_managed_instances_capacity_provider_arn = "arn:aws:lambda:..."
+# lambda_timeout_seconds          = 5400
 ```
 
 After apply: `terraform output execution_timeouts`

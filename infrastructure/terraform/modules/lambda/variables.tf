@@ -27,18 +27,39 @@ variable "memory_size" {
   default = 4096
 }
 
+variable "enable_lambda_managed_instances" {
+  description = <<-EOT
+    Attach Lambda Managed Instances (LMI) capacity so per-invoke timeout may be
+    set up to 5400s (90 min) for async / ESM / durable async segments.
+    Classic on-demand Lambda remains capped at 900s (15 min).
+    Requires lambda_managed_instances_capacity_provider_arn when true.
+    See: https://aws.amazon.com/blogs/compute/announcing-90-minute-function-timeout-on-aws-lambda-managed-instances/
+  EOT
+  type        = bool
+  default     = false
+}
+
+variable "lambda_managed_instances_capacity_provider_arn" {
+  description = "ARN of an aws_lambda_capacity_provider for LMI. Required when enable_lambda_managed_instances is true."
+  type        = string
+  default     = null
+}
+
 variable "timeout" {
   description = <<-EOT
-    Per-invocation Lambda timeout in seconds (AWS hard max: 900 / 15 minutes).
-    This is NOT the total backfill duration. Long jobs use durable execution
-    replay + Step Functions resume loops up to durable_execution_timeout.
+    Per-invocation Lambda timeout in seconds (segment clock).
+    - On-demand Lambda: 1–900 (AWS hard max 15 minutes).
+    - Lambda Managed Instances (async/ESM): 1–5400 (up to 90 minutes).
+    This is NOT the total backfill duration. Longer jobs use Durable Execution
+    + IceGuard rollback + Step Functions resume up to durable_execution_timeout
+    so incomplete Parquet never becomes a corrupt Iceberg snapshot.
   EOT
   type        = number
   default     = 900
 
   validation {
-    condition     = var.timeout >= 1 && var.timeout <= 900
-    error_message = "Lambda per-invocation timeout must be between 1 and 900 seconds."
+    condition     = var.timeout >= 1 && var.timeout <= 5400
+    error_message = "Lambda per-invocation timeout must be between 1 and 5400 seconds."
   }
 }
 
@@ -52,9 +73,8 @@ variable "durable_execution_timeout" {
   description = <<-EOT
     Total durable execution budget in seconds across all platform-managed replays
     within one execution (workload clock). Set this to your expected backfill
-    wall-clock time — the framework chains ≤15-minute Lambda segments until this
-    budget is exhausted, overcoming the AWS per-invocation limit.
-    AWS allows up to 31622400 seconds (~366 days). Default 5400.
+    wall-clock time — the framework chains Lambda segments until this budget is
+    exhausted. AWS allows up to 31622400 seconds (~366 days). Default 5400.
   EOT
   type        = number
   default     = 5400
@@ -89,4 +109,28 @@ variable "log_retention_days" {
 variable "tags" {
   type    = map(string)
   default = {}
+}
+
+check "lmi_timeout_coherence" {
+  assert {
+    condition = (
+      var.enable_lambda_managed_instances
+      ? var.timeout <= 5400
+      : var.timeout <= 900
+    )
+    error_message = "On-demand Lambda timeout max is 900s; enable_lambda_managed_instances allows up to 5400s (90 min)."
+  }
+}
+
+check "lmi_capacity_provider_required" {
+  assert {
+    condition = (
+      !var.enable_lambda_managed_instances
+      || (
+        var.lambda_managed_instances_capacity_provider_arn != null
+        && var.lambda_managed_instances_capacity_provider_arn != ""
+      )
+    )
+    error_message = "enable_lambda_managed_instances=true requires lambda_managed_instances_capacity_provider_arn."
+  }
 }

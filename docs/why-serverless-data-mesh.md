@@ -571,9 +571,9 @@ gantt
 
 | Layer | Setting | Role |
 |-------|---------|------|
-| Per invocation | Lambda `timeout` (≤ 900s) | One container segment |
+| Per invocation | Lambda `timeout` (≤900s · ≤5400s with LMI) | One IceGuard-protected segment |
 | Total budget | `durable_config.execution_timeout` | **Configurable** durable ceiling (set to your job) |
-| Orchestration | Step Functions resume loop | Chains segments past the 15-min limit |
+| Orchestration | Step Functions resume loop | Chains segments; sync SFN still ≤15 min |
 
 Terraform tuning: **[terraform-guide.md](terraform-guide.md)**
 

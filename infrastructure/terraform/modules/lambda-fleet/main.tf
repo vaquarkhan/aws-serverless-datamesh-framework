@@ -30,14 +30,23 @@ variable "timeout" {
   default = 900
 }
 
+variable "enable_lambda_managed_instances" {
+  type    = bool
+  default = false
+}
+
+variable "lambda_managed_instances_capacity_provider_arn" {
+  type    = string
+  default = null
+}
+
 variable "enable_durable_execution" {
   type    = bool
   default = true
 }
 
 variable "durable_execution_timeout" {
-  # Workload clock: set to your backfill wall-clock. Segments chain past the
-  # 15-minute Lambda limit until this budget is used.
+  # Workload clock: set to your backfill wall-clock. IceGuard + Durable protect Iceberg.
   type    = number
   default = 5400
 }
@@ -76,6 +85,8 @@ module "layer_lambda" {
   durable_execution_timeout = var.durable_execution_timeout
   durable_retention_days    = var.durable_retention_days
   dlq_arn                   = var.dlq_arn
+  enable_lambda_managed_instances = var.enable_lambda_managed_instances
+  lambda_managed_instances_capacity_provider_arn = var.lambda_managed_instances_capacity_provider_arn
 
   environment_variables = merge(var.base_environment_variables, {
     MEDALLION_DOMAIN = each.value.domain_id
