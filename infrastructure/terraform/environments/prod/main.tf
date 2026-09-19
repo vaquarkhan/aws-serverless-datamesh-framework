@@ -5,19 +5,24 @@ locals {
   }
   iceberg_warehouse = "${local.account_id}:s3tablescatalog/${var.lakehouse_bucket_name}"
 
-  # Dual clocks + optional LMI longer segments:
+  # Dual clocks + dual Step Functions invoke modes:
   # - lambda_timeout_seconds: segment clock (900 on-demand; up to 5400 with LMI)
   # - durable_execution_timeout_seconds: total job budget (any duration you set)
+  # - sfn_lambda_invoke_mode=sync: AWS sync cap 15 min
+  # - sfn_lambda_invoke_mode=async_callback: waitForTaskToken + Event (LMI ≤90 min)
   # IceGuard rolls back before hard timeout so incomplete Parquet never commits.
+  sfn_invoke_mode = lower(var.sfn_lambda_invoke_mode)
   lambda_segment_timeout_max = var.enable_lambda_managed_instances ? 5400 : 900
   lambda_per_invocation_timeout = min(
     coalesce(var.lambda_per_invocation_timeout_seconds, var.lambda_timeout_seconds),
     local.lambda_segment_timeout_max
   )
-  durable_execution_timeout     = var.durable_execution_timeout_seconds
-  # Step Functions lambda:invoke is synchronous — AWS still caps sync at 900s.
-  # Cap SFN wait accordingly even when LMI allows longer async segments.
-  sfn_lambda_invoke_timeout = min(local.lambda_per_invocation_timeout, 900) + var.sfn_invoke_timeout_buffer_seconds
+  durable_execution_timeout = var.durable_execution_timeout_seconds
+  sfn_lambda_invoke_timeout = (
+    local.sfn_invoke_mode == "async_callback"
+    ? local.lambda_per_invocation_timeout + var.sfn_invoke_timeout_buffer_seconds
+    : min(local.lambda_per_invocation_timeout, 900) + var.sfn_invoke_timeout_buffer_seconds
+  )
   iceguard_rollback_ms = coalesce(
     var.iceguard_rollback_threshold_ms,
     min(60000, max(10000, floor(local.lambda_per_invocation_timeout * 33)))
@@ -44,6 +49,26 @@ check "lmi_capacity_provider" {
       )
     )
     error_message = "enable_lambda_managed_instances=true requires lambda_managed_instances_capacity_provider_arn."
+  }
+}
+
+check "sfn_mode_for_long_segments" {
+  assert {
+    condition = (
+      local.lambda_per_invocation_timeout <= 900
+      || local.sfn_invoke_mode == "async_callback"
+    )
+    error_message = "lambda_timeout_seconds > 900 with Step Functions requires sfn_lambda_invoke_mode=async_callback (AWS sync invoke is capped at 15 min)."
+  }
+}
+
+check "async_callback_needs_lmi_for_gt_15" {
+  assert {
+    condition = (
+      local.lambda_per_invocation_timeout <= 900
+      || var.enable_lambda_managed_instances
+    )
+    error_message = "lambda_timeout_seconds > 900 requires enable_lambda_managed_instances=true."
   }
 }
 
@@ -115,6 +140,8 @@ module "lambda" {
   dlq_arn                  = module.messaging.dlq_arn
   enable_lambda_managed_instances = var.enable_lambda_managed_instances
   lambda_managed_instances_capacity_provider_arn = var.lambda_managed_instances_capacity_provider_arn
+  subnet_ids         = var.lambda_subnet_ids
+  security_group_ids = var.lambda_security_group_ids
 
   environment_variables = {
     ICEGUARD_CHECKPOINT_BUCKET      = module.storage.checkpoint_bucket_name
@@ -141,13 +168,14 @@ module "stepfunctions" {
   count  = var.enable_step_functions ? 1 : 0
   source = "../../modules/stepfunctions"
 
-  name_prefix          = var.name_prefix
-  role_arn             = module.iam.stepfunctions_role_arn
-  lambda_qualified_arn = module.lambda.qualified_invoke_arn
-  max_resume_attempts  = local.effective_max_resume_attempts
+  name_prefix               = var.name_prefix
+  role_arn                  = module.iam.stepfunctions_role_arn
+  lambda_qualified_arn      = module.lambda.qualified_invoke_arn
+  sfn_lambda_invoke_mode    = local.sfn_invoke_mode
+  max_resume_attempts       = local.effective_max_resume_attempts
   lambda_invoke_timeout_seconds = local.sfn_lambda_invoke_timeout
-  resume_wait_seconds  = var.resume_wait_seconds
-  tags                 = local.tags
+  resume_wait_seconds       = var.resume_wait_seconds
+  tags                      = local.tags
 }
 
 module "eventbridge" {

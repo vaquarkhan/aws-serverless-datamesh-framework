@@ -20,13 +20,20 @@ resource "aws_iam_role" "domain_writer" {
 
 resource "aws_iam_role_policy_attachment" "lambda_basic" {
   role       = aws_iam_role.domain_writer.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRolePolicy"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 # Durable execution checkpoint permissions (required for Lambda Durable Functions).
 resource "aws_iam_role_policy_attachment" "lambda_durable" {
   role       = aws_iam_role.domain_writer.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicDurableExecutionRolePolicy"
+}
+
+# Needed only when Lambda is attached to a VPC (ENI create/describe/delete).
+# Safe to attach always — unused when subnet_ids is empty.
+resource "aws_iam_role_policy_attachment" "lambda_vpc" {
+  role       = aws_iam_role.domain_writer.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
 resource "aws_iam_role_policy" "domain_writer_data" {
@@ -162,6 +169,25 @@ resource "aws_iam_role_policy" "domain_writer_sns" {
       Effect   = "Allow"
       Action   = ["sns:Publish"]
       Resource = [var.sns_topic_arn]
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "domain_writer_sfn_callback" {
+  name = "${var.name_prefix}-sfn-task-callback"
+  role = aws_iam_role.domain_writer.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = "StepFunctionsTaskTokenCallback"
+      Effect = "Allow"
+      Action = [
+        "states:SendTaskSuccess",
+        "states:SendTaskFailure",
+        "states:SendTaskHeartbeat",
+      ]
+      Resource = "*"
     }]
   })
 }

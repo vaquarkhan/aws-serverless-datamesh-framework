@@ -1,0 +1,11 @@
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/design-studio/frames/01.png'
+duration 3.5
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/design-studio/frames/02.png'
+duration 3.5
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/design-studio/frames/03.png'
+duration 3.5
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/design-studio/frames/04.png'
+duration 3.5
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/design-studio/frames/05.png'
+duration 3.5
+file 'C:/Users/Administrator/Downloads/serverless-datamesh-framework-sdf/docs/media/design-studio/frames/05.png'

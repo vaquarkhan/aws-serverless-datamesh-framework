@@ -176,8 +176,24 @@ variable "max_resume_attempts" {
   default     = 10
 }
 
+variable "sfn_lambda_invoke_mode" {
+  description = <<-EOT
+    Step Functions → Lambda invoke mode:
+    - sync (default): lambda:invoke RequestResponse. AWS sync cap = 15 minutes.
+    - async_callback: waitForTaskToken + InvocationType=Event. Use with LMI for
+      segments up to 90 minutes. Handler SendTaskSuccess/Failure is wired in.
+  EOT
+  type        = string
+  default     = "sync"
+
+  validation {
+    condition     = contains(["sync", "async_callback"], lower(var.sfn_lambda_invoke_mode))
+    error_message = "sfn_lambda_invoke_mode must be sync or async_callback."
+  }
+}
+
 variable "sfn_invoke_timeout_buffer_seconds" {
-  description = "Added to lambda_timeout_seconds for Step Functions lambda:invoke TimeoutSeconds."
+  description = "Added to the effective SFN segment wait (sync capped at 900s; async_callback uses full lambda timeout)."
   type        = number
   default     = 60
 }
@@ -210,4 +226,20 @@ variable "consumer_principal_arn" {
   description = "IAM principal ARN for analytics consumers (Athena role). Required when enable_lake_formation_governance is true."
   type        = string
   default     = ""
+}
+
+variable "lambda_subnet_ids" {
+  description = <<-EOT
+    Optional subnet IDs for Lambda VPC attachment.
+    Default [] = no VPC (Lambda on AWS-managed network — NOT your account default VPC).
+    Set with lambda_security_group_ids when writers must reach private endpoints.
+  EOT
+  type        = list(string)
+  default     = []
+}
+
+variable "lambda_security_group_ids" {
+  description = "Security group IDs required when lambda_subnet_ids is non-empty."
+  type        = list(string)
+  default     = []
 }

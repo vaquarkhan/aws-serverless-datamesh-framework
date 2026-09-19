@@ -11,6 +11,12 @@ from typing import Any
 from urllib.parse import urlparse
 
 from serverless_data_mesh.ui.data import build_dashboard, run_local_demo
+from serverless_data_mesh.ui.designer_api import (
+    contract_to_yaml,
+    save_and_apply_designer_contract,
+    save_designer_contract,
+    validate_designer_contract,
+)
 
 _STATIC = Path(__file__).resolve().parent / "static"
 
@@ -114,7 +120,11 @@ def serve_ui(
         def do_POST(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
             length = int(self.headers.get("Content-Length", 0))
-            _ = self.rfile.read(length) if length else b""
+            raw_body = self.rfile.read(length) if length else b"{}"
+            try:
+                body = json.loads(raw_body.decode("utf-8") or "{}")
+            except json.JSONDecodeError:
+                body = {}
 
             if parsed.path == "/api/actions/demo":
                 try:
@@ -144,6 +154,46 @@ def serve_ui(
                             "root": str(runtime.root),
                         },
                     )
+                except Exception as exc:
+                    self._json(500, {"ok": False, "error": str(exc)})
+                return
+
+            if parsed.path == "/api/designer/to-yaml":
+                contract = body.get("contract") or {}
+                try:
+                    self._json(200, {"ok": True, "yaml": contract_to_yaml(contract)})
+                except Exception as exc:
+                    self._json(500, {"ok": False, "error": str(exc)})
+                return
+
+            if parsed.path == "/api/designer/validate":
+                contract = body.get("contract") or {}
+                result = validate_designer_contract(contract)
+                self._json(200 if result.get("ok") else 400, result)
+                return
+
+            if parsed.path == "/api/designer/save":
+                contract = body.get("contract") or {}
+                fmt = str(body.get("format") or "both")
+                try:
+                    result = save_designer_contract(
+                        generated_root=root,
+                        contract=contract,
+                        fmt=fmt,
+                    )
+                    self._json(200, result)
+                except Exception as exc:
+                    self._json(500, {"ok": False, "error": str(exc)})
+                return
+
+            if parsed.path == "/api/designer/apply":
+                contract = body.get("contract") or {}
+                try:
+                    result = save_and_apply_designer_contract(
+                        generated_root=root,
+                        contract=contract,
+                    )
+                    self._json(200, result)
                 except Exception as exc:
                     self._json(500, {"ok": False, "error": str(exc)})
                 return

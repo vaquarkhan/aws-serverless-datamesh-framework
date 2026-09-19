@@ -111,6 +111,33 @@ variable "tags" {
   default = {}
 }
 
+variable "subnet_ids" {
+  description = <<-EOT
+    Optional private subnet IDs for Lambda VPC attachment.
+    Empty (default) = no VPC — Lambda runs on the AWS-managed network (not your
+    account default VPC). Use this when you need ENIs to reach private RDS/Kafka
+    or private endpoints. Requires security_group_ids when non-empty.
+  EOT
+  type    = list(string)
+  default = []
+}
+
+variable "security_group_ids" {
+  description = "Security groups for Lambda ENIs when subnet_ids is non-empty."
+  type        = list(string)
+  default     = []
+}
+
+check "vpc_pair" {
+  assert {
+    condition = (
+      length(var.subnet_ids) == 0
+      || length(var.security_group_ids) > 0
+    )
+    error_message = "security_group_ids is required when subnet_ids is set."
+  }
+}
+
 check "lmi_timeout_coherence" {
   assert {
     condition = (

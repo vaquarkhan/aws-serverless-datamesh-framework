@@ -10,139 +10,308 @@
   <link rel="stylesheet" href="/static/app.css" />
 </head>
 <body>
-  <div class="bg-orb orb-a"></div>
-  <div class="bg-orb orb-b"></div>
+  <div class="atmosphere" aria-hidden="true">
+    <div class="grid-floor"></div>
+    <div class="glow g1"></div>
+    <div class="glow g2"></div>
+  </div>
 
-  <header class="top">
-    <div class="brand">
-      <div class="mark">PVDM</div>
-      <div>
-        <h1>Serverless Data Mesh</h1>
-        <p class="tag">Vaquar Pattern (PVDM) · proprietary method by Vaquar Khan</p>
-      </div>
-    </div>
-    <div class="top-actions">
-      <a class="btn ghost" href="/walkthrough" style="text-decoration:none">Demo walkthrough</a>
-      <button id="btn-refresh" class="btn ghost">Refresh</button>
-      <button id="btn-demo" class="btn primary">Run PVDM demo</button>
-      <button id="btn-attest" class="btn">Attest demo</button>
-    </div>
-  </header>
-
-  <nav class="tabs" role="tablist">
-    <button class="tab active" data-tab="overview">Overview</button>
-    <button class="tab" data-tab="pipelines">Pipelines</button>
-    <button class="tab" data-tab="trust">Trust</button>
-    <button class="tab" data-tab="pvdm">PVDM</button>
-    <button class="tab" data-tab="durable">Durable</button>
-    <button class="tab" data-tab="tutorial">Tutorial</button>
-  </nav>
-
-  <main>
-    <section id="panel-overview" class="panel active">
-      <div class="kpi-grid" id="kpi-grid"></div>
-      <div class="split">
-        <article class="card">
-          <h2>Mesh health</h2>
-          <div id="mesh-health"></div>
-        </article>
-        <article class="card">
-          <h2>Activity feed</h2>
-          <div id="activity" class="feed"></div>
-        </article>
-      </div>
-      <article class="card">
-        <h2>Trust snapshot</h2>
-        <div id="trust-bars" class="bars"></div>
-      </article>
-    </section>
-
-    <section id="panel-pipelines" class="panel">
-      <article class="card">
-        <div class="card-head">
-          <h2>Generated pipelines</h2>
-          <span class="muted" id="pipe-count"></span>
+  <div class="app-shell">
+    <aside class="rail" aria-label="Primary navigation">
+      <div class="rail-brand">
+        <div class="mark">PVDM</div>
+        <div>
+          <strong>Data Mesh</strong>
+          <span>Control</span>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Domain</th><th>Layer</th><th>Product</th><th>Engine</th>
-                <th>Handler</th><th>Readers</th><th>Path</th>
-              </tr>
-            </thead>
-            <tbody id="pipe-body"></tbody>
-          </table>
-        </div>
-      </article>
-      <article class="card">
-        <h2>Layer Lambda fleet</h2>
-        <pre id="layer-manifest" class="codeblock">—</pre>
-      </article>
-    </section>
+      </div>
 
-    <section id="panel-trust" class="panel">
-      <div class="split">
-        <article class="card">
-          <h2>VRP trust board</h2>
-          <p class="muted" id="trust-mode"></p>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Domain</th><th>Status</th><th>Rows</th><th>Proof</th></tr></thead>
-              <tbody id="trust-body"></tbody>
-            </table>
+      <p class="rail-label">Create</p>
+      <button class="rail-item active" data-tab="design">
+        <span class="rail-ico">◇</span> Design
+      </button>
+
+      <p class="rail-label">Observe</p>
+      <button class="rail-item" data-tab="overview">
+        <span class="rail-ico">▣</span> Overview
+      </button>
+      <button class="rail-item" data-tab="pipelines">
+        <span class="rail-ico">☰</span> Pipelines
+      </button>
+      <button class="rail-item" data-tab="trust">
+        <span class="rail-ico">◎</span> Trust
+      </button>
+
+      <p class="rail-label">System</p>
+      <button class="rail-item" data-tab="pvdm">
+        <span class="rail-ico">P</span> PVDM
+      </button>
+      <button class="rail-item" data-tab="durable">
+        <span class="rail-ico">⏱</span> Durable
+      </button>
+      <button class="rail-item" data-tab="tutorial">
+        <span class="rail-ico">▶</span> Tutorial
+      </button>
+
+      <div class="rail-foot">
+        <a href="https://arxiv.org/pdf/2608.14643" target="_blank" rel="noopener noreferrer">Paper (PDF)</a>
+        <a href="/walkthrough">Walkthrough</a>
+        <button type="button" id="btn-refresh" class="linkish">Refresh</button>
+      </div>
+    </aside>
+
+    <div class="stage">
+      <header class="stage-top">
+        <div>
+          <p class="eyebrow" id="stage-eyebrow">Create</p>
+          <h1 id="stage-title">Mesh Design Studio</h1>
+          <p class="tag" id="stage-sub">Compose domains → write mesh.yaml → generate pipelines for Terraform</p>
+        </div>
+        <div class="top-actions">
+          <button id="btn-demo" class="btn ghost">Run PVDM demo</button>
+          <button id="btn-attest" class="btn ghost">Attest</button>
+          <button id="btn-design-apply" class="btn primary pulse-ready">Generate pipelines</button>
+        </div>
+      </header>
+
+      <ol class="journey" aria-label="Delivery path">
+        <li class="on" data-step="design"><i>1</i><span>Design</span></li>
+        <li data-step="generate"><i>2</i><span>Generate</span></li>
+        <li data-step="package"><i>3</i><span>Package</span></li>
+        <li data-step="terraform"><i>4</i><span>Terraform</span></li>
+      </ol>
+
+      <main>
+        <section id="panel-design" class="panel active">
+          <div class="studio">
+            <aside class="studio-palette">
+              <p class="palette-title">Blocks</p>
+              <div class="palette-item" draggable="true" data-kind="domain">
+                <strong>Domain</strong>
+                <span>Product boundary</span>
+              </div>
+              <div class="palette-item layer bronze" draggable="true" data-kind="bronze">
+                <strong>Bronze</strong>
+                <span>Land raw</span>
+              </div>
+              <div class="palette-item layer silver" draggable="true" data-kind="silver">
+                <strong>Silver</strong>
+                <span>Curate</span>
+              </div>
+              <div class="palette-item layer gold" draggable="true" data-kind="gold">
+                <strong>Gold</strong>
+                <span>Publish</span>
+              </div>
+              <div class="palette-tools">
+                <button type="button" class="btn ghost block" id="btn-design-sample">Start with xyz</button>
+                <button type="button" class="btn ghost block" id="btn-design-add-domain">+ Empty domain</button>
+                <button type="button" class="btn ghost block" id="btn-design-clear">Clear</button>
+              </div>
+            </aside>
+
+            <div
+              id="design-canvas"
+              class="design-canvas"
+              tabindex="0"
+              aria-label="Medallion canvas"
+            >
+              <div class="design-empty" id="design-empty">
+                <div class="empty-visual" aria-hidden="true">
+                  <span class="nv bronze">B</span>
+                  <span class="conn"></span>
+                  <span class="nv silver">S</span>
+                  <span class="conn"></span>
+                  <span class="nv gold">G</span>
+                </div>
+                <h2>Drop a domain to begin</h2>
+                <p>Then stack bronze → silver → gold. Generate writes <code>mesh.yaml</code> and compiles pipelines into <code>generated/</code>.</p>
+              </div>
+              <div id="design-nodes" class="design-nodes"></div>
+            </div>
+
+            <aside class="studio-inspector">
+              <div class="inspector-head">
+                <h2>Live contract</h2>
+                <span class="badge pass" id="design-live-badge">editing</span>
+              </div>
+              <div class="meta-grid">
+                <label class="meta-field">Organization
+                  <input id="design-org" type="text" value="xyz-org" />
+                </label>
+                <label class="meta-field">Prefix
+                  <input id="design-prefix" type="text" value="xyz" />
+                </label>
+                <label class="meta-field">Region
+                  <input id="design-region" type="text" value="us-east-2" />
+                </label>
+              </div>
+
+              <p class="palette-title" style="margin-top:.75rem">AWS deploy</p>
+              <div class="meta-grid">
+                <label class="meta-field">Producer account
+                  <input id="design-acct-producer" type="text" value="111111111111" maxlength="12" />
+                </label>
+                <label class="meta-field">Steward account
+                  <input id="design-acct-steward" type="text" value="222222222222" maxlength="12" />
+                </label>
+                <label class="meta-field">Publisher account
+                  <input id="design-acct-publisher" type="text" value="333333333333" maxlength="12" />
+                </label>
+                <label class="meta-field">Networking
+                  <select id="design-networking">
+                    <option value="none" selected>No VPC (default — not account default VPC)</option>
+                    <option value="vpc">Attach VPC (set subnets/SGs in tfvars)</option>
+                  </select>
+                </label>
+                <label class="meta-field design-vpc-fields is-hidden" id="design-vpc-fields">
+                  Subnet IDs (comma-separated)
+                  <input id="design-subnets" type="text" placeholder="subnet-aaa, subnet-bbb" />
+                </label>
+                <label class="meta-field design-vpc-fields is-hidden" id="design-sg-fields">
+                  Security group IDs
+                  <input id="design-sgs" type="text" placeholder="sg-cccc" />
+                </label>
+              </div>
+              <p class="aws-hint" id="design-aws-hint">
+                IAM roles are created by Terraform (<code>*-domain-writer</code>, Step Functions, EventBridge) — you do not paste role ARNs here.
+                Default networking is <strong>no VPC</strong> (AWS-managed Lambda network). That is not your account’s default VPC.
+              </p>
+              <div class="inspector-actions" id="design-actions-form">
+                <button type="button" class="btn primary block" id="btn-design-apply-secondary">Generate pipelines</button>
+                <button type="button" class="btn ghost block" id="btn-design-save">Save mesh.yaml only</button>
+                <button type="button" class="btn ghost block" id="btn-design-validate">Validate</button>
+                <details class="design-export">
+                  <summary>Export copy / download</summary>
+                  <div class="design-export-actions">
+                    <button type="button" class="btn ghost" id="btn-design-copy">Copy JSON</button>
+                    <button type="button" class="btn ghost" id="btn-design-dl-json">JSON</button>
+                    <button type="button" class="btn ghost" id="btn-design-dl-yaml">YAML</button>
+                  </div>
+                </details>
+              </div>
+              <pre id="design-json" class="codeblock design-json" aria-live="polite">{}</pre>
+              <p class="status-line" id="design-status">Drag blocks · Generate writes mesh.yaml + apply</p>
+            </aside>
           </div>
-        </article>
-        <article class="card">
-          <h2>PVDM-A attestations</h2>
-          <div id="attest-list" class="feed"></div>
-        </article>
-      </div>
-    </section>
+        </section>
 
-    <section id="panel-pvdm" class="panel">
-      <article class="card hero-pvdm">
-        <p class="eyebrow" id="pvdm-method"></p>
-        <h2>Four-phase invariant</h2>
-        <p class="invariant" id="pvdm-invariant"></p>
-        <div class="phase-grid" id="phase-grid"></div>
-        <p class="muted copyright" id="pvdm-copyright"></p>
-      </article>
-    </section>
-
-    <section id="panel-durable" class="panel">
-      <div class="split">
-        <article class="card">
-          <h2>Dual clocks</h2>
-          <div class="clocks" id="clocks"></div>
-        </article>
-        <article class="card">
-          <h2>Compute model</h2>
-          <div id="compute-facts"></div>
-        </article>
-      </div>
-    </section>
-
-    <section id="panel-tutorial" class="panel">
-      <article class="card">
-        <div class="card-head">
-          <h2>Visual tutorial</h2>
-          <div class="stepper-nav">
-            <button class="btn ghost" id="tut-prev">← Prev</button>
-            <span id="tut-pos" class="muted"></span>
-            <button class="btn ghost" id="tut-next">Next →</button>
+        <section id="panel-overview" class="panel">
+          <div class="kpi-grid" id="kpi-grid"></div>
+          <div class="split">
+            <article class="surface">
+              <h2>Mesh health</h2>
+              <div id="mesh-health"></div>
+            </article>
+            <article class="surface">
+              <h2>Activity</h2>
+              <div id="activity" class="feed"></div>
+            </article>
           </div>
-        </div>
-        <div class="tutorial" id="tutorial-view"></div>
-      </article>
-    </section>
-  </main>
+          <article class="surface">
+            <h2>Trust snapshot</h2>
+            <div id="trust-bars" class="bars"></div>
+          </article>
+        </section>
+
+        <section id="panel-pipelines" class="panel">
+          <article class="surface">
+            <div class="card-head">
+              <h2>Generated pipelines</h2>
+              <span class="muted" id="pipe-count"></span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Domain</th><th>Layer</th><th>Product</th><th>Engine</th>
+                    <th>Handler</th><th>Readers</th><th>Path</th>
+                  </tr>
+                </thead>
+                <tbody id="pipe-body"></tbody>
+              </table>
+            </div>
+          </article>
+          <article class="surface">
+            <h2>Layer Lambda fleet</h2>
+            <pre id="layer-manifest" class="codeblock">—</pre>
+          </article>
+        </section>
+
+        <section id="panel-trust" class="panel">
+          <div class="split">
+            <article class="surface">
+              <h2>VRP trust board</h2>
+              <p class="muted" id="trust-mode"></p>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Domain</th><th>Status</th><th>Rows</th><th>Proof</th></tr></thead>
+                  <tbody id="trust-body"></tbody>
+                </table>
+              </div>
+            </article>
+            <article class="surface">
+              <h2>PVDM-A attestations</h2>
+              <div id="attest-list" class="feed"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="panel-pvdm" class="panel">
+          <article class="surface hero-pvdm">
+            <p class="eyebrow" id="pvdm-method"></p>
+            <h2>Four-phase invariant</h2>
+            <p class="invariant" id="pvdm-invariant"></p>
+            <p class="paper-link">
+              <a href="https://arxiv.org/pdf/2608.14643" target="_blank" rel="noopener noreferrer">
+                Research paper (PDF) — arXiv:2608.14643
+              </a>
+              <span class="muted"> · Proof-Gated Publication for Serverless Data-Mesh Lakehouses</span>
+            </p>
+            <div class="phase-grid" id="phase-grid"></div>
+            <p class="muted copyright" id="pvdm-copyright"></p>
+          </article>
+        </section>
+
+        <section id="panel-durable" class="panel">
+          <div class="split">
+            <article class="surface">
+              <h2>Dual clocks</h2>
+              <div id="clocks" class="clocks"></div>
+            </article>
+            <article class="surface">
+              <h2>Compute model</h2>
+              <div id="compute-facts"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="panel-tutorial" class="panel">
+          <article class="surface">
+            <div class="card-head">
+              <h2>Visual tutorial</h2>
+              <div class="stepper-nav">
+                <button class="btn ghost" id="tut-prev">← Prev</button>
+                <span id="tut-pos" class="muted"></span>
+                <button class="btn ghost" id="tut-next">Next →</button>
+              </div>
+            </div>
+            <div class="tutorial" id="tutorial-view"></div>
+          </article>
+        </section>
+      </main>
+
+      <footer class="site-foot">
+        <span>© 2024–2026 Vaquar Khan · PVDM / Vaquar Pattern — proprietary method</span>
+        <span>
+          <a href="https://arxiv.org/pdf/2608.14643" target="_blank" rel="noopener noreferrer">Paper (PDF)</a>
+          · Reference implementation Apache-2.0
+        </span>
+      </footer>
+    </div>
+  </div>
 
   <div id="toast" class="toast hidden"></div>
-  <footer class="site-foot">
-    <span>© 2024–2026 Vaquar Khan · PVDM / Vaquar Pattern — proprietary method</span>
-    <span>Reference implementation Apache-2.0</span>
-  </footer>
   <script src="/static/app.js"></script>
+  <script src="/static/designer.js"></script>
 </body>
 </html>

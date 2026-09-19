@@ -11,12 +11,100 @@
     setTimeout(() => el.classList.add("hidden"), 4200);
   };
 
-  document.querySelectorAll(".tab").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
-      document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
-      btn.classList.add("active");
-      $(`#panel-${btn.dataset.tab}`).classList.add("active");
+  const STAGE = {
+    design: {
+      eyebrow: "Create",
+      title: "Mesh Design Studio",
+      sub: "Compose domains → write mesh.yaml → generate pipelines for Terraform",
+      journey: "design",
+    },
+    overview: {
+      eyebrow: "Observe",
+      title: "Mesh Overview",
+      sub: "Live health, activity, and trust snapshot for this project root",
+      journey: null,
+    },
+    pipelines: {
+      eyebrow: "Observe",
+      title: "Generated Pipelines",
+      sub: "Layer handlers compiled under generated/ — ready to package",
+      journey: "generate",
+    },
+    trust: {
+      eyebrow: "Observe",
+      title: "Trust Board",
+      sub: "VRP verdicts and PVDM-A decision attestations",
+      journey: null,
+    },
+    pvdm: {
+      eyebrow: "System",
+      title: "PVDM Pattern",
+      sub: "Physical · Verify · Durable · Metadata — commit only after VRP PASS",
+      journey: null,
+    },
+    durable: {
+      eyebrow: "System",
+      title: "Durable Execution",
+      sub: "Container clock vs workload clock — LMI async and SFN sync modes",
+      journey: null,
+    },
+    tutorial: {
+      eyebrow: "System",
+      title: "Visual Tutorial",
+      sub: "Step through apply → package → Terraform with guided commands",
+      journey: "package",
+    },
+  };
+
+  function setStage(tab) {
+    const meta = STAGE[tab] || STAGE.overview;
+    const eyebrow = $("#stage-eyebrow");
+    const title = $("#stage-title");
+    const sub = $("#stage-sub");
+    if (eyebrow) eyebrow.textContent = meta.eyebrow;
+    if (title) title.textContent = meta.title;
+    if (sub) sub.textContent = meta.sub;
+
+    document.querySelectorAll(".journey li").forEach((li) => {
+      li.classList.remove("on");
+      if (meta.journey && li.dataset.step === meta.journey) {
+        li.classList.add("on");
+      }
+    });
+
+    const applyBtn = $("#btn-design-apply");
+    if (applyBtn) {
+      applyBtn.style.display = tab === "design" ? "" : "none";
+    }
+  }
+
+  function activateTab(tab) {
+    document.querySelectorAll(".rail-item").forEach((b) => {
+      b.classList.toggle("active", b.dataset.tab === tab);
+    });
+    document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+    const panel = $(`#panel-${tab}`);
+    if (panel) panel.classList.add("active");
+    setStage(tab);
+  }
+
+  document.querySelectorAll(".rail-item").forEach((btn) => {
+    btn.addEventListener("click", () => activateTab(btn.dataset.tab));
+  });
+
+  window.addEventListener("sdm-goto-tab", (e) => {
+    const tab = e.detail?.tab;
+    if (tab) activateTab(tab);
+  });
+
+  window.addEventListener("sdm-journey", (e) => {
+    const step = e.detail?.step;
+    if (!step) return;
+    document.querySelectorAll(".journey li").forEach((li) => {
+      const idx = ["design", "generate", "package", "terraform"].indexOf(li.dataset.step);
+      const cur = ["design", "generate", "package", "terraform"].indexOf(step);
+      li.classList.toggle("on", li.dataset.step === step);
+      li.classList.toggle("done", idx >= 0 && cur >= 0 && idx < cur);
     });
   });
 
@@ -147,7 +235,7 @@
         <p class="muted">${esc(s.blurb || "")}</p>
         <div class="feed-item" style="margin-top:.75rem"><strong style="color:var(--accent)">What you do</strong><br>${esc(s.do || "")}</div>
         <p class="cmd">${esc(s.command)}</p>
-        <div class="feed-item" style="margin-top:.75rem"><strong style="color:var(--accent-2)">Benefit you get</strong><br>${esc(s.benefit || "")}</div>
+        <div class="feed-item" style="margin-top:.75rem"><strong style="color:var(--gold)">Benefit you get</strong><br>${esc(s.benefit || "")}</div>
         <p class="muted" style="margin-top:1rem"><a href="/walkthrough">Open full demo walkthrough (auto-play) →</a></p>
       </div>`;
   }
@@ -194,5 +282,10 @@
     postAction("/api/actions/attest-demo", "Attestation created")
   );
 
+  window.addEventListener("sdm-dashboard-refresh", () => {
+    load().catch((e) => toast(String(e), true));
+  });
+
+  setStage("design");
   load().catch((e) => toast(String(e), true));
 })();

@@ -44,6 +44,15 @@ resume_wait_seconds                 = 30
 # enable_lambda_managed_instances                = true
 # lambda_managed_instances_capacity_provider_arn = "arn:aws:lambda:us-east-2:ACCOUNT:capacity-provider:NAME"
 # lambda_timeout_seconds                         = 5400
+# Required when lambda_timeout_seconds > 900 and you use Step Functions:
+# sfn_lambda_invoke_mode                         = "async_callback"
+# (sync SFN invoke remains AWS-capped at 15 min)
 
 # Optional: also page an existing platform topic
 # alarm_sns_topic_arns = ["arn:aws:sns:us-east-2:123456789012:platform-alerts"]
+
+# Networking (default = NO VPC — Lambda on AWS-managed network, not account default VPC)
+# lambda_subnet_ids         = ["subnet-aaa", "subnet-bbb"]
+# lambda_security_group_ids = ["sg-cccc"]
+# IAM: Terraform creates {name_prefix}-domain-writer + Step Functions roles automatically.
+# When subnets are set, AWSLambdaVPCAccessExecutionRole is already attached.

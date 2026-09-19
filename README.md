@@ -1,9 +1,11 @@
-<div align="center">
+﻿<div align="center">
 
 # Serverless Data Mesh
 
 **Governed, exactly-once lakehouse writes on AWS Lambda - with cryptographic proof, not just green job logs.**
 
+[![Website](https://img.shields.io/badge/website-GitHub%20Pages-2ea44f?logo=github)](https://vaquarkhan.github.io/aws-serverless-datamesh-framework/)
+[![Paper](https://img.shields.io/badge/paper-arXiv%3A2608.14643-b31b1b?logo=arxiv&logoColor=white)](https://arxiv.org/pdf/2608.14643)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyPI version](https://img.shields.io/pypi/v/serverless-data-mesh.svg)](https://pypi.org/project/serverless-data-mesh/)
 [![PyPI downloads/month](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fpypistats.org%2Fapi%2Fpackages%2Fserverless-data-mesh%2Frecent&query=%24.data.last_month&label=downloads%2Fmonth&color=blue)](https://pypistats.org/packages/serverless-data-mesh)
@@ -21,7 +23,7 @@ An open Python framework for **federated data mesh** lakehouse publication on AW
 **domain-oriented ownership**, **data as a product**, and **self-serve write infrastructure** for cross-domain teams.<br/>
 **Producer** domains publish governed **data products** - **Steward** notaries enforce **federated computational governance** - **Publisher** zones expose consumer-ready **Iceberg data products** to the mesh.
 
-[**PyPI**](https://pypi.org/project/serverless-data-mesh/) · [**Docker (GHCR)**](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/pkgs/container/serverless-data-mesh) · [**Walkthrough**](#how-to-start---walkthrough-gifs--benefits) · [**GIF gallery**](docs/visual-tutorial.md) · [**Vaquar Pattern**](docs/vaquar-pattern.md) · [**Paper (arXiv)**](https://arxiv.org/abs/2608.14643) · [**Deploy**](docs/aws-production-deploy.md)
+[**PyPI**](https://pypi.org/project/serverless-data-mesh/) · [**Docker (GHCR)**](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/pkgs/container/serverless-data-mesh) · [**Docs site**](https://vaquarkhan.github.io/aws-serverless-datamesh-framework/) · [**Walkthrough**](#how-to-start---walkthrough-gifs--benefits) · [**Developer UI → Terraform**](docs/developer-ui-and-deploy.md) · [**Vaquar Pattern**](docs/vaquar-pattern.md) · [**Paper (PDF)**](https://arxiv.org/pdf/2608.14643) · [**Deploy**](docs/aws-production-deploy.md)
 
 </div>
 
@@ -32,10 +34,17 @@ An open Python framework for **federated data mesh** lakehouse publication on AW
 Read this section in the README - no extra docs required.  
 **Interactive auto-play demo:** after `ui --open`, open [http://127.0.0.1:8765/walkthrough](http://127.0.0.1:8765/walkthrough) · or open [docs/demo-walkthrough.html](docs/demo-walkthrough.html)
 
+**Recorded demos:**  
+- **Greenfield E2E (captioned):** [docs/media/greenfield-e2e-captioned.mp4](docs/media/greenfield-e2e-captioned.mp4) · [script](docs/greenfield-e2e-caption-script.md)  
+- **Control UI tour:** [docs/media/control-ui-demo.mp4](docs/media/control-ui-demo.mp4)  
+- Embedded on the [GitHub Pages site](https://vaquarkhan.github.io/aws-serverless-datamesh-framework/)
+
 **Also useful:**
 
 | Resource | Link / command |
 |----------|----------------|
+| **Docs site (GitHub Pages)** | [vaquarkhan.github.io/aws-serverless-datamesh-framework](https://vaquarkhan.github.io/aws-serverless-datamesh-framework/) |
+| **Developer UI → Terraform** | [docs/developer-ui-and-deploy.md](docs/developer-ui-and-deploy.md) |
 | **Full GIF gallery** | [docs/visual-tutorial.md](docs/visual-tutorial.md) |
 | **Control center** | `serverless-data-mesh ui --path examples/medallion-e2e/generated --open` → http://127.0.0.1:8765/ |
 | **Durable Lambda clocks** | [examples/durable-compute/](examples/durable-compute/) (tfvars + dual-clock guide) |
@@ -60,14 +69,21 @@ serverless-data-mesh ui --path examples/medallion-e2e/generated --open
 # → http://127.0.0.1:8765/walkthrough   (auto-play GIF demo)
 ```
 
-| In the UI | What to use it for |
-|-----------|--------------------|
-| Overview | KPIs + trust bars |
-| Pipelines | Bronze / silver / gold outputs |
-| Trust | VRP PASS/FAIL board |
-| Tutorial | Same GIF guide as below |
-| **Demo walkthrough** (header) | Auto-play Do / Benefit video |
-| **Run PVDM demo** (header) | Local gate demo → updates Trust |
+| In the UI | What it shows / does |
+|-----------|----------------------|
+| **Design** | Drag Domain + layers → **Save & generate pipelines** writes `mesh.yaml` beside `generated/` and runs `apply` (download optional) |
+| **Overview** | KPIs, mesh health, activity feed, trust snapshot bars |
+| **Pipelines** | Table of generated bronze/silver/gold (domain, layer, product, engine, handler, readers, path) + Layer Lambda fleet manifest |
+| **Trust** | VRP trust board (PASS/FAIL, rows, proof id) + PVDM-A attestation list |
+| **PVDM** | Four-phase Vaquar Pattern (Physical → Verify → Durable → Metadata) + invariant |
+| **Durable** | Dual clocks (segment vs durable budget) + compute-model facts |
+| **Tutorial** | In-app GIF stepper (Prev/Next) — same happy path as the README walkthrough |
+| **Demo walkthrough** (header) | Auto-play Do / Benefit page at `/walkthrough` |
+| **Refresh** | Reload dashboard from the generated mesh path |
+| **Run PVDM demo** | Local gate demo → updates Trust (no AWS) |
+| **Attest demo** | Emit a sample PVDM-A attestation → shows under Trust |
+
+**How you create pipelines:** **Design** tab (drag-drop → JSON/YAML) or edit YAML → `apply` / `compile`. Other tabs observe what the compiler generated.
 
 <p align="center">
   <img src="docs/images/tutorial/tutorial-overview.gif" alt="Step-by-step demo overview GIF" width="720" />
@@ -490,9 +506,22 @@ enriched, audit = connector.apply_chunk(source_records)
 
 ---
 
-## Create pipelines from YAML
+## Create pipelines from YAML (or Design tab)
 
-**Metadata-driven pipeline creation**  -  define your mesh in YAML; the compiler generates proof-gated Lambda pipelines, Step Functions orchestrators, VRP config, consumer SLAs, and Terraform manifests. Domain teams only implement `readers.py` (source/sink I/O).
+**Design tab (MVP):** drag Domain + Bronze/Silver/Gold onto the canvas → live MedallionMesh JSON/YAML → download/save → `apply`. Other tabs explore the compiled mesh. Design emits metadata; Terraform still deploys AWS.
+
+### How a user creates a pipeline (end-to-end)
+
+| Step | What you do | Command / artifact |
+|------|-------------|--------------------|
+| 1 | Scaffold or Design | `new` **or** UI Design tab → JSON/YAML |
+| 2 | Edit metadata | Adjust org/prefix/region or layers |
+| 3 | Compile | `serverless-data-mesh apply --contract … --output …` |
+| 4 | Fill I/O stubs | Implement each layer’s `readers.py` |
+| 5 | Observe | Overview / Pipelines / Trust (same UI) |
+| 6 | Deploy | Package Lambda zip + Terraform |
+
+**What you do:** Design tab (or edit YAML) → `serverless-data-mesh apply` → implement `readers.py` → package + Terraform deploy.
 
 <p align="center">
   <img src="docs/images/pipeline-creation-flow.png" alt="Metadata-driven pipeline creation: Write YAML, compile with serverless-data-mesh apply, deploy to AWS" width="920" />
@@ -521,7 +550,7 @@ serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generat
 
 ### One YAML → bronze / silver / gold medallion
 
-A single `MedallionMesh` contract expands into **N domains × 3 layers** plus mesh-wide orchestration. The [northstar example](examples/medallion-e2e/northstar.mesh.yaml) produces **6 PVDM pipelines** (orders + payments) from one file.
+This is the high-leverage path: a single `MedallionMesh` contract expands into **N domains × 3 layers** plus mesh-wide orchestration — compiler fan-out from metadata, not a visual designer. The [northstar example](examples/medallion-e2e/northstar.mesh.yaml) produces **6 PVDM pipelines** (orders + payments) from one file.
 
 <p align="center">
   <img src="docs/images/medallion-one-yaml-mesh.png" alt="One northstar.mesh.yaml generates orders and payments bronze silver gold pipelines plus orchestrators" width="920" />
@@ -673,13 +702,14 @@ serverless-data-mesh ui --path my-mesh/generated --open   # mesh control panel
 
 ### Local mesh control UI
 
-After `apply`, open the **control center** (KPIs, pipelines, trust board, PVDM, durable clocks, visual tutorial):
+After `apply`, open the **control center** (observe / demo — **not** a pipeline designer):
 
 ```bash
 serverless-data-mesh new --template medallion --output my-mesh
 serverless-data-mesh apply --contract my-mesh/mesh.yaml --output my-mesh/generated
 serverless-data-mesh ui --path my-mesh/generated --host 127.0.0.1 --port 8765 --open
 # → http://127.0.0.1:8765/
+# → http://127.0.0.1:8765/walkthrough
 ```
 
 Or against the northstar sample:
@@ -691,7 +721,20 @@ serverless-data-mesh apply \
 serverless-data-mesh ui --path examples/medallion-e2e/generated --open
 ```
 
-**UI features:** Overview KPIs · pipeline explorer · VRP trust bars · PVDM-A attestations · dual-clock durable panel · in-app GIF tutorial · one-click local PVDM / attest demos.
+| Tab / control | Feature |
+|---------------|---------|
+| Overview | KPIs, mesh health, activity feed, trust snapshot bars |
+| Pipelines | Generated pipeline table + Layer Lambda fleet manifest |
+| Trust | VRP PASS/FAIL board + PVDM-A attestations |
+| PVDM | Four-phase invariant explainer |
+| Durable | Dual clocks (segment vs workload) + compute facts |
+| Tutorial | GIF stepper with Prev/Next |
+| Demo walkthrough | Auto-play Do/Benefit page (`/walkthrough`) |
+| Refresh | Reload from generated path |
+| Run PVDM demo | Local proof gate → updates Trust |
+| Attest demo | Sample PVDM-A attestation |
+
+Contract authoring remains YAML (or a future web editor on the roadmap). Diagram-to-mesh is not shipped.
 
 **Visual tutorial (GIFs):** [docs/visual-tutorial.md](docs/visual-tutorial.md)
 
@@ -803,6 +846,7 @@ terraform init && terraform apply
 
 | Document | What you will learn |
 |----------|---------------------|
+| **[Developer UI → Terraform](docs/developer-ui-and-deploy.md)** | **How UI starts (stdlib HTTP), create workflow, package, terraform apply** |
 | **[Metadata-driven pipelines](docs/metadata-driven-pipeline.md)** | **Complete guide: YAML schema, bronze/silver/gold, compile, deploy** |
 | **[Vaquar Pattern (proprietary method)](docs/vaquar-pattern.md)** | Formal PVDM spec  -  cite this; inventor attribution |
 | **[PVDM paper (arXiv:2608.14643)](https://arxiv.org/abs/2608.14643)** | Proof-gated publication preprint (methods + evaluation) |
@@ -834,6 +878,7 @@ terraform init && terraform apply
 ```
 serverless-data-mesh/
 ├── docs/
+│   ├── developer-ui-and-deploy.md # Local UI start + YAML → Terraform path
 │   ├── metadata-driven-pipeline.md # Complete YAML → pipeline guide (medallion)
 │   ├── blog-the-vaquar-pattern.md  # Full Vaquar Pattern blog (images)
 │   ├── vaquar-pattern.md           # Formal pattern spec (cite this)

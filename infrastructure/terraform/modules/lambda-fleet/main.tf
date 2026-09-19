@@ -71,6 +71,16 @@ variable "tags" {
   default = {}
 }
 
+variable "subnet_ids" {
+  type    = list(string)
+  default = []
+}
+
+variable "security_group_ids" {
+  type    = list(string)
+  default = []
+}
+
 module "layer_lambda" {
   for_each = var.layers
   source   = "../lambda"
@@ -87,6 +97,8 @@ module "layer_lambda" {
   dlq_arn                   = var.dlq_arn
   enable_lambda_managed_instances = var.enable_lambda_managed_instances
   lambda_managed_instances_capacity_provider_arn = var.lambda_managed_instances_capacity_provider_arn
+  subnet_ids         = var.subnet_ids
+  security_group_ids = var.security_group_ids
 
   environment_variables = merge(var.base_environment_variables, {
     MEDALLION_DOMAIN = each.value.domain_id

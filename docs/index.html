@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Serverless Data Mesh — Docs &amp; Control UI</title>
+  <meta name="description" content="Vaquar Pattern (PVDM) on AWS Lambda: YAML → compile → local control UI → Terraform deploy." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #08110e; --panel: #12201b; --line: rgba(120,170,140,.28);
+      --text: #e8f0ea; --muted: #8fa899; --accent: #3dcf8e; --gold: #e8c47a;
+      --display: Fraunces, Georgia, serif; --sans: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text); font-family: var(--sans);
+      background:
+        radial-gradient(900px 480px at 10% -10%, #163528, transparent 55%),
+        radial-gradient(700px 400px at 100% 0%, #1a2a18, transparent 50%),
+        var(--bg);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+    .brand { display: flex; gap: .9rem; align-items: center; margin-bottom: 1rem; }
+    .mark {
+      width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center;
+      font-weight: 700; background: linear-gradient(135deg, #2f9e6a, #1f7a52); color: #06100c;
+    }
+    .badges {
+      display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1.35rem; align-items: center;
+    }
+    .badges img { height: 22px; }
+    h1 { font-family: var(--display); font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0 0 .4rem; line-height: 1.15; }
+    .lead { color: var(--muted); max-width: 42rem; line-height: 1.55; margin: 0 0 1.25rem; }
+    .video-card {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+      padding: 1rem 1.1rem 1.15rem; margin: 0 0 1.5rem;
+    }
+    .video-card h2 {
+      margin: 0 0 .65rem; font-size: .95rem; color: var(--gold);
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+    .video-card video {
+      width: 100%; border-radius: 12px; border: 1px solid var(--line);
+      background: #000; display: block; aspect-ratio: 16/9;
+    }
+    .video-card .cap { margin: .65rem 0 0; color: var(--muted); font-size: .88rem; line-height: 1.45; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+    .card {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+      padding: 1.1rem 1.2rem; text-decoration: none; color: inherit;
+      transition: border-color .15s, transform .15s;
+    }
+    a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .card h2 { margin: 0 0 .4rem; font-size: 1.05rem; color: var(--accent); }
+    .card p { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.45; }
+    .card .tag { display: inline-block; margin-top: .7rem; font-size: .72rem; letter-spacing: .04em;
+      text-transform: uppercase; color: var(--gold); }
+    .start {
+      margin: 1.75rem 0; padding: 1.15rem 1.25rem; border-radius: 18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(61,207,142,.12), rgba(232,196,122,.07));
+    }
+    .start h2 { margin: 0 0 .65rem; font-size: .95rem; color: var(--gold); text-transform: uppercase; letter-spacing: .06em; }
+    pre {
+      margin: 0; font-family: var(--mono); font-size: .84rem; white-space: pre-wrap;
+      background: #06100c; padding: .9rem 1rem; border-radius: 12px; border: 1px solid var(--line);
+    }
+    .note { margin-top: .85rem; color: var(--muted); font-size: .88rem; line-height: 1.45; }
+    footer { margin-top: 2rem; color: var(--muted); font-size: .85rem; }
+    footer a { color: var(--accent); }
+    .flow {
+      display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 1.5rem; align-items: center;
+      font-size: .85rem; color: var(--muted);
+    }
+    .flow span {
+      background: rgba(61,207,142,.1); border: 1px solid var(--line); color: var(--text);
+      padding: .35rem .65rem; border-radius: 999px;
+    }
+    .flow i { opacity: .5; font-style: normal; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark">PVDM</div>
+      <div>
+        <strong>Serverless Data Mesh</strong>
+        <div style="color:var(--muted);font-size:.88rem">Vaquar Pattern · GitHub Pages</div>
+      </div>
+    </div>
+
+    <div class="badges" aria-label="Project badges">
+      <a href="https://vaquarkhan.github.io/aws-serverless-datamesh-framework/"><img alt="Website" src="https://img.shields.io/badge/website-GitHub%20Pages-2ea44f?logo=github" /></a>
+      <a href="https://arxiv.org/pdf/2608.14643"><img alt="PVDM paper arXiv" src="https://img.shields.io/badge/paper-arXiv%3A2608.14643-b31b1b?logo=arxiv&amp;logoColor=white" /></a>
+      <a href="https://www.python.org/downloads/"><img alt="Python 3.12+" src="https://img.shields.io/badge/python-3.12%2B-blue.svg" /></a>
+      <a href="https://pypi.org/project/serverless-data-mesh/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/serverless-data-mesh.svg" /></a>
+      <a href="https://pypistats.org/packages/serverless-data-mesh"><img alt="PyPI downloads/month" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fpypistats.org%2Fapi%2Fpackages%2Fserverless-data-mesh%2Frecent&amp;query=%24.data.last_month&amp;label=downloads%2Fmonth&amp;color=blue" /></a>
+      <a href="https://pypistats.org/packages/serverless-data-mesh"><img alt="PyPI downloads/week" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fpypistats.org%2Fapi%2Fpackages%2Fserverless-data-mesh%2Frecent&amp;query=%24.data.last_week&amp;label=downloads%2Fweek&amp;color=brightgreen" /></a>
+      <a href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework/pkgs/container/serverless-data-mesh"><img alt="Docker" src="https://img.shields.io/badge/ghcr.io-serverless--data--mesh-blue?logo=docker" /></a>
+      <a href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-green.svg" /></a>
+      <a href="https://docs.aws.amazon.com/lambda/"><img alt="AWS Lambda" src="https://img.shields.io/badge/AWS-Lambda%20%2B%20Durable%20Execution-orange.svg" /></a>
+      <a href="https://iceberg.apache.org/"><img alt="Iceberg" src="https://img.shields.io/badge/Apache-Iceberg-00A4EF.svg" /></a>
+    </div>
+
+    <h1>Docs, demo walkthrough &amp; developer path</h1>
+    <p class="lead">
+      Pipelines are created from <strong>YAML + compiler</strong>, not by drawing in the UI.
+      The control UI runs locally (Python stdlib HTTP) to observe a compiled mesh, then you package and deploy with Terraform.
+    </p>
+
+    <div class="video-card">
+      <h2>Greenfield E2E — captioned demo (XYZ mesh)</h2>
+      <video controls playsinline preload="metadata" poster="media/greenfield-e2e-poster.png">
+        <source src="media/greenfield-e2e-captioned.mp4" type="video/mp4" />
+        Your browser does not support HTML5 video.
+        <a href="media/greenfield-e2e-captioned.mp4">Download the MP4</a>.
+      </video>
+      <p class="cap">
+        Scripted captions: greenfield developer → YAML/JSON metadata for domain <strong>xyz</strong> →
+        <code>apply</code> creates bronze/silver/gold → local control UI observe → readers → Terraform →
+        Step Functions / PVDM end-to-end.
+        <em>Not a draw-on-canvas designer</em> — see
+        <a href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/greenfield-e2e-caption-script.md" style="color:var(--accent)">caption script</a>.
+      </p>
+    </div>
+
+    <div class="video-card">
+      <h2>Design Studio — VPC / IAM honesty (scripted)</h2>
+      <video controls playsinline preload="metadata" poster="media/design-studio-demo-poster.png">
+        <source src="media/design-studio-demo.mp4" type="video/mp4" />
+        Your browser does not support HTML5 video.
+        <a href="media/design-studio-demo.mp4">Download the MP4</a>.
+      </video>
+      <p class="cap">
+        Default networking = <strong>no VPC</strong> (not account default VPC).
+        IAM roles are created by Terraform. Paper:
+        <a href="https://arxiv.org/pdf/2608.14643" style="color:var(--accent)">arXiv:2608.14643 PDF</a>.
+      </p>
+    </div>
+
+    <div class="video-card">
+      <h2>Control UI tour (recorded)</h2>
+      <video controls playsinline preload="metadata" poster="media/control-ui-demo-poster.png">
+        <source src="media/control-ui-demo.mp4" type="video/mp4" />
+        Your browser does not support HTML5 video.
+        <a href="media/control-ui-demo.mp4">Download the MP4</a>.
+      </video>
+      <p class="cap">
+        Tab walkthrough: Overview → Pipelines → Trust → PVDM → Durable → Tutorial → Run PVDM demo.
+      </p>
+    </div>
+
+    <div class="flow" aria-label="Developer workflow">
+      <span>1. YAML</span><i>→</i>
+      <span>2. apply / compile</span><i>→</i>
+      <span>3. local UI</span><i>→</i>
+      <span>4. readers.py</span><i>→</i>
+      <span>5. Terraform</span><i>→</i>
+      <span>6. AWS run</span>
+    </div>
+
+    <div class="start">
+      <h2>Local control UI (not Jetty — Python ThreadingHTTPServer)</h2>
+      <pre>pip install "serverless-data-mesh"
+# from a clone of this repo:
+serverless-data-mesh apply ^
+  --contract examples/medallion-e2e/northstar.mesh.yaml ^
+  --output examples/medallion-e2e/generated
+
+serverless-data-mesh ui --path examples/medallion-e2e/generated --open
+# → http://127.0.0.1:8765/
+# → http://127.0.0.1:8765/walkthrough</pre>
+      <p class="note">
+        On Mac/Linux use <code>\</code> instead of <code>^</code>.
+        Full developer instructions:
+        <a href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/developer-ui-and-deploy.md" style="color:var(--accent)">developer-ui-and-deploy.md</a>
+      </p>
+    </div>
+
+    <div class="grid">
+      <a class="card" href="demo-walkthrough.html">
+        <h2>Interactive walkthrough</h2>
+        <p>Auto-play GIF demo: install → YAML → apply → UI → deploy → observe.</p>
+        <span class="tag">GitHub Pages</span>
+      </a>
+      <a class="card" href="media/greenfield-e2e-captioned.mp4">
+        <h2>Greenfield E2E video (MP4)</h2>
+        <p>Captioned story: metadata → all layers → UI → Terraform (~65s).</p>
+        <span class="tag">Video</span>
+      </a>
+      <a class="card" href="media/control-ui-demo.mp4">
+        <h2>UI tour video (MP4)</h2>
+        <p>Download the recorded control-center tab tour (~21s, H.264).</p>
+        <span class="tag">Video</span>
+      </a>
+      <a class="card" href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/developer-ui-and-deploy.md">
+        <h2>Developer UI → Terraform</h2>
+        <p>How the UI starts, create workflow, package Lambda, terraform apply, first run.</p>
+        <span class="tag">Primary guide</span>
+      </a>
+      <a class="card" href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/terraform-guide.md">
+        <h2>Terraform guide</h2>
+        <p>Prod dual clocks, LMI, sync vs async_callback Step Functions modes.</p>
+        <span class="tag">Deploy</span>
+      </a>
+      <a class="card" href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/metadata-driven-pipeline.md">
+        <h2>Metadata / medallion</h2>
+        <p>One YAML → bronze / silver / gold. Control UI observes; it does not design.</p>
+        <span class="tag">Compiler</span>
+      </a>
+      <a class="card" href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework">
+        <h2>GitHub repository</h2>
+        <p>Source, examples, Terraform modules, PyPI package.</p>
+        <span class="tag">Code</span>
+      </a>
+    </div>
+
+    <footer>
+      PVDM / Vaquar Pattern © Vaquar Khan (proprietary method) · reference code Apache-2.0 ·
+      <a href="https://pypi.org/project/serverless-data-mesh/">PyPI</a> ·
+      <a href="https://arxiv.org/pdf/2608.14643">Paper (PDF)</a>
+      · <a href="https://arxiv.org/abs/2608.14643">arXiv abstract</a>
+    </footer>
+  </div>
+</body>
+</html>
