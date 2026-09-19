@@ -34,10 +34,7 @@ An open Python framework for **federated data mesh** lakehouse publication on AW
 Read this section in the README - no extra docs required.  
 **Interactive auto-play demo:** after `ui --open`, open [http://127.0.0.1:8765/walkthrough](http://127.0.0.1:8765/walkthrough) · or open [docs/demo-walkthrough.html](docs/demo-walkthrough.html)
 
-**Recorded demos:**  
-- **Greenfield E2E (captioned):** [docs/media/greenfield-e2e-captioned.mp4](docs/media/greenfield-e2e-captioned.mp4) · [script](docs/greenfield-e2e-caption-script.md)  
-- **Control UI (final):** [docs/media/control-ui-final.mp4](docs/media/control-ui-final.mp4) — create mesh (region · accounts · VPC)  
-- Embedded on the [GitHub Pages site](https://vaquarkhan.github.io/aws-serverless-datamesh-framework/)
+**Recorded demo:** [docs/media/control-ui-final.mp4](docs/media/control-ui-final.mp4) — Design Studio create mesh (region · accounts · VPC). Embedded on the [GitHub Pages site](https://vaquarkhan.github.io/aws-serverless-datamesh-framework/).
 
 **Also useful:**
 

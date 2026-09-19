@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Docs / GitHub Pages: drop obsolete **greenfield E2E** video (pre–Design Studio narrative); **control-ui-final** only
+
 ## [1.4.3] - 2026-09-19
 
 ### Changed

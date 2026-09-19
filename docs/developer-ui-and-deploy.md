@@ -74,16 +74,13 @@ serverless-data-mesh ui --path examples/medallion-e2e/generated --host 127.0.0.1
 
 Stop the server with `Ctrl+C` in the terminal.
 
-### Control UI demo videos
+### Control UI demo video
 
 | Video | What it shows |
 |-------|----------------|
-| [`greenfield-e2e-captioned.mp4`](media/greenfield-e2e-captioned.mp4) | Captioned greenfield → XYZ medallion → apply → UI → Terraform |
 | [`control-ui-final.mp4`](media/control-ui-final.mp4) | Live Design Studio: region · accounts · VPC → domains → pipelines |
-| Caption script | [`greenfield-e2e-caption-script.md`](greenfield-e2e-caption-script.md) |
 
-Rebuild greenfield: `python scripts/build_greenfield_e2e_video.py`  
-Rebuild Control UI final: `python scripts/build_final_ui_video.py` (needs UI on `:8765` + Playwright)
+Rebuild: `python scripts/build_final_ui_video.py` (needs UI on `:8765` + Playwright)
 
 Site embed: [GitHub Pages landing](https://vaquarkhan.github.io/aws-serverless-datamesh-framework/)
 
