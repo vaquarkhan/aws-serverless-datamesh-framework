@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.4.3] - 2026-09-19
+
+### Changed
+
+- Docs / GitHub Pages: remove obsolete `control-ui-demo` and `design-studio-demo` videos; keep **greenfield E2E** + **control-ui-final** only
+- README, developer guide, walkthrough: point at final create-mesh video
+
 ## [1.4.2] - 2026-09-19
 
 ### Changed

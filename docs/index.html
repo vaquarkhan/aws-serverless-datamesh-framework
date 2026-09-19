@@ -107,28 +107,26 @@
 
     <h1>Docs, demo walkthrough &amp; developer path</h1>
     <p class="lead">
-      Pipelines are created from <strong>YAML + compiler</strong>, not by drawing in the UI.
-      The control UI runs locally (Python stdlib HTTP) to observe a compiled mesh, then you package and deploy with Terraform.
+      Create a mesh in the <strong>Design Studio</strong> (region · accounts · VPC) or from YAML,
+      then <code>apply</code> compiles bronze/silver/gold pipelines. The local control UI observes
+      the generated mesh; package and deploy with Terraform.
     </p>
 
     <div class="video-card">
       <h2>Greenfield E2E — captioned demo (XYZ mesh)</h2>
-      <video controls playsinline preload="metadata" poster="media/greenfield-e2e-poster.png">
-        <source src="media/greenfield-e2e-captioned.mp4" type="video/mp4" />
-        Your browser does not support HTML5 video.
-        <a href="media/greenfield-e2e-captioned.mp4">Download the MP4</a>.
+      <video controls playsinline preload="metadata" poster="media/greenfield-e2e-poster.png" src="media/greenfield-e2e-captioned.mp4">
+        <a href="media/greenfield-e2e-captioned.mp4">Download the MP4</a>
       </video>
       <p class="cap">
         Scripted captions: greenfield developer → YAML/JSON metadata for domain <strong>xyz</strong> →
-        <code>apply</code> creates bronze/silver/gold → local control UI observe → readers → Terraform →
+        <code>apply</code> creates bronze/silver/gold → local control UI → readers → Terraform →
         Step Functions / PVDM end-to-end.
-        <em>Not a draw-on-canvas designer</em> — see
-        <a href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/greenfield-e2e-caption-script.md" style="color:var(--accent)">caption script</a>.
+        <a href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/greenfield-e2e-caption-script.md" style="color:var(--accent)">Caption script</a>.
       </p>
     </div>
 
     <div class="video-card">
-      <h2>Final Control UI — create mesh (region · accounts · VPC)</h2>
+      <h2>Control UI — create mesh (final)</h2>
       <video
         controls
         playsinline
@@ -139,47 +137,14 @@
         <a href="media/control-ui-final.mp4">Download MP4</a>
       </video>
       <p class="cap">
-        Final tour: <strong>Create data mesh</strong> (region, accounts, VPC none/existing/create) → domains → pipelines → PVDM paper.
-        Direct file:
-        <a href="media/control-ui-final.mp4" style="color:var(--accent)">control-ui-final.mp4</a>.
-      </p>
-    </div>
-
-    <div class="video-card">
-      <h2>Design Studio — create mesh (region · accounts · VPC)</h2>
-      <video
-        controls
-        playsinline
-        preload="auto"
-        poster="media/design-studio-demo-poster.png"
-        src="media/design-studio-demo.mp4"
-      >
-        <a href="media/design-studio-demo.mp4">Download MP4</a>
-      </video>
-      <p class="cap">
-        Create data mesh: pick <strong>region</strong>, <strong>single or three accounts</strong>, and VPC —
-        <strong>default (no VPC)</strong> · <strong>use existing</strong> · <strong>create new</strong>.
-        If the player fails, use the
-        <a href="media/design-studio-demo.mp4" style="color:var(--accent)">direct MP4 link</a>.
-        Paper:
-        <a href="https://arxiv.org/pdf/2608.14643" style="color:var(--accent)">arXiv:2608.14643</a>.
-      </p>
-    </div>
-
-    <div class="video-card">
-      <h2>Control UI tour (recorded)</h2>
-      <video controls playsinline preload="metadata" poster="media/control-ui-demo-poster.png">
-        <source src="media/control-ui-demo.mp4" type="video/mp4" />
-        Your browser does not support HTML5 video.
-        <a href="media/control-ui-demo.mp4">Download the MP4</a>.
-      </video>
-      <p class="cap">
-        Tab walkthrough: Overview → Pipelines → Trust → PVDM → Durable → Tutorial → Run PVDM demo.
+        Live Design Studio: <strong>region · accounts · VPC</strong> (none / existing / create) →
+        bronze/silver/gold domains → pipelines → PVDM paper.
+        Rebuild: <code>python scripts/build_final_ui_video.py</code>.
       </p>
     </div>
 
     <div class="flow" aria-label="Developer workflow">
-      <span>1. YAML</span><i>→</i>
+      <span>1. Design / YAML</span><i>→</i>
       <span>2. apply / compile</span><i>→</i>
       <span>3. local UI</span><i>→</i>
       <span>4. readers.py</span><i>→</i>
@@ -213,12 +178,12 @@ serverless-data-mesh ui --path examples/medallion-e2e/generated --open
       </a>
       <a class="card" href="media/greenfield-e2e-captioned.mp4">
         <h2>Greenfield E2E video (MP4)</h2>
-        <p>Captioned story: metadata → all layers → UI → Terraform (~65s).</p>
+        <p>Captioned story: metadata → all layers → UI → Terraform.</p>
         <span class="tag">Video</span>
       </a>
-      <a class="card" href="media/control-ui-demo.mp4">
-        <h2>UI tour video (MP4)</h2>
-        <p>Download the recorded control-center tab tour (~21s, H.264).</p>
+      <a class="card" href="media/control-ui-final.mp4">
+        <h2>Control UI final (MP4)</h2>
+        <p>Create mesh: region · accounts · VPC → domains → pipelines.</p>
         <span class="tag">Video</span>
       </a>
       <a class="card" href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/developer-ui-and-deploy.md">
@@ -233,7 +198,7 @@ serverless-data-mesh ui --path examples/medallion-e2e/generated --open
       </a>
       <a class="card" href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework/blob/main/docs/metadata-driven-pipeline.md">
         <h2>Metadata / medallion</h2>
-        <p>One YAML → bronze / silver / gold. Control UI observes; it does not design.</p>
+        <p>Design Studio or YAML → bronze / silver / gold via <code>apply</code>.</p>
         <span class="tag">Compiler</span>
       </a>
       <a class="card" href="https://github.com/vaquarkhan/aws-serverless-datamesh-framework">

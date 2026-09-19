@@ -36,7 +36,7 @@ Read this section in the README - no extra docs required.
 
 **Recorded demos:**  
 - **Greenfield E2E (captioned):** [docs/media/greenfield-e2e-captioned.mp4](docs/media/greenfield-e2e-captioned.mp4) · [script](docs/greenfield-e2e-caption-script.md)  
-- **Control UI tour:** [docs/media/control-ui-demo.mp4](docs/media/control-ui-demo.mp4)  
+- **Control UI (final):** [docs/media/control-ui-final.mp4](docs/media/control-ui-final.mp4) — create mesh (region · accounts · VPC)  
 - Embedded on the [GitHub Pages site](https://vaquarkhan.github.io/aws-serverless-datamesh-framework/)
 
 **Also useful:**

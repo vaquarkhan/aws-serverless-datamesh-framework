@@ -5,12 +5,13 @@
 This is the honest product path:
 
 ```text
-YAML contract  →  apply/compile  →  local control UI (observe)
+Design Studio (region·accounts·VPC) or YAML contract
+       →  apply/compile  →  local control UI (observe + Design)
        →  implement readers.py  →  package Lambda  →  terraform apply  →  Step Functions run
 ```
 
 - **Not Jetty / Tomcat / Node.** The control UI is Python’s stdlib `ThreadingHTTPServer`.
-- **Not a diagram designer.** The UI does not create pipelines; the compiler does.
+- **Design Studio** writes `mesh.yaml` and can run apply into `generated/`; you can still author YAML by hand.
 
 ---
 
@@ -77,13 +78,12 @@ Stop the server with `Ctrl+C` in the terminal.
 
 | Video | What it shows |
 |-------|----------------|
-| [`greenfield-e2e-captioned.mp4`](media/greenfield-e2e-captioned.mp4) | Scripted captions: greenfield → XYZ medallion YAML → all layers → UI → Terraform E2E |
-| [`design-studio-demo.mp4`](media/design-studio-demo.mp4) | Design Studio + VPC/IAM defaults + paper |
-| [`control-ui-demo.mp4`](media/control-ui-demo.mp4) | Live UI tab tour + Run PVDM demo |
+| [`greenfield-e2e-captioned.mp4`](media/greenfield-e2e-captioned.mp4) | Captioned greenfield → XYZ medallion → apply → UI → Terraform |
+| [`control-ui-final.mp4`](media/control-ui-final.mp4) | Live Design Studio: region · accounts · VPC → domains → pipelines |
 | Caption script | [`greenfield-e2e-caption-script.md`](greenfield-e2e-caption-script.md) |
 
-Rebuild captioned E2E: `python scripts/build_greenfield_e2e_video.py`  
-Rebuild Design Studio clip: `python scripts/build_design_studio_video.py`
+Rebuild greenfield: `python scripts/build_greenfield_e2e_video.py`  
+Rebuild Control UI final: `python scripts/build_final_ui_video.py` (needs UI on `:8765` + Playwright)
 
 Site embed: [GitHub Pages landing](https://vaquarkhan.github.io/aws-serverless-datamesh-framework/)
 

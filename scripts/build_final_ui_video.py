@@ -142,11 +142,8 @@ def encode(shots: list[tuple[str, str]]) -> Path:
         ],
         check=True,
     )
-    # Keep design-studio-demo as alias of final for Pages card
-    design = OUT_DIR / "design-studio-demo.mp4"
-    design.write_bytes(out.read_bytes())
-    (OUT_DIR / "design-studio-demo-poster.png").write_bytes(poster.read_bytes())
     print(f"Wrote {out} ({out.stat().st_size} bytes)")
+    print(f"Poster {poster}")
     return out
 
 
