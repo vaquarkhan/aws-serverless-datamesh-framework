@@ -147,7 +147,8 @@ variable "lambda_memory_mb" {{
 }}
 
 variable "lambda_timeout_seconds" {{
-  default = {contract.runtime.lambda_timeout_seconds}
+  description = "Segment timeout: ≤900 on-demand; ≤5400 with enable_lambda_managed_instances"
+  default     = {contract.runtime.lambda_timeout_seconds}
 }}
 
 variable "lambda_package_extras" {{

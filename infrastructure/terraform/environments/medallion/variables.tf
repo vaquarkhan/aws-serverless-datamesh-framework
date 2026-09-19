@@ -62,8 +62,20 @@ variable "trust_dashboard_domains" {
 }
 
 variable "lambda_timeout_seconds" {
-  type    = number
-  default = 900
+  description = "Segment timeout: 1–900 on-demand; up to 5400 with LMI."
+  type        = number
+  default     = 900
+}
+
+variable "enable_lambda_managed_instances" {
+  description = "Attach Lambda Managed Instances for segments up to 90 minutes (async/ESM)."
+  type        = bool
+  default     = false
+}
+
+variable "lambda_managed_instances_capacity_provider_arn" {
+  type    = string
+  default = null
 }
 
 variable "lambda_memory_mb" {
@@ -72,8 +84,7 @@ variable "lambda_memory_mb" {
 }
 
 variable "durable_execution_timeout_seconds" {
-  # Workload clock: set to your backfill wall-clock. Segments chain past the
-  # 15-minute Lambda limit until this budget is used.
+  # Workload clock: set to your backfill wall-clock. IceGuard + Durable protect Iceberg.
   type    = number
   default = 5400
 }

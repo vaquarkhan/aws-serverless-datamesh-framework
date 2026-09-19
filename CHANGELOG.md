@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-19
+
+### Added
+
+- **Lambda Managed Instances (LMI) opt-in**: segments up to **90 minutes** for async/ESM via `enable_lambda_managed_instances` + capacity provider ARN
+- **`execution_timeouts` module** with unit tests validating on-demand (≤15 min) vs LMI (≤90 min), SFN sync cap, IceGuard rollback scaling, and durable budget coherence
+- **Docs**: `docs/lambda-managed-instances.md` — industry-standard 15–90 min segments with IceGuard/VRP Iceberg safety
+
+### Changed
+
+- Terraform lambda module / prod / medallion / multi-account: timeout ceiling **900 or 5400** by capacity mode; SFN invoke wait capped at sync 15 min
+- README / architecture / terraform guides: dual clocks + LMI; IceGuard prevents corrupt Iceberg publication
+- PyPI download badges: use live **pypistats** monthly/weekly counts (shields `pypi/dm` and pe.py static badges were unreliable)
+
 ## [1.2.0] - 2026-07-21
 
 ### Added

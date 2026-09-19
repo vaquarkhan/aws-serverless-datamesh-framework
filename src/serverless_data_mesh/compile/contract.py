@@ -37,7 +37,7 @@ class PipelineRuntime:
     engine: str = "pyarrow"  # pyarrow | polars | pyspark | pure_python
     package_extras: str = ""  # pip extra: rules | spark | all
     lambda_memory_mb: int = 3008
-    lambda_timeout_seconds: int = 900
+    lambda_timeout_seconds: int = 900  # ≤900 on-demand; ≤5400 with LMI (Terraform)
     spark_rules_enabled: bool = False
     spark_shuffle_partitions: int = 8
 

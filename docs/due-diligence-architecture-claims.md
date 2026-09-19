@@ -17,6 +17,7 @@ This document separates **what is true today**, **what is overstated**, and **wh
 | **Orchestration wording (Step Functions “continuation tokens”)** | **Misstated** — resume is outcome=`rolled_back` re-invoke + Durable checkpoints |
 | **“Five-phase PVDM” / mandatory Phase 0 Rules** | **Misstated** — SparkRules is **optional** pre-Physical; canonical PVDM is **four** phases |
 | **Agentic AI (PVDM-A, MCP, AgentCore, Presidio, PromptGuard, Spring AI OTel)** | **Not in this repo** — treat as roadmap, not current capability |
+| **Lambda Managed Instances 90-min segments** | **Opt-in Terraform** — `enable_lambda_managed_instances`; sync SFN still ≤15 min; IceGuard + Durable unchanged |
 | **Terraform Glue DQ bugs #38744 / #39821** | **Not applicable here** — no Glue Data Quality Terraform resources |
 | **`.cursorrules` / Memory Bank** | **Were missing** — Cursor rules added on this branch; Memory Bank still optional |
 

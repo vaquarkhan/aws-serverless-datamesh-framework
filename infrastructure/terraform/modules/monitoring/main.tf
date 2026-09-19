@@ -60,7 +60,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_duration_p99" {
   extended_statistic  = "p99"
   threshold           = 840000
   treat_missing_data  = "notBreaching"
-  alarm_description   = "Domain writer p99 duration approaching 15-minute Lambda ceiling."
+  alarm_description   = "Domain writer p99 duration approaching configured Lambda segment ceiling (15 min on-demand / up to 90 min with LMI)."
   alarm_actions       = var.alarm_actions
   ok_actions          = var.ok_actions
 

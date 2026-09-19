@@ -34,9 +34,20 @@ variable "lambda_handler" {
 }
 
 variable "lambda_timeout_seconds" {
-  description = "Per-invocation Lambda timeout (1-900)."
+  description = "Per-invocation segment timeout (1-900 on-demand; up to 5400 with LMI)."
   type        = number
   default     = 600
+}
+
+variable "enable_lambda_managed_instances" {
+  description = "Attach Lambda Managed Instances for segments up to 90 minutes (async/ESM)."
+  type        = bool
+  default     = false
+}
+
+variable "lambda_managed_instances_capacity_provider_arn" {
+  type    = string
+  default = null
 }
 
 variable "durable_execution_timeout_seconds" {
@@ -75,9 +86,10 @@ locals {
   account_id        = data.aws_caller_identity.current.account_id
   iceberg_warehouse = "${local.account_id}:s3tablescatalog/${var.lakehouse_bucket_name}"
 
-  lambda_per_invocation_timeout = min(var.lambda_timeout_seconds, 900)
+  lambda_segment_timeout_max    = var.enable_lambda_managed_instances ? 5400 : 900
+  lambda_per_invocation_timeout = min(var.lambda_timeout_seconds, local.lambda_segment_timeout_max)
   durable_execution_timeout     = var.durable_execution_timeout_seconds
-  sfn_lambda_invoke_timeout     = local.lambda_per_invocation_timeout + var.sfn_invoke_timeout_buffer_seconds
+  sfn_lambda_invoke_timeout     = min(local.lambda_per_invocation_timeout, 900) + var.sfn_invoke_timeout_buffer_seconds
   iceguard_rollback_ms          = coalesce(
     var.iceguard_rollback_threshold_ms,
     min(60000, max(10000, floor(local.lambda_per_invocation_timeout * 33)))
@@ -125,6 +137,8 @@ module "lambda" {
   memory_size  = var.lambda_memory_mb
   timeout      = local.lambda_per_invocation_timeout
   durable_execution_timeout = local.durable_execution_timeout
+  enable_lambda_managed_instances = var.enable_lambda_managed_instances
+  lambda_managed_instances_capacity_provider_arn = var.lambda_managed_instances_capacity_provider_arn
   environment_variables = {
     ICEGUARD_CHECKPOINT_BUCKET      = module.storage.checkpoint_bucket_name
     VRP_PROOF_BUCKET               = module.storage.proof_bucket_name

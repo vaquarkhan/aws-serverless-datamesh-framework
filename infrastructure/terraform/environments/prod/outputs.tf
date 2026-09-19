@@ -59,17 +59,18 @@ output "example_cli_invoke" {
 }
 
 output "execution_timeouts" {
-  description = "Two-layer timeout model for long backfills (all Terraform-configurable)."
+  description = "Segment + durable timeout model (on-demand 15 min or LMI up to 90 min segments)."
   value = {
-    lambda_timeout_seconds          = local.lambda_per_invocation_timeout
-    lambda_memory_mb                = var.lambda_memory_mb
-    durable_execution_seconds       = local.durable_execution_timeout
-    durable_retention_days          = var.durable_retention_days
-    iceguard_rollback_threshold_ms  = local.iceguard_rollback_ms
-    step_functions_invoke_seconds   = local.sfn_lambda_invoke_timeout
-    step_functions_invoke_buffer_s  = var.sfn_invoke_timeout_buffer_seconds
-    resume_wait_seconds             = var.resume_wait_seconds
-    max_resume_attempts             = local.effective_max_resume_attempts
-    min_resume_attempts_required    = local.min_resume_attempts
+    lambda_timeout_seconds                     = local.lambda_per_invocation_timeout
+    lambda_managed_instances_enabled           = var.enable_lambda_managed_instances
+    lambda_memory_mb                           = var.lambda_memory_mb
+    durable_execution_seconds                  = local.durable_execution_timeout
+    durable_retention_days                     = var.durable_retention_days
+    iceguard_rollback_threshold_ms             = local.iceguard_rollback_ms
+    step_functions_invoke_seconds              = local.sfn_lambda_invoke_timeout
+    step_functions_invoke_buffer_s             = var.sfn_invoke_timeout_buffer_seconds
+    resume_wait_seconds                        = var.resume_wait_seconds
+    max_resume_attempts                        = local.effective_max_resume_attempts
+    min_resume_attempts_required               = local.min_resume_attempts
   }
 }

@@ -112,22 +112,24 @@ Full guide: **[glue-connector.md](glue-connector.md)**.
 |------------|----------------|-------|
 | **Durable Lambda** | Yes | `durable_config` + `@durable_execution` + Durable SDK steps |
 | **MicroVM** | Yes (AWS-managed) | Lambda runs on **Firecracker** microVMs; we do not operate Firecracker |
-| **On-demand instances** | On-demand **Lambda** | Scale to zero; **not** EC2 on-demand fleets |
-| **Configurable run time** | Yes (dual clocks) | Per-invoke ≤ 900s; durable budget **configurable** (any duration you set) |
+| **On-demand instances** | On-demand **Lambda** (default) | Scale to zero; **not** EC2 ASG fleets |
+| **Managed Instances (opt-in)** | `enable_lambda_managed_instances` | Segments up to **90 min** for async/ESM ([AWS LMI](https://aws.amazon.com/blogs/compute/announcing-90-minute-function-timeout-on-aws-lambda-managed-instances/)) |
+| **Configurable run time** | Yes (dual clocks) | Segment 15–90 min (by capacity mode); durable budget **any duration**; IceGuard protects Iceberg |
 
-Sales diagram: [docs/images/durable-lambda-compute-model.png](images/durable-lambda-compute-model.png) · Hands-on: [examples/durable-compute/](../examples/durable-compute/)
+Sales diagram: [docs/images/durable-lambda-compute-model.png](images/durable-lambda-compute-model.png) · Hands-on: [examples/durable-compute/](../examples/durable-compute/) · LMI guide: [lambda-managed-instances.md](lambda-managed-instances.md)
 
-## Long-running execution (configurable durable budget)
+## Long-running execution (15–90 min segments + durable budget)
 
-Lambda containers still have a **15-minute hard cap** per invocation (`timeout = 900`).
-This framework **overcomes that limit** with **two cooperating clocks**: each segment stays within 15 minutes; the workload clock is Terraform-tunable for whatever wall-clock time the backfill needs (AWS Durable Execution allows up to ~1 year).
+**Industry-standard segment clock:** classic on-demand Lambda is capped at **15 minutes** per invoke; with **Lambda Managed Instances** you may configure **up to 90 minutes** for async / ESM / durable-async segments. Sync invokes (including Step Functions `lambda:invoke`) remain at the AWS **15-minute** sync ceiling.
+
+The framework **still** uses two cooperating clocks plus IceGuard so incomplete Parquet never becomes a corrupt Iceberg snapshot:
 
 | Layer | Setting | Role |
 |-------|---------|------|
-| Per invocation | Lambda `timeout` (≤ 900s) | One container segment; IceGuard watchdog fires before this limit |
-| Total durable budget | `durable_config.execution_timeout` | **Configurable** ceiling for one execution ID across replays |
-| Orchestration | Step Functions `max_resume_attempts` | Re-invokes after `rolled_back` when a segment ends early |
-| Per SFN task | `TimeoutSeconds` on `lambda:invoke` | Waits for **one** segment to return, not the full workload budget |
+| Per invocation | `lambda_timeout_seconds` (≤900 or ≤5400 with LMI) | One IceGuard-protected segment |
+| Total durable budget | `durable_config.execution_timeout` | **Configurable** ceiling across replays (any duration you set) |
+| Orchestration | Step Functions `max_resume_attempts` | Re-invokes after `rolled_back` (sync path ≤15 min per invoke) |
+| Iceberg safety | IceGuard rollback + VRP `validate_then_commit` | Metadata only after PASS |
 
 ```mermaid
 sequenceDiagram
@@ -136,7 +138,7 @@ sequenceDiagram
     participant IG as IceGuard
     participant DE as Durable SDK
 
-    SFN->>L: Invoke segment 1 (≤15 min)
+    SFN->>L: Invoke segment 1 (≤15 min sync / ≤90 min async LMI)
     L->>DE: durable_write_chunk (checkpointed)
     IG-->>L: Near timeout → rolled_back
     L-->>SFN: outcome=rolled_back, resume_offset
@@ -147,15 +149,20 @@ sequenceDiagram
     L-->>SFN: outcome=committed
 ```
 
-**Direct invoke** (qualified `:live` ARN, no Step Functions): durable execution can chain platform-managed replays within `execution_timeout` without returning `rolled_back` between segments: useful for jobs that fit entirely under the durable budget.
+**Direct invoke** (qualified `:live` ARN, no Step Functions): durable execution can chain platform-managed replays within `execution_timeout` without returning `rolled_back` between segments: useful for jobs that fit entirely under the durable budget. On LMI this is where **up to 90-minute** continuous segments apply.
 
 **Step Functions backfill**: each `rolled_back` ends one segment; the resume loop starts a new invocation. IceGuard S3 checkpoints (keyed by `workload_id`) carry the physical resume offset; durable step checkpoints prevent re-writing verified chunks.
 
 Tune in Terraform (`environments/prod/terraform.tfvars`):
 
 ```hcl
-# Set durable budget to your backfill wall-clock (overcomes the 15-min Lambda limit)
-durable_execution_timeout_seconds     = 10800
-max_resume_attempts                   = 14     # auto-bumped to ceil(durable/lambda)+2 if lower
+# Segment clock: 900 (15 min on-demand) or up to 5400 with LMI
 lambda_timeout_seconds                = 900
+# enable_lambda_managed_instances   = true
+# lambda_managed_instances_capacity_provider_arn = "arn:aws:lambda:..."
+# lambda_timeout_seconds            = 5400
+
+# Workload clock: set to your backfill wall-clock
+durable_execution_timeout_seconds     = 10800
+max_resume_attempts                   = 14
 ```

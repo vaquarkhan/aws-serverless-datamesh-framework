@@ -11,8 +11,12 @@ publisher_account_id = "PUBLISHER_ACCOUNT_ID"
 lakehouse_bucket     = "sdm-publisher-lakehouse-PUBLISHER_ACCOUNT_ID"
 
 lambda_timeout_seconds            = 900
-# Workload clock: set to your backfill wall-clock (overcomes the 15-min Lambda limit)
+# Workload clock: set to your backfill wall-clock (IceGuard + Durable protect Iceberg)
 durable_execution_timeout_seconds = 5400
+# Optional LMI (up to 90 min async segments):
+# enable_lambda_managed_instances = true
+# lambda_managed_instances_capacity_provider_arn = "arn:aws:lambda:..."
+# lambda_timeout_seconds = 5400
 
 # Optional SparkRules on Lambda: set after packaging with SDM_EXTRAS=rules
 # SPARKRULES_DRL_S3_URI in Lambda env (add to module block when rules enabled)

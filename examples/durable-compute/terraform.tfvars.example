@@ -1,15 +1,20 @@
-# Sample tfvars — durable Lambda dual clocks
+# Sample tfvars — durable Lambda dual clocks + optional LMI
 # Copy values into environments/prod or medallion terraform.tfvars
 #
-# Dual clocks: lambda_timeout_seconds = per-invoke cap (AWS max 900).
-# durable_execution_timeout_seconds = total job budget — set to whatever
-# your backfill needs (overcomes the 15-minute Lambda limit via segment chaining).
+# Segment clock: 900s on-demand (15 min) or up to 5400s with Managed Instances.
+# Workload clock: durable_execution_timeout_seconds = any wall-clock you need.
+# IceGuard rolls back before hard timeout → no corrupt Iceberg metadata.
 
 enable_durable_execution          = true
-lambda_timeout_seconds            = 900     # segment clock (AWS max 15 min)
+lambda_timeout_seconds            = 900     # on-demand segment (15 min)
 durable_execution_timeout_seconds = 10800   # set to your backfill wall-clock
 durable_retention_days            = 14
 lambda_memory_mb                  = 4096
 iceguard_rollback_threshold_ms    = 30000
 max_resume_attempts               = 14
 resume_wait_seconds               = 60
+
+# Optional — Lambda Managed Instances (up to 90 min async/ESM segments):
+# enable_lambda_managed_instances                = true
+# lambda_managed_instances_capacity_provider_arn = "arn:aws:lambda:REGION:ACCOUNT:capacity-provider:NAME"
+# lambda_timeout_seconds                         = 5400

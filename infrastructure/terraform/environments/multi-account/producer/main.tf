@@ -49,13 +49,23 @@ variable "glue_table_name" {
 }
 
 variable "lambda_timeout_seconds" {
-  type    = number
-  default = 900
+  description = "Segment timeout: 1–900 on-demand; up to 5400 with LMI."
+  type        = number
+  default     = 900
+}
+
+variable "enable_lambda_managed_instances" {
+  type    = bool
+  default = false
+}
+
+variable "lambda_managed_instances_capacity_provider_arn" {
+  type    = string
+  default = null
 }
 
 variable "durable_execution_timeout_seconds" {
-  # Workload clock: set to your backfill wall-clock. Segments chain past the
-  # 15-minute Lambda limit until this budget is used.
+  # Workload clock: set to your backfill wall-clock. IceGuard + Durable protect Iceberg.
   type    = number
   default = 5400
 }
@@ -82,7 +92,8 @@ data "aws_caller_identity" "current" {}
 
 locals {
   iceberg_warehouse = "${var.steward_account_id}:s3tablescatalog/${var.lakehouse_bucket}"
-  lambda_timeout    = min(var.lambda_timeout_seconds, 900)
+  lambda_segment_max = var.enable_lambda_managed_instances ? 5400 : 900
+  lambda_timeout     = min(var.lambda_timeout_seconds, local.lambda_segment_max)
 }
 
 module "messaging" {
@@ -111,6 +122,8 @@ module "lambda" {
   timeout                   = local.lambda_timeout
   durable_execution_timeout = var.durable_execution_timeout_seconds
   dlq_arn                   = module.messaging.dlq_arn
+  enable_lambda_managed_instances = var.enable_lambda_managed_instances
+  lambda_managed_instances_capacity_provider_arn = var.lambda_managed_instances_capacity_provider_arn
 
   environment_variables = {
     ICEGUARD_CHECKPOINT_BUCKET      = var.checkpoint_bucket

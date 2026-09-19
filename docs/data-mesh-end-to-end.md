@@ -14,7 +14,7 @@ This document explains how **Serverless Data Mesh** works from first principles 
 4. [Glue Catalog Connector (not Glue ETL)](#4-glue-catalog-connector-not-glue-etl)
 5. [End-to-end journey (one backfill)](#5-end-to-end-journey-one-backfill)
 6. [Transaction boundary (four phases)](#6-transaction-boundary-four-phases)
-7. [Configurable durable execution on 15-minute Lambda](#7-configurable-durable-execution-on-15-minute-lambda)
+7. [Configurable durable execution (15-90 min segments)](#7-configurable-durable-execution-15-90-min-segments)
 8. [VRP proofs and audit trail](#8-vrp-proofs-and-audit-trail)
 9. [IAM and cross-account trust](#9-iam-and-cross-account-trust)
 10. [Deploy per account](#10-deploy-per-account)
@@ -177,7 +177,7 @@ Lambda is the **execution unit** for domain writes - not because batch EMR is wr
 
 1. **Domains are independent**: each team ships a small handler, not a shared cluster.
 2. **Cost follows usage**: backfills scale to zero between runs.
-3. **Durable Execution**: AWS now chains 15-minute segments into a **configurable** total budget (any duration you set in Terraform).
+3. **Durable Execution**: AWS chains segments (15 min on-demand · up to 90 min with LMI async) into a **configurable** total budget; IceGuard + VRP keep Iceberg clean.
 4. **IceGuard**: turns Lambda's hard timeout into a **safe rollback + resume** primitive.
 
 ![Lambda execution flow](../images/lambda-execution-flow.png)
@@ -394,16 +394,18 @@ flowchart TB
 
 ---
 
-## 7. Configurable durable execution on 15-minute Lambda
+## 7. Configurable durable execution (15-90 min segments)
 
-Lambda has a **hard 15-minute per-invocation limit**. The framework overcomes that with two cooperating clocks — set the **workload clock** in Terraform to whatever wall-clock your backfill needs:
+Lambda **on-demand** has a **15-minute** per-invocation limit; **Managed Instances** allow **up to 90 minutes** for async/ESM ([AWS LMI](https://aws.amazon.com/blogs/compute/announcing-90-minute-function-timeout-on-aws-lambda-managed-instances/)). The framework chains segments with Durable Execution + IceGuard so incomplete Parquet never becomes a corrupt Iceberg snapshot:
 
 | Setting | Meaning |
 |---------|---------|
-| `lambda_timeout_seconds` (≤ 900) | One container segment |
+| `lambda_timeout_seconds` (≤900 or ≤5400 with LMI) | One IceGuard-protected segment |
+| `enable_lambda_managed_instances` | Opt-in longer async segments |
 | `durable_execution_timeout_seconds` | **Configurable** total durable budget (any duration you set) |
 | `max_resume_attempts` | Step Functions loops after `rolled_back` (auto `ceil(durable/lambda)+2`) |
-| Step Functions `TimeoutSeconds` | Waits for one segment, not the full workload |
+| Step Functions `TimeoutSeconds` | Waits for one **sync** segment (≤15 min), not the full workload |
+
 
 See [architecture.md: Long-running execution](architecture.md#long-running-execution-configurable-durable-budget) for sequence diagrams and Terraform tuning.
 

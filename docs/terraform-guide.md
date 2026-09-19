@@ -93,18 +93,20 @@ resume_wait_seconds               = 60
 # iceguard_rollback_threshold_ms  = null  # auto-derived from lambda_timeout_seconds
 ```
 
-### Configurable durable backfills (two clocks)
+### Configurable durable backfills (15–90 min segments + workload clock)
 
 | Setting | Meaning |
 |---------|---------|
-| `lambda_timeout_seconds = 900` | AWS hard max per container (15 min) |
-| `durable_execution_timeout_seconds` | **Configurable** total job budget (set to your backfill wall-clock; overcomes the 15-min Lambda limit) |
+| `lambda_timeout_seconds` | Segment clock: **≤900** on-demand (15 min); **≤5400** with LMI (90 min async/ESM) |
+| `enable_lambda_managed_instances` | Opt-in Lambda Managed Instances capacity |
+| `lambda_managed_instances_capacity_provider_arn` | Required when LMI is enabled |
+| `durable_execution_timeout_seconds` | **Configurable** total job budget (any wall-clock you set) |
 | `lambda_memory_mb` | Chunk throughput: raise if p99 duration nears timeout |
-| `sfn_invoke_timeout_buffer_seconds` | SFN `TimeoutSeconds` = lambda + buffer |
+| `sfn_invoke_timeout_buffer_seconds` | SFN `TimeoutSeconds` = min(lambda, 900) + buffer (sync still ≤15 min) |
 | `max_resume_attempts` | Resume loops after `rolled_back`; prod auto-bumps to `ceil(durable/lambda)+2` |
-| `iceguard_rollback_threshold_ms` | Null = auto (~33ms × lambda timeout, clamped 10s–60s) |
+| `iceguard_rollback_threshold_ms` | Null = auto; IceGuard yields before hard kill → no corrupt Iceberg |
 
-Step Functions waits **~960s per invoke** (one segment), not the full workload budget. Size resumes from `ceil(durable_execution_timeout_seconds / lambda_timeout_seconds) + buffer`.
+Step Functions waits for **one sync segment** (≤ ~960s), not the full workload budget. On LMI, longer segments apply to **async / ESM / direct durable** paths — see [lambda-managed-instances.md](lambda-managed-instances.md).
 
 After apply, verify:
 
@@ -163,7 +165,7 @@ The **backfill orchestrator** state machine invokes the domain writer and loops 
 
 ### What we try to achieve
 
-Hands-free long backfills: IceGuard timeout rollbacks are automatically resumed without duplicating committed chunks. Each Step Functions invocation runs at most one 15-minute Lambda segment; the resume loop stitches segments until `committed` or `max_resume_attempts`.
+Hands-free long backfills: IceGuard timeout rollbacks are automatically resumed without duplicating committed chunks. Each Step Functions invocation runs one sync segment (AWS sync ≤15 min); with LMI, async/direct durable paths may use up to 90-minute segments. The resume loop stitches segments until `committed` or `max_resume_attempts`.
 
 ```bash
 aws stepfunctions start-execution \

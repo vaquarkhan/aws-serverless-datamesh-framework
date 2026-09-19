@@ -72,9 +72,12 @@ enable_monitoring_alarms = true
 enable_step_functions    = true
 enable_durable_execution = true
 
-# Production clocks
+# Production clocks (15 min on-demand; optional LMI up to 90 min async)
 lambda_timeout_seconds            = 900
-durable_execution_timeout_seconds = 5400
+# enable_lambda_managed_instances = true
+# lambda_managed_instances_capacity_provider_arn = "arn:aws:lambda:..."
+# lambda_timeout_seconds          = 5400
+durable_execution_timeout_seconds = 10800
 lambda_memory_mb                  = 4096
 ```
 

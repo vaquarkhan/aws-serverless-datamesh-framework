@@ -140,7 +140,7 @@ flowchart LR
 
 | Clock | Owner | Scope |
 |-------|-------|-------|
-| **Container clock** | IceGuard watchdog | One Lambda invocation (max 900s) |
+| **Container clock** | IceGuard watchdog | One Lambda invocation (≤900s on-demand · ≤5400s with LMI) |
 | **Workload clock** | Durable SDK + Step Functions | Full backfill (configurable durable budget) |
 
 **Linkage key:** `workload_id` ties checkpoints, proofs, and durable step replay across segments.

@@ -31,6 +31,7 @@ as part of the Vaquar Pattern name.
 - PVDM-A Decision Attestation (`serverless_data_mesh.attestation`, CLI `attest`)
 - Optional KMS proof envelopes (`VRP_KMS_KEY_ID` → `kms_signature` on VRP JSON)
 - Pre-physical rules gate (`SDM_RULES_GATE` / SparkRules env in coordinator)
+- Optional Lambda Managed Instances segments up to 90 min (`enable_lambda_managed_instances`; async/ESM)
 
 **Still not shipped (do not invent):**
 - MCP / AgentCore Gateway / JWT interceptors
@@ -82,3 +83,4 @@ If the user asks for MCP/gateway features, say they are not present yet — do n
 - Due diligence vs marketing claims: `docs/due-diligence-architecture-claims.md`
 - Agentic roadmap: `docs/roadmap-pvdm-a-agentic.md`
 - Observability: `docs/observability-production.md`
+- LMI 15–90 min segments: `docs/lambda-managed-instances.md`

@@ -5,11 +5,10 @@ locals {
   }
   iceberg_warehouse = "${local.account_id}:s3tablescatalog/${var.lakehouse_bucket_name}"
 
-  # Dual clocks (how we overcome the 15-minute Lambda limit):
-  # - lambda_timeout_seconds: per-container cap (AWS hard max 900)
-  # - durable_execution_timeout_seconds: total job budget — set to whatever the
-  #   backfill needs; Step Functions + Durable Execution chain segments until done
-  lambda_per_invocation_timeout = min(var.lambda_timeout_seconds, 900)
+  # Dual clocks + optional LMI (15–90 min segments):
+  # IceGuard rolls back before hard timeout → no corrupt Iceberg metadata.
+  lambda_segment_timeout_max    = var.enable_lambda_managed_instances ? 5400 : 900
+  lambda_per_invocation_timeout = min(var.lambda_timeout_seconds, local.lambda_segment_timeout_max)
   durable_execution_timeout     = var.durable_execution_timeout_seconds
   checkpoint_retention_days     = max(7, var.durable_retention_days)
 
@@ -94,6 +93,8 @@ module "lambda_fleet" {
   durable_retention_days    = var.durable_retention_days
   timeout                   = local.lambda_per_invocation_timeout
   dlq_arn                   = module.messaging.dlq_arn
+  enable_lambda_managed_instances = var.enable_lambda_managed_instances
+  lambda_managed_instances_capacity_provider_arn = var.lambda_managed_instances_capacity_provider_arn
 
   base_environment_variables = {
     ICEGUARD_CHECKPOINT_BUCKET = module.storage.checkpoint_bucket_name

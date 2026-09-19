@@ -227,8 +227,10 @@ def build_dashboard(generated_path: Path) -> dict[str, Any]:
             "lambda_timeout_seconds": 900,
             "durable_execution_timeout_seconds": 5400,
             "microvm": "Firecracker (AWS-managed)",
-            "compute": "On-demand Lambda (scale to zero)",
+            "compute": "On-demand Lambda (default) or Managed Instances (opt-in, up to 90 min async)",
             "enable_durable_execution": True,
+            "enable_lambda_managed_instances": False,
+            "iceberg_safety": "IceGuard rollback + VRP before metadata",
         },
         "tutorial": _tutorial_steps(),
     }
@@ -285,7 +287,7 @@ def _tutorial_steps() -> list[dict[str, str]]:
             "image": "/tutorial/step-05-deploy.png",
             "gif": "/tutorial/step-05-deploy.gif",
             "do": "Package zip + terraform apply with lambda_timeout + durable budget.",
-            "benefit": "Firecracker on-demand Lambda; configurable durable budget (overcomes 15-min limit); no idle clusters.",
+            "benefit": "15–90 min segments (on-demand or LMI); Durable + IceGuard avoid corrupt Iceberg; no idle clusters.",
             "blurb": "Production compute without EMR sprawl.",
         },
         {

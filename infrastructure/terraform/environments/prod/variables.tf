@@ -106,14 +106,33 @@ variable "iceberg_checkpoint_interval" {
 
 # --- Lambda timeout & execution tuning (all configurable via terraform.tfvars) ---
 
+variable "enable_lambda_managed_instances" {
+  description = <<-EOT
+    Use Lambda Managed Instances so segment timeout may be 15–90 minutes (async/ESM).
+    Default false = classic on-demand Lambda (max 15 min per invoke).
+    IceGuard + Durable + VRP still gate Iceberg metadata either way.
+  EOT
+  type        = bool
+  default     = false
+}
+
+variable "lambda_managed_instances_capacity_provider_arn" {
+  description = "ARN of aws_lambda_capacity_provider when enable_lambda_managed_instances is true."
+  type        = string
+  default     = null
+}
+
 variable "lambda_timeout_seconds" {
-  description = "Per-invocation Lambda timeout in seconds (AWS hard max 900 = 15 min)."
+  description = <<-EOT
+    Per-invocation segment timeout in seconds.
+    On-demand: 1–900 (15 min). With LMI enabled: 1–5400 (90 min) for async/ESM.
+  EOT
   type        = number
   default     = 900
 
   validation {
-    condition     = var.lambda_timeout_seconds >= 1 && var.lambda_timeout_seconds <= 900
-    error_message = "lambda_timeout_seconds must be between 1 and 900."
+    condition     = var.lambda_timeout_seconds >= 1 && var.lambda_timeout_seconds <= 5400
+    error_message = "lambda_timeout_seconds must be between 1 and 5400."
   }
 }
 
@@ -132,8 +151,9 @@ variable "lambda_memory_mb" {
 variable "durable_execution_timeout_seconds" {
   description = <<-EOT
     Total durable execution budget in seconds (workload clock).
-    Set to your backfill wall-clock needs — segments chain past the 15-minute
-    Lambda limit until this budget is used. AWS max ~31622400 (~1 year).
+    Set to your backfill wall-clock — segments chain until this budget is used.
+    IceGuard rolls back incomplete writes so Iceberg metadata is never committed
+    without VRP PASS. AWS max ~31622400 (~1 year).
   EOT
   type        = number
   default     = 5400

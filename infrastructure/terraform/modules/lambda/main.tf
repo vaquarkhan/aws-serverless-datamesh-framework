@@ -2,6 +2,8 @@ locals {
   package_hash   = filebase64sha256(var.package_path)
   function_name  = "${var.name_prefix}-domain-writer"
   log_group_name = "/aws/lambda/${local.function_name}"
+  # LMI capacity providers require a published version.
+  publish_version = var.enable_lambda_managed_instances || var.enable_durable_execution
 }
 
 resource "aws_cloudwatch_log_group" "domain_writer" {
@@ -17,6 +19,7 @@ resource "aws_lambda_function" "domain_writer" {
   runtime       = var.runtime
   memory_size   = var.memory_size
   timeout       = var.timeout
+  publish       = local.publish_version
 
   filename         = var.package_path
   source_code_hash = local.package_hash
@@ -37,10 +40,20 @@ resource "aws_lambda_function" "domain_writer" {
     }
   }
 
+  dynamic "capacity_provider_config" {
+    for_each = var.enable_lambda_managed_instances ? [1] : []
+    content {
+      lambda_managed_instances_capacity_provider_config {
+        capacity_provider_arn = var.lambda_managed_instances_capacity_provider_arn
+      }
+    }
+  }
+
   depends_on = [aws_cloudwatch_log_group.domain_writer]
 
   tags = merge(var.tags, {
     Component = "domain-writer"
+    Capacity  = var.enable_lambda_managed_instances ? "managed-instances" : "on-demand"
   })
 
   timeouts {

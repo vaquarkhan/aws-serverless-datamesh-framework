@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
 
 # Serverless Data Mesh
 
@@ -6,8 +6,8 @@
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyPI version](https://img.shields.io/pypi/v/serverless-data-mesh.svg)](https://pypi.org/project/serverless-data-mesh/)
-[![PyPI downloads/month](https://img.shields.io/pypi/dm/serverless-data-mesh.svg)](https://pypistats.org/packages/serverless-data-mesh)
-[![PyPI total downloads](https://static.pepy.tech/badge/serverless-data-mesh)](https://pepy.tech/projects/serverless-data-mesh)
+[![PyPI downloads/month](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fpypistats.org%2Fapi%2Fpackages%2Fserverless-data-mesh%2Frecent&query=%24.data.last_month&label=downloads%2Fmonth&color=blue)](https://pypistats.org/packages/serverless-data-mesh)
+[![PyPI downloads/week](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fpypistats.org%2Fapi%2Fpackages%2Fserverless-data-mesh%2Frecent&query=%24.data.last_week&label=downloads%2Fweek&color=brightgreen)](https://pypistats.org/packages/serverless-data-mesh)
 [![Docker](https://img.shields.io/badge/ghcr.io-serverless--data--mesh-blue?logo=docker)](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/pkgs/container/serverless-data-mesh)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE)
 [![AWS Lambda](https://img.shields.io/badge/AWS-Lambda%20%2B%20Durable%20Execution-orange.svg)](https://docs.aws.amazon.com/lambda/)
@@ -187,12 +187,12 @@ serverless-data-mesh dashboard --open
 
 ### Docker (GHCR - published image)
 
-Official image (release `v1.2.0` publishes via GitHub Actions to GHCR):
+Official image (release `v1.3.0` publishes via GitHub Actions to GHCR):
 
 ```bash
-docker pull ghcr.io/vaquarkhan/serverless-data-mesh:1.2.0
+docker pull ghcr.io/vaquarkhan/serverless-data-mesh:1.3.0
 # or: ghcr.io/vaquarkhan/serverless-data-mesh:latest
-docker run --rm -p 8765:8765 ghcr.io/vaquarkhan/serverless-data-mesh:1.2.0
+docker run --rm -p 8765:8765 ghcr.io/vaquarkhan/serverless-data-mesh:1.3.0
 # open http://127.0.0.1:8765/
 ```
 
@@ -208,9 +208,9 @@ docker run --rm -p 8765:8765 serverless-data-mesh:local
 
 | Channel | Command / link |
 |---------|----------------|
-| **PyPI** | `pip install serverless-data-mesh==1.2.0` · [project](https://pypi.org/project/serverless-data-mesh/) · [monthly stats](https://pypistats.org/packages/serverless-data-mesh) · [total downloads](https://pepy.tech/projects/serverless-data-mesh) |
+| **PyPI** | `pip install serverless-data-mesh==1.3.0` · [project](https://pypi.org/project/serverless-data-mesh/) · [monthly stats](https://pypistats.org/packages/serverless-data-mesh) · [total downloads](https://pepy.tech/projects/serverless-data-mesh) |
 | **Docker** | `docker pull ghcr.io/vaquarkhan/serverless-data-mesh:latest` |
-| **GitHub Release** | [v1.2.0](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/releases/tag/v1.2.0) |
+| **GitHub Release** | [v1.3.0](https://github.com/vaquarkhan/aws-serverless-datamesh-framework/releases/tag/v1.3.0) |
 
 ---
 
@@ -249,7 +249,7 @@ Most data mesh programs reorganize teams but leave the **write path** centralize
 |------|-------------------|-------------------------------|
 | **Silent data loss** | Partition row counts drift; discovered days later | VRP `FAIL` blocks Iceberg snapshot; consumers never see bad data |
 | **"Job succeeded" ≠ correct** | Glue exit code 0 with 6 missing rows | Multiset cryptographic proof per chunk |
-| **Lambda 15-min limit** | "Use EMR/Glue for real backfills" | Durable Execution + Step Functions resume → **configurable** total runtime (overcomes the per-invoke limit) |
+| **Lambda 15-min limit** | "Use EMR/Glue for real backfills" | Durable + IceGuard (any total runtime); optional LMI segments up to **90 min** async |
 | **Retry duplicates data** | Re-invoke creates duplicate Parquet | IceGuard rollback + `workload_id` checkpoints |
 | **Platform bottleneck** | Every domain waits on central ETL | Each domain owns a Lambda writer + declared contract |
 | **No audit evidence** | Sample rows and debate | Immutable VRP proofs in Steward S3; offline `verify_proof` |
@@ -324,7 +324,7 @@ What makes this new vs Outbox, Saga, Medallion, and Glue bookmarks: **Iceberg pu
 
 ## Durable Lambda compute model
 
-**No idle EMR/Glue clusters. No EC2 on-demand fleet.** Domain writers run on **AWS Lambda** with **Durable Execution**, Firecracker isolation, and **fully configurable dual clocks**.
+**No idle EMR/Glue clusters.** Domain writers run on **AWS Lambda** with **Durable Execution**, Firecracker isolation, **15–90 minute segments** (on-demand or [Managed Instances](https://aws.amazon.com/blogs/compute/announcing-90-minute-function-timeout-on-aws-lambda-managed-instances/)), and IceGuard so incomplete writes never corrupt Iceberg.
 
 <p align="center">
   <img src="docs/images/durable-lambda-compute-model.png" alt="Durable Lambda compute: Firecracker microVM, on-demand Lambda, dual clocks for per-invoke and durable budget" width="920" />
@@ -334,32 +334,36 @@ What makes this new vs Outbox, Saga, Medallion, and Glue bookmarks: **Iceberg pu
 |------------|-------------|-------------------------|
 | **Durable Lambda** | `@durable_execution` + Terraform `durable_config` | Glue ETL as the write path |
 | **MicroVM isolation** | AWS Lambda on **Firecracker** microVMs (AWS-managed) | Custom Firecracker / self-managed microVMs |
-| **On-demand compute** | **On-demand Lambda** scaling (scale to zero) | EC2 on-demand / ASG fleets; provisioned concurrency (optional later) |
-| **Configurable time** | Per-invoke timeout **and** durable total budget | Fixed 15-min wall clock for the whole backfill |
+| **On-demand compute** | **On-demand Lambda** (default, scale to zero) | Unmanaged EC2 / ASG fleets |
+| **Managed Instances (opt-in)** | LMI capacity provider + timeout up to **90 min** async | Claiming sync invokes exceed 15 min |
+| **Iceberg safety** | IceGuard rollback + VRP before metadata | “Job SUCCEEDED” as proof of integrity |
 
 ### Dual clocks (Terraform-tunable)
 
 | Knob | tfvars / variable | Meaning | Limits |
 |------|-------------------|---------|--------|
-| **Container clock** | `lambda_timeout_seconds` | One Lambda invocation | 1–**900** s (AWS hard max / 15 min) |
-| **Workload clock** | `durable_execution_timeout_seconds` | Total durable budget across segments | **Configurable** — set to your backfill wall-clock (AWS allows up to ~1 year) |
+| **Container clock** | `lambda_timeout_seconds` | One Lambda invocation | **15 min** on-demand · **up to 90 min** with LMI (async/ESM) |
+| **Capacity mode** | `enable_lambda_managed_instances` | Attach LMI capacity provider | Opt-in; needs capacity provider ARN |
+| **Workload clock** | `durable_execution_timeout_seconds` | Total durable budget across segments | **Any duration** you set (AWS up to ~1 year) |
 | **IceGuard lead time** | `iceguard_rollback_threshold_ms` | Rollback before hard kill | Auto or explicit ms |
-| **SFN resume** | `max_resume_attempts`, `resume_wait_seconds` | Re-invoke after `rolled_back` | Tunable (auto-bumped from durable ÷ segment) |
+| **SFN resume** | `max_resume_attempts`, `resume_wait_seconds` | Re-invoke after `rolled_back` | Sync SFN invoke still ≤15 min |
 
 ```hcl
 # infrastructure/terraform/environments/prod/terraform.tfvars (example)
 enable_durable_execution           = true
-lambda_timeout_seconds             = 900      # 15 min per segment (AWS max)
-# Workload clock: set to whatever your job needs — this is how we overcome the
-# 15-minute Lambda limit (segments chain until the durable budget is used).
-durable_execution_timeout_seconds  = 10800
+lambda_timeout_seconds             = 900      # 15 min on-demand (default)
+# Optional industry-standard longer segments (async/ESM on LMI):
+# enable_lambda_managed_instances = true
+# lambda_managed_instances_capacity_provider_arn = "arn:aws:lambda:..."
+# lambda_timeout_seconds          = 5400      # up to 90 min
+durable_execution_timeout_seconds  = 10800    # set to your backfill wall-clock
 lambda_memory_mb                   = 4096
-iceguard_rollback_threshold_ms     = 30000    # yield before hard timeout
+iceguard_rollback_threshold_ms     = 30000    # yield before hard timeout → no corrupt Iceberg
 ```
 
-Long backfills = **many durable segments** (each ≤ `lambda_timeout_seconds`), not one forever-running process. Configure `durable_execution_timeout_seconds` for the full job; IceGuard rolls back incomplete chunks; Durable SDK replays completed steps; Step Functions resumes on `rolled_back`.
+Long backfills = **many durable segments** (each ≤ `lambda_timeout_seconds`), not one forever-running process. IceGuard rolls back incomplete chunks; Durable SDK replays completed steps; Step Functions resumes on `rolled_back`; metadata commits only after VRP PASS.
 
-→ [Durable compute example](examples/durable-compute/README.md) · [Architecture](docs/architecture.md#durable-lambda-compute-model)
+→ [Durable compute example](examples/durable-compute/README.md) · [LMI 15–90 min guide](docs/lambda-managed-instances.md) · [Architecture](docs/architecture.md#durable-lambda-compute-model)
 
 ---
 
@@ -628,12 +632,12 @@ serverless-data-mesh demo
 
 ### Install from PyPI
 
-**Package:** [`serverless-data-mesh`](https://pypi.org/project/serverless-data-mesh/) · **Requires Python 3.12+** · **Latest:** [1.2.0](https://pypi.org/project/serverless-data-mesh/1.2.0/)
+**Package:** [`serverless-data-mesh`](https://pypi.org/project/serverless-data-mesh/) · **Requires Python 3.12+** · **Latest:** [1.3.0](https://pypi.org/project/serverless-data-mesh/1.3.0/)
 
 | | Link |
 |---|------|
 | **PyPI project** | https://pypi.org/project/serverless-data-mesh/ |
-| **Download files (1.2.0)** | https://pypi.org/project/serverless-data-mesh/1.2.0/#files |
+| **Download files (1.3.0)** | https://pypi.org/project/serverless-data-mesh/1.3.0/#files |
 | **5-min AWS guide** | [docs/first-mesh-on-aws.md](docs/first-mesh-on-aws.md) |
 
 **Recommended install (pip):**
@@ -643,7 +647,7 @@ serverless-data-mesh demo
 pip install serverless-data-mesh
 
 # Pin a version (recommended for production)
-pip install serverless-data-mesh==1.2.0
+pip install serverless-data-mesh==1.3.0
 
 # Upgrade
 pip install -U serverless-data-mesh
@@ -804,7 +808,8 @@ terraform init && terraform apply
 | **[PVDM paper (arXiv:2608.14643)](https://arxiv.org/abs/2608.14643)** | Proof-gated publication preprint (methods + evaluation) |
 | **[PVDM reference gate](https://github.com/vaquarkhan/Proof-gated-publication-PVDM)** | Stdlib gate + 30-case adversarial suite + Spark benchmarks |
 | **[Visual tutorial (GIFs)](docs/visual-tutorial.md)** | Step-by-step animated walkthrough + control UI Tutorial tab |
-| **[Durable compute example](examples/durable-compute/README.md)** | Lambda dual clocks, Firecracker, on-demand, tfvars |
+| **[Durable compute example](examples/durable-compute/README.md)** | 15–90 min segments, Durable, IceGuard, tfvars |
+| **[Lambda Managed Instances](docs/lambda-managed-instances.md)** | Opt-in LMI up to 90 min async; Iceberg safety |
 | **[Observability (production)](docs/observability-production.md)** | Structured logs, VRP S3 proofs, CloudWatch dashboard, DLQ smoke tests |
 | **[Medallion example](examples/medallion-e2e/README.md)** | One YAML → 6 pipelines + orchestrators |
 | **[Retail flat ETL example](examples/retail-mesh/README.md)** | 5 domain pipelines, PySpark on Lambda |
