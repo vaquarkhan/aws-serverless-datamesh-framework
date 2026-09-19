@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-09-19
+
+### Fixed
+
+- Wheel build: remove duplicate `serverless_data_mesh/VERSION` (Hatch force-include conflict)
+
 ## [1.4.0] - 2026-09-19
 
 ### Added
