@@ -227,7 +227,9 @@ def build_dashboard(generated_path: Path) -> dict[str, Any]:
             "lambda_timeout_seconds": 900,
             "durable_execution_timeout_seconds": 5400,
             "microvm": "Firecracker (AWS-managed)",
-            "compute": "On-demand Lambda (default) or Managed Instances (opt-in, up to 90 min async)",
+            "compute": (
+                "On-demand Lambda (default) or Managed Instances (opt-in, up to 90 min async)"
+            ),
             "enable_durable_execution": True,
             "enable_lambda_managed_instances": False,
             "iceberg_safety": "IceGuard rollback + VRP before metadata",
@@ -241,17 +243,17 @@ def _tutorial_steps() -> list[dict[str, str]]:
         {
             "id": "1",
             "title": "Install & prove the gate",
-            "command": "pip install serverless-data-mesh && serverless-data-mesh demo",
+            "command": ("pip install serverless-data-mesh && serverless-data-mesh demo"),
             "image": "/tutorial/step-01-install-demo.png",
             "gif": "/tutorial/step-01-install-demo.gif",
             "do": "Install the package, then run the local demo once.",
-            "benefit": "Clean commit + corrupt blocked in <60s — no AWS. Proves the VRP gate.",
+            "benefit": ("Clean commit + corrupt blocked in <60s — no AWS. Proves the VRP gate."),
             "blurb": "Fastest way to feel the Vaquar Pattern (PVDM) invariant.",
         },
         {
             "id": "2",
             "title": "Create mesh YAML",
-            "command": "serverless-data-mesh new --template medallion --output my-mesh",
+            "command": ("serverless-data-mesh new --template medallion --output my-mesh"),
             "image": "/tutorial/step-02-new-mesh.png",
             "gif": "/tutorial/step-02-new-mesh.gif",
             "do": "Scaffold a medallion starter contract.",
@@ -276,18 +278,21 @@ def _tutorial_steps() -> list[dict[str, str]]:
             "command": "serverless-data-mesh ui --path my-mesh/generated --open",
             "image": "/tutorial/step-04-ui.png",
             "gif": "/tutorial/step-04-ui.gif",
-            "do": "Open http://127.0.0.1:8765/ (or /walkthrough for video-style demo).",
-            "benefit": "KPIs, trust, PVDM, durable clocks before you spend AWS $.",
+            "do": ("Open http://127.0.0.1:8765/ (or /walkthrough for video-style demo)."),
+            "benefit": ("KPIs, trust, PVDM, durable clocks before you spend AWS $."),
             "blurb": "Human review surface for the mesh.",
         },
         {
             "id": "5",
             "title": "Deploy Durable Lambda",
-            "command": "package_lambda.sh && terraform apply  # dual clocks in tfvars",
+            "command": ("package_lambda.sh && terraform apply  # dual clocks in tfvars"),
             "image": "/tutorial/step-05-deploy.png",
             "gif": "/tutorial/step-05-deploy.gif",
-            "do": "Package zip + terraform apply with lambda_timeout + durable budget.",
-            "benefit": "15–90 min segments (on-demand or LMI); Durable + IceGuard avoid corrupt Iceberg; no idle clusters.",
+            "do": ("Package zip + terraform apply with lambda_timeout + durable budget."),
+            "benefit": (
+                "15–90 min segments (on-demand or LMI); "
+                "Durable + IceGuard avoid corrupt Iceberg; no idle clusters."
+            ),
             "blurb": "Production compute without EMR sprawl.",
         },
         {

@@ -91,7 +91,7 @@ def save_designer_contract(
         subs = ", ".join(f'"{s}"' for s in (net.get("subnet_ids") or []))
         sgs = ", ".join(f'"{s}"' for s in (net.get("security_group_ids") or []))
         vpc_line = (
-            "\nvpc_mode = \"existing\"\n"
+            '\nvpc_mode = "existing"\n'
             f"lambda_subnet_ids         = [{subs}]\n"
             f"lambda_security_group_ids = [{sgs}]\n"
         )
@@ -100,23 +100,18 @@ def save_designer_contract(
     elif net_mode == "create":
         cidr = net.get("cidr_block") or "10.80.0.0/16"
         azs = int(net.get("az_count") or 2)
-        vpc_line = (
-            "\nvpc_mode = \"create\"\n"
-            f'vpc_cidr_block = "{cidr}"\n'
-            f"vpc_az_count   = {azs}\n"
-        )
+        vpc_line = f'\nvpc_mode = "create"\nvpc_cidr_block = "{cidr}"\nvpc_az_count   = {azs}\n'
     else:
         vpc_line = (
-            "\nvpc_mode = \"none\"\n"
-            "# No VPC — AWS-managed Lambda network (NOT account default VPC)\n"
+            '\nvpc_mode = "none"\n# No VPC — AWS-managed Lambda network (NOT account default VPC)\n'
         )
 
     hint = (
         "# Canonical mesh contract written by control UI — Create data mesh\n"
         f"MESH_CONTRACT={paths['yaml'].as_posix()}\n"
         f"MESH_GENERATED={paths['generated'].as_posix()}\n"
-        f"aws_region   = \"{region}\"\n"
-        f"name_prefix  = \"{prefix}\"\n"
+        f'aws_region   = "{region}"\n'
+        f'name_prefix  = "{prefix}"\n'
         f"# accounts: producer={accounts.get('producer')} "
         f"steward={accounts.get('steward')} publisher={accounts.get('publisher')}\n"
         "# IAM: Terraform creates *-domain-writer + Step Functions + EventBridge "

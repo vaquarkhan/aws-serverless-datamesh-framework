@@ -42,7 +42,9 @@ class ExecutionTimeoutProfile:
 
 
 def segment_timeout_max(*, enable_lambda_managed_instances: bool) -> int:
-    return LMI_SEGMENT_MAX_SECONDS if enable_lambda_managed_instances else ON_DEMAND_SEGMENT_MAX_SECONDS
+    if enable_lambda_managed_instances:
+        return LMI_SEGMENT_MAX_SECONDS
+    return ON_DEMAND_SEGMENT_MAX_SECONDS
 
 
 def resolve_lambda_timeout(
@@ -53,12 +55,12 @@ def resolve_lambda_timeout(
     """Clamp requested segment timeout to the capacity-mode ceiling."""
     if requested < 1:
         raise ValueError("lambda_timeout_seconds must be >= 1")
-    ceiling = segment_timeout_max(enable_lambda_managed_instances=enable_lambda_managed_instances)
+    ceiling = segment_timeout_max(
+        enable_lambda_managed_instances=enable_lambda_managed_instances,
+    )
     if requested > ceiling:
         mode = "managed-instances" if enable_lambda_managed_instances else "on-demand"
-        raise ValueError(
-            f"lambda_timeout_seconds={requested} exceeds {ceiling}s for {mode} Lambda"
-        )
+        raise ValueError(f"lambda_timeout_seconds={requested} exceeds {ceiling}s for {mode} Lambda")
     return requested
 
 
@@ -78,7 +80,8 @@ def resolve_sfn_invoke_timeout(
     mode = (sfn_invoke_mode or SFN_INVOKE_MODE_SYNC).strip().lower()
     if mode not in VALID_SFN_INVOKE_MODES:
         raise ValueError(
-            f"sfn_invoke_mode must be one of {sorted(VALID_SFN_INVOKE_MODES)}, got {sfn_invoke_mode!r}"
+            "sfn_invoke_mode must be one of "
+            f"{sorted(VALID_SFN_INVOKE_MODES)}, got {sfn_invoke_mode!r}"
         )
     if mode == SFN_INVOKE_MODE_ASYNC_CALLBACK:
         return lambda_timeout_seconds + buffer_seconds
@@ -134,9 +137,7 @@ def validate_durable_budget(
             f"durable_execution_timeout_seconds must be <= {DURABLE_EXECUTION_MAX_SECONDS}"
         )
     if durable_execution_timeout_seconds < lambda_timeout_seconds:
-        raise ValueError(
-            "durable_execution_timeout_seconds must be >= lambda_timeout_seconds"
-        )
+        raise ValueError("durable_execution_timeout_seconds must be >= lambda_timeout_seconds")
 
 
 def validate_sfn_mode_for_segment(
@@ -149,7 +150,8 @@ def validate_sfn_mode_for_segment(
     mode = (sfn_invoke_mode or SFN_INVOKE_MODE_SYNC).strip().lower()
     if mode not in VALID_SFN_INVOKE_MODES:
         raise ValueError(
-            f"sfn_invoke_mode must be one of {sorted(VALID_SFN_INVOKE_MODES)}, got {sfn_invoke_mode!r}"
+            "sfn_invoke_mode must be one of "
+            f"{sorted(VALID_SFN_INVOKE_MODES)}, got {sfn_invoke_mode!r}"
         )
     if lambda_timeout_seconds > SYNC_INVOKE_MAX_SECONDS:
         if not enable_lambda_managed_instances:

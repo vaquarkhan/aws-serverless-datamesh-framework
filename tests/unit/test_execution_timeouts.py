@@ -157,18 +157,18 @@ def test_resolve_lambda_timeout_rejects_zero() -> None:
 
 def test_terraform_dual_sfn_modes_wired() -> None:
     root = Path(__file__).resolve().parents[2]
-    sfn_vars = (
-        root / "infrastructure/terraform/modules/stepfunctions/variables.tf"
-    ).read_text(encoding="utf-8")
-    sfn_main = (
-        root / "infrastructure/terraform/modules/stepfunctions/main.tf"
-    ).read_text(encoding="utf-8")
-    prod_vars = (
-        root / "infrastructure/terraform/environments/prod/variables.tf"
-    ).read_text(encoding="utf-8")
-    prod_main = (
-        root / "infrastructure/terraform/environments/prod/main.tf"
-    ).read_text(encoding="utf-8")
+    sfn_vars = (root / "infrastructure/terraform/modules/stepfunctions/variables.tf").read_text(
+        encoding="utf-8"
+    )
+    sfn_main = (root / "infrastructure/terraform/modules/stepfunctions/main.tf").read_text(
+        encoding="utf-8"
+    )
+    prod_vars = (root / "infrastructure/terraform/environments/prod/variables.tf").read_text(
+        encoding="utf-8"
+    )
+    prod_main = (root / "infrastructure/terraform/environments/prod/main.tf").read_text(
+        encoding="utf-8"
+    )
     iam = (root / "infrastructure/terraform/modules/iam/main.tf").read_text(encoding="utf-8")
 
     assert "sfn_lambda_invoke_mode" in sfn_vars
@@ -178,10 +178,9 @@ def test_terraform_dual_sfn_modes_wired() -> None:
     assert "sfn_lambda_invoke_mode" in prod_vars
     assert "sfn_mode_for_long_segments" in prod_main
     assert "SendTaskSuccess" in iam
-    assert (root / "infrastructure/terraform/modules/stepfunctions/state_machine_sync.asl.json.tpl").exists()
-    assert (
-        root / "infrastructure/terraform/modules/stepfunctions/state_machine_async_callback.asl.json.tpl"
-    ).exists()
+    sfn_mod = root / "infrastructure/terraform/modules/stepfunctions"
+    assert (sfn_mod / "state_machine_sync.asl.json.tpl").exists()
+    assert (sfn_mod / "state_machine_async_callback.asl.json.tpl").exists()
 
 
 def test_docs_cover_dual_sfn_paths() -> None:

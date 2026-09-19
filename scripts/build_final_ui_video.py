@@ -50,8 +50,12 @@ def slide(path: Path, title: str, bullets: list[str], cap: str) -> None:
     img = Image.new("RGB", (W, H), (7, 14, 12))
     draw = ImageDraw.Draw(img)
     draw.rectangle((0, 0, W, 70), fill=(10, 18, 15))
-    draw.text((32, 20), "Serverless Data Mesh — final UI tour", fill=(224, 192, 122), font=font(18, True))
-    draw.rounded_rectangle((40, 100, W - 40, H - 120), radius=18, fill=(14, 26, 22), outline=(40, 70, 55))
+    draw.text(
+        (32, 20), "Serverless Data Mesh — final UI tour", fill=(224, 192, 122), font=font(18, True)
+    )
+    draw.rounded_rectangle(
+        (40, 100, W - 40, H - 120), radius=18, fill=(14, 26, 22), outline=(40, 70, 55)
+    )
     draw.text((70, 130), title, fill=(224, 192, 122), font=font(28, True))
     y = 200
     for b in bullets:
@@ -105,11 +109,48 @@ def capture_playwright(frames: Path) -> list[tuple[str, str]]:
 
 def capture_fallback(frames: Path) -> list[tuple[str, str]]:
     seq = [
-        ("01-create", "Create data mesh", ["Region dropdown", "Single or three accounts", "VPC: none / existing / create"], "Create data mesh: region · accounts · VPC"),
-        ("02-accounts", "Accounts", ["Single account for POC", "Or Producer · Steward · Publisher", "IAM roles via Terraform"], "Account topology is part of mesh creation"),
-        ("03-vpc", "Networking", ["Default = no VPC (not account default)", "Existing = your subnets/SGs", "Create = vpc-lambda module"], "Three honest VPC choices"),
-        ("04-generate", "Generate", ["Write mesh.yaml in project", "apply → generated/", "terraform.contract.txt for vpc_mode"], "Generate pipelines in-project — not download-only"),
-        ("05-paper", "Paper + Pages", ["arXiv:2608.14643 PDF", "GitHub Pages docs + demos", "Local UI remains control plane"], "Docs site + local Design Studio"),
+        (
+            "01-create",
+            "Create data mesh",
+            ["Region dropdown", "Single or three accounts", "VPC: none / existing / create"],
+            "Create data mesh: region · accounts · VPC",
+        ),
+        (
+            "02-accounts",
+            "Accounts",
+            [
+                "Single account for POC",
+                "Or Producer · Steward · Publisher",
+                "IAM roles via Terraform",
+            ],
+            "Account topology is part of mesh creation",
+        ),
+        (
+            "03-vpc",
+            "Networking",
+            [
+                "Default = no VPC (not account default)",
+                "Existing = your subnets/SGs",
+                "Create = vpc-lambda module",
+            ],
+            "Three honest VPC choices",
+        ),
+        (
+            "04-generate",
+            "Generate",
+            [
+                "Write mesh.yaml in project",
+                "apply → generated/",
+                "terraform.contract.txt for vpc_mode",
+            ],
+            "Generate pipelines in-project — not download-only",
+        ),
+        (
+            "05-paper",
+            "Paper + Pages",
+            ["arXiv:2608.14643 PDF", "GitHub Pages docs + demos", "Local UI remains control plane"],
+            "Docs site + local Design Studio",
+        ),
     ]
     out: list[tuple[str, str]] = []
     for name, title, bullets, cap in seq:
@@ -135,10 +176,25 @@ def encode(shots: list[tuple[str, str]]) -> Path:
     ffmpeg = str(FFMPEG if FFMPEG.is_file() else "ffmpeg")
     subprocess.run(
         [
-            ffmpeg, "-y", "-f", "concat", "-safe", "0", "-i", str(concat),
-            "-vf", "fps=30,format=yuv420p",
-            "-c:v", "libx264", "-profile:v", "main", "-pix_fmt", "yuv420p",
-            "-movflags", "+faststart", str(out),
+            ffmpeg,
+            "-y",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            str(concat),
+            "-vf",
+            "fps=30,format=yuv420p",
+            "-c:v",
+            "libx264",
+            "-profile:v",
+            "main",
+            "-pix_fmt",
+            "yuv420p",
+            "-movflags",
+            "+faststart",
+            str(out),
         ],
         check=True,
     )

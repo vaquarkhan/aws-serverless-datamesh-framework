@@ -144,6 +144,10 @@ extend-exclude = [
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.per-file-ignores]
+# Caption/narration strings in demo video builders exceed 100 cols by design.
+"scripts/build_*_video.py" = ["E501"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
